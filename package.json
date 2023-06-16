@@ -1,0 +1,36 @@
+{
+  "name": "server",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "set NODE_ENV=development && nodemon server.js",
+    "prod": "set NODE_ENV=production && nodemon server.js",
+    "linux-test": "export NODE_ENV=development && nodemon server.js",
+    "linux-prod": "export NODE_ENV=production && nodemon server.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "aws-sdk": "^2.1048.0",
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^10.0.0",
+    "express": "^4.17.1",
+    "fs": "^0.0.1-security",
+    "http": "0.0.1-security",
+    "jsonwebtoken": "^8.5.1",
+    "moment": "^2.29.1",
+    "mongodb": "^4.1.1",
+    "mongoose": "^6.0.5",
+    "multer": "^1.4.3",
+    "multer-s3": "^2.10.0",
+    "nodemailer": "^6.7.2",
+    "nodemon": "^2.0.13",
+    "randomatic": "^3.1.1",
+    "sharp": "^0.29.3"
+  },
+  "devDependencies": {
+    "babel-plugin-transform-remove-console": "^6.9.4"
+  }
+}
