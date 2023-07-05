@@ -11,6 +11,7 @@ const user = require("./user/user_index");
 const leave = require("./leave/leave_index");
 const collab = require("./collab/collab_index");
 const admin = require("./admin/admin_index");
+//박재현
 const status = require("./status/status_index");
 
 const notification = require("./notification/notification_index");
@@ -36,6 +37,7 @@ router.use("/user", user);
 router.use("/leave", leave);
 router.use("/collab", collab);
 router.use("/notification", notification);
+// 박재현
 router.use("/status", status);
 
 /*-----------------------------------
