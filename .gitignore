@@ -1,7 +1,7 @@
 /env
 /config/S3config.json
 /backup
-
+git.sh
 # dependencies
 /node_modules
 
