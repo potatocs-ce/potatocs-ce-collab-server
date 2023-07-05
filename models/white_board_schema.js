@@ -19,9 +19,6 @@ const whiteBoardSchema = mongoose.Schema(
     image_key: {
       type: String,
     },
-    key_file: {
-      type: String,
-    },
   },
   {
     timestamps: true,
