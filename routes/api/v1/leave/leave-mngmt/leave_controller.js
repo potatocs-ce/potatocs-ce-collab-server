@@ -290,17 +290,17 @@ exports.requestLeave = async (req, res) => {
 
     //// notification
 
-    // const notification = await dbModels.Notification(
-    //     {
-    //         sender: req.decoded._id,
-    //         receiver: getManagerData.myManager,
-    //         notiType: 'leave-request',
-    //         isRead: false,
-    //         iconText: 'open_in_browser',
-    //         notiLabel: 'A new leave request received\nEmployee : ' + userYear.name,
-    //         navigate: 'approval-mngmt/leave-request'
-    //     }
-    // )
+    const notification = await dbModels.Notification(
+      {
+        sender: req.decoded._id,
+        receiver: getManagerData.myManager,
+        notiType: 'leave-request',
+        isRead: false,
+        iconText: 'open_in_browser',
+        notiLabel: 'A new leave request received\nEmployee : ' + userYear.name,
+        navigate: 'approval-mngmt/leave-request'
+      }
+    )
 
     await notification.save();
     ///////////////////
