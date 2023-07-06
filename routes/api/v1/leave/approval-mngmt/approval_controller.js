@@ -109,13 +109,13 @@ exports.approvedRequest = async (req, res) => {
     }
 
     // // 해당 직원 정보 > 가지고 있는 휴가처리 (마이너스 처리)
-    const findRequestor = {
-      _id: updatedRequest.requestor
-    }
-    const requestorInfo = await dbModels.Member.findOne(findRequestor);
-    if (!updatedRequest) {
-      return res.status(404).send('the update2 has failed');
-    }
+    // const findRequestor = {
+    //   _id: updatedRequest.requestor
+    // }
+    // const requestorInfo = await dbModels.Member.findOne(findRequestor);
+    // if (!updatedRequest) {
+    //   return res.status(404).send('the update2 has failed');
+    // }
     // console.log('leftLeave before >>', requestorInfo);
     // 처리과정
     const leftLeave = requestorInfo[updatedRequest.leaveType] - updatedRequest.leaveDuration
@@ -205,18 +205,18 @@ exports.approvedLeaveRequest = async (req, res) => {
     const updatedRequest = await dbModels.LeaveRequest.findOneAndUpdate(criteria, updateData);
 
     //////////////// 일단 보류 LeaveRequestHistory
-    // const leaveReqHistory = {	
-    // 	requestor: updatedRequest.requestor,
-    // 	approver: updatedRequest.approver,
-    // 	leaveType: updatedRequest.leaveType,
-    // 	leaveDay: updatedRequest.leaveDay,
-    // 	leaveDuration: updatedRequest.leaveDuration,
-    // 	leave_start_date: updatedRequest.leave_start_date,
-    // 	leave_end_date: updatedRequest.leave_end_date,
-    // 	leave_reason: updatedRequest.leave_reason,
-    // 	status: 'approve',
-    // 	year: updatedRequest.year 	
-    // }
+    const leaveReqHistory = {
+      requestor: updatedRequest.requestor,
+      approver: updatedRequest.approver,
+      leaveType: updatedRequest.leaveType,
+      leaveDay: updatedRequest.leaveDay,
+      leaveDuration: updatedRequest.leaveDuration,
+      leave_start_date: updatedRequest.leave_start_date,
+      leave_end_date: updatedRequest.leave_end_date,
+      leave_reason: updatedRequest.leave_reason,
+      status: 'approve',
+      year: updatedRequest.year
+    }
 
     // const leaveRequestHistory = dbModels.LeaveRequestHistory(leaveReqHistory);
     // console.log(leaveRequestHistory);
