@@ -26,6 +26,7 @@ exports.verifyToken = (token) => {
 
 //박재현
 exports.deleteToken = (token) => {
+  if (!token) return "error meessage";
   return new Promise((resolve, reject) => {
     jwt.verify(token, process.env.JWT_SECRET, (error, decoded) => {
       if (error) reject(error);
@@ -33,3 +34,4 @@ exports.deleteToken = (token) => {
     });
   });
 };
+//end
