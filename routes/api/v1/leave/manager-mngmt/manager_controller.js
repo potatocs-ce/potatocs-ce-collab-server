@@ -35,7 +35,12 @@ exports.getManager = async (req, res) => {
     // console.log('managerInfo', managerInfo);
 
     const getManager = {
-      ...requestedManager
+      _id: requestedManager._id,
+      accepted: requestedManager.accepted,
+      manager_id: requestedManager.myManager,
+      email: managerInfo.email,
+      name: managerInfo.name,
+      profile_img: managerInfo.profile_img,
     }
     // console.log(getManager);
 
@@ -104,6 +109,59 @@ exports.findManager = async (req, res) => {
 
 };
 
+
+exports.findManagers = async (req, res) => {
+  console.log(`
+--------------------------------------------------
+  User : ${req.decoded._id}
+  API  : Find My Manager
+  router.get('/find-manager/:id', managerMngmtCtrl.findManagers);
+  
+  manager_email_id : ${req.query.searchStr}
+--------------------------------------------------`);
+
+  // console.log(req.query);
+
+  try {
+
+    const criteria = {
+      email: req.query.searchStr,
+    }
+
+    const projection = 'email name profile_img mobile department company_id retired';
+
+    const user = await member.find(criteria, projection);
+    console.log(user);
+
+    if (user.retired == true) {
+      return res.status(400).send({
+        message: `An employee who's retired at the company.`
+      });
+    }
+    if (!user) {
+      return res.status(400).send({
+        message: 'Cannot find the manager'
+      });
+    }
+    if (user.company_id != req.query.company_id) {
+      return res.status(400).send({
+        message: `Cannot find the manager or An employee who's not registered at the company.`
+      })
+    }
+
+
+    return res.send({
+      user
+    });
+
+  } catch (err) {
+
+    return res.status(500).send('DB Error');
+
+  }
+
+};
+
 exports.addManager = async (req, res) => {
   console.log(`
 --------------------------------------------------
@@ -115,7 +173,7 @@ exports.addManager = async (req, res) => {
 --------------------------------------------------`);
 
   try {
-    const { manger_id } = body
+
     const newManager = manager({
       myManager: req.body.manager_id,
       myId: req.decoded._id,
@@ -134,7 +192,12 @@ exports.addManager = async (req, res) => {
     )
 
     getManager = {
-      ...isManager
+      accepted: false,
+      email: isManager.email,
+      manager_id: isManager._id,
+      name: isManager.name,
+      profile_img: isManager.profile_img,
+      _id: isManager.myId,
     }
     res.send({
       message: 'requested',
