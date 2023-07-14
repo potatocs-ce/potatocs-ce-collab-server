@@ -3,6 +3,9 @@ const adAuthController = require('./adAuth_contoller');
 
 /* Admin Sign Up */
 router.post('/signUp', adAuthController.signUp);
+
+/* Admin Sign Up */
+router.post('/signUptest', adAuthController.signUptest);
 /* Admin Sign In */
 router.post('/signIn', adAuthController.signIn);
 /* Find password > Create a verification + Send an email  */
