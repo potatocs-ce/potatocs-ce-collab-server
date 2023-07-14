@@ -53,51 +53,6 @@ exports.signUp = async (req, res) => {
 
 };
 
-exports.signUptest = async (req, res) => {
-    console.log(`
---------------------------------------------------  
-  API  : Signup
-  router.post('signUp', adAuthcontroller.signUp) 
---------------------------------------------------`);
-    // console.log(req.body);
-
-    const criteria = {
-        email: req.body.email
-    };
-    const projection = '_id';
-    const adminData = {
-        email: req.body.email,
-        password: req.body.password,
-        name: req.body.name,
-    }
-
-    try {
-        const adminUser = await admin.findOne(criteria, projection).lean();
-
-        if (adminUser) {
-            return res.status(409).send({
-                message: 'duplicated'
-            })
-        }
-
-        const newAdmin = admin(adminData);
-        const newAdMenuSide = adMenuSide({ admin_id: newAdmin._id });	// 회원가입 하면 menuside가 만들어짐
-
-        await newAdmin.save();
-        await newAdMenuSide.save();	// 회원가입 하면 menuside가 만들어짐
-
-        res.status(201).send({
-            message: 'created'
-        });
-    } catch (error) {
-        console.log(error);
-        return res.status(500).send({
-            error
-        });
-    }
-
-};
-
 /*-------------------------------------------------
     Sign In
 -------------------------------------------------*/
