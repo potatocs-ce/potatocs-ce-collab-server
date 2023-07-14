@@ -41,40 +41,6 @@ exports.profile = async (req, res) => {
     }
 };
 
-exports.profileTest = async (req, res) => {
-    console.log(`
---------------------------------------------------
-  User Profile: ${req.decoded._id}
-  router.get('/profile', adProfileCtrl.profile) 
---------------------------------------------------`);
-
-    const criteria = { _id: req.decoded._id };
-    const projection = {
-        password: false,
-        createdAt: false,
-        updatedAt: false
-    }
-
-    try {
-        const adUser = await admin.findOne(criteria, projection).populate('company_id');
-
-        // console.log(adUser);
-
-        if (!adUser) {
-            return res.status(401).send({
-                message: 'An error has occurred'
-            });
-        }
-
-        return res.send(
-            adUser
-        );
-    } catch (err) {
-        console.log(err);
-        return res.status(500).send('db Error');
-    }
-};
-
 exports.profileChange = async (req, res) => {
     console.log(`
 --------------------------------------------------
