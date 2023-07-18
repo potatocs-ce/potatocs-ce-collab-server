@@ -13,7 +13,7 @@ const adHolidayCtrl = require('./holiday-mngmt/holiday_controller');
     admin Main 페이지
 -----------------------------------*/
 router.get('/getAdminMain', adMainCtrl.getAdminMain);
-router.get('/getAdminMainTest', adMainCtrl.getAdminMainTest);
+
 /*-----------------------------------
     Approval Controller
     회사 등록 승인 요청 리스트
