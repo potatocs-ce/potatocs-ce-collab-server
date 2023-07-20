@@ -11,15 +11,6 @@ const folderSchema = mongoose.Schema(
     displayName: {
       type: String
     },
-    displayAddress: {
-      type: String
-    },
-    displayPhone: {
-      type: String
-    },
-    img: {
-      type: String
-    },
     children: [
       {
         type: mongoose.Schema.Types.ObjectId,

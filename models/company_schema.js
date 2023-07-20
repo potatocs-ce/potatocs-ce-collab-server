@@ -36,15 +36,15 @@ const companySchema = mongoose.Schema(
     rollover: {
       type: Boolean
     },
-    // rollover_max_month: {
-    //     type: Number
-    // },
-    // rollover_max_day: {
-    //     type: Number
-    // },
-    // isReplacementDay: {
-    //     type: Boolean
-    // },
+    rollover_max_month: {
+      type: Number
+    },
+    rollover_max_day: {
+      type: Number
+    },
+    isReplacementDay: {
+      type: Boolean
+    },
     rd_validity_term: {
       type: Number
     },
