@@ -19,7 +19,6 @@ router.get('/getAdminMain', adMainCtrl.getAdminMain);
     회사 등록 승인 요청 리스트
 -----------------------------------*/
 router.get('/getPendingRequest', adApprovalCtrl.getPendingRequest);
-router.get('/getPendingRequestTest', adApprovalCtrl.getPendingRequestTest);
 router.put('/approveRequest', adApprovalCtrl.approveRequest);
 router.delete('/deleteRequest', adApprovalCtrl.deleteRequest);
 
