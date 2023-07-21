@@ -81,6 +81,87 @@ exports.getPendingRequest = async (req, res) => {
         });
     }
 }
+exports.getPendingRequestTest = async (req, res) => {
+    console.log(`
+--------------------------------------------------
+    User : ${req.decoded._id}
+    API  : get pending company request data
+    router.get('/getPendingRequest', companyCtrl.getPendingRequest);
+--------------------------------------------------`);
+    const dbModels = global.DB_MODELS;
+    try {
+
+        const criteria = {
+            _id: ObjectId(req.decoded._id)
+        }
+
+        const projection = '_id company_id'
+
+        const adminInfo = await dbModels.Admin.findOne(criteria, projection).lean();
+
+        // console.log(adminInfo);
+
+        const pendingRequestData = await dbModels.PendingCompanyRequest.aggregate([
+            {
+                $match: {
+                    company_id: adminInfo.company_id,
+                    status: 'pending'
+                }
+            },
+            {
+                $lookup: {
+                    from: 'members',
+                    let: {
+                        memberId: '$member_id'
+                    },
+                    pipeline: [
+                        {
+                            $match: {
+                                $expr: {
+                                    $eq: ['$_id', '$$memberId']
+                                }
+                            }
+                        },
+                        {
+                            $project: {
+                                name: 1,
+                                email: 1
+                            }
+                        }
+                    ],
+                    as: 'memberInfo'
+                }
+            },
+            {
+                $unwind: {
+                    path: '$memberInfo',
+                    preserveNullAndEmptyArrays: true
+                }
+            },
+            {
+                $project: {
+                    email: '$memberInfo.email',
+                    name: '$memberInfo.name',
+                    status: 1,
+                    createdAt: 1
+                }
+            }
+
+        ])
+
+        // console.log(pendingRequestData);
+
+        return res.status(200).send({
+            message: 'loaded',
+            pendingRequestData
+        })
+
+    } catch (err) {
+        return res.status(500).send({
+            message: 'DB Error'
+        });
+    }
+}
 
 // 1. Reqeust 수락
 exports.approveRequest = async (req, res) => {
@@ -165,7 +246,7 @@ exports.approveRequest = async (req, res) => {
             }
         ).lean();
 
-        
+
         // console.log('companyLeaveStandard');
         // console.log(companyLeaveStandard.leave_standard);
 
