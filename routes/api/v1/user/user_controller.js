@@ -47,7 +47,18 @@ exports.profile = async (req, res) => {
 
       const adminProfileData = {
         user: {
-          ...user
+          _id: user._id,
+          email: user.email,
+          name: user.name,
+          profile_img: user.profile_img,
+          mobile: user.mobile,
+          department: user.department,
+          isManager: user.isManager,
+          position: user.position,
+          location: user.location,
+          emp_start_date: user.emp_start_date,
+          emp_end_date: user.emp_end_date,
+          isAdmin: user.isAdmin,
         },
         company: adminCompanyInfo,
       }
@@ -99,14 +110,37 @@ exports.profile = async (req, res) => {
       // 	// user2.profile_img = 'https://potatocs-meeting-pdf.s3.ap-northeast-2.amazonaws.com/profile-img/1640743822555.person.png'
       // }
       managerInfo = {
-        ...user2
+        manager_id: user2.myManager._id,
+        email: user2.myManager.email,
+        name: user2.myManager.name,
+        profile_img: user2.myManager.profile_img,
+        mobile: user2.myManager.mobile,
+        department: user2.myManager.department,
+        isManager: user2.myManager.isManager,
+        position: user2.myManager.position,
+        location: user2.myManager.location,
+        emp_start_date: user2.myManager.emp_start_date,
+        emp_end_date: user2.myManager.emp_end_date,
+        isAdmin: user2.myManager.isAdmin,
+        company_id: user2.myManager.company_id,
+        accepted: user2.accepted,
       }
 
     }
 
     if (company) {
       companyInfo = {
-        ...company
+        _id: company.company_id._id,
+        company_code: company.company_id.company_code,
+        company_name: company.company_id.company_name,
+        status: company.status,
+        request_id: company._id,
+        rollover: company.company_id.rollover,
+        rollover_max_day: company.company_id.rollover_max_day,
+        rollover_max_month: company.company_id.rollover_max_month,
+        isReplacementDay: company.company_id.isReplacementDay,
+        rd_validity_term: company.company_id.rd_validity_term,
+        company_holiday: company.company_id.company_holiday,
       }
     }
 
