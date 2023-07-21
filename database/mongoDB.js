@@ -56,7 +56,6 @@ function createSchema() {
   dbModels.Notification = require("../models/notification_schema");
 
   dbModels.ScrumBoard = require("../models/scrumboard_schema");
-  dbModels.FileUpload = require("../models/fileUpload_schema");
   global.DB_MODELS = dbModels;
 }
 
