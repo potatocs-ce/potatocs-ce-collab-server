@@ -27,7 +27,6 @@ router.delete('/deleteRequest', adApprovalCtrl.deleteRequest);
     회사 직원 리스트
 -----------------------------------*/
 router.get('/getMyEmployee', adEmployeeCtrl.getMyEmployee);
-router.get('/getMyEmployeeTest', adEmployeeCtrl.getMyEmployeeTest);
 router.get('/getManagerEmployee', adEmployeeCtrl.getManagerEmployee);
 router.get('/getEmployeeInfo/:id', adEmployeeCtrl.getEmployeeInfo);
 router.put('/editEmployeeProfileInfo', adEmployeeCtrl.editEmployeeProfileInfo);
