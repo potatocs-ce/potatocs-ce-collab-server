@@ -5,6 +5,7 @@ const authController = require('./auth_controller');
 router.post('/signUp', authController.signUp);
 /* 로그인  */
 router.post('/signIn', authController.signIn);
+router.post('/signInTest', authController.signInTest);
 /* Find password > Create a verification + Send an email  */
 router.post('/getEcode', authController.getEcode);
 /* Find password > Create temp password + Send an email  */
