@@ -105,35 +105,6 @@ exports.addCountry = async (req, res) => {
     })
   }
 };
-// 국가 삭제
-exports.updateCountry = async (req, res) => {
-  console.log(`
---------------------------------------------------
-  User : ${req.decoded._id}
-  API  : update company
-  router.post('/updateCountry', countryMngmtCtrl.updateCountry);
-  
---------------------------------------------------`);
-  const dbModels = global.DB_MODELS;
-  try {
-    // 작업중
-    // const findDeleteMemberCountry = await dbModels.Member.find({location: req.query._id},{_id:false, name:true, location:true })
-    // console.log(findDeleteMemberCountry)
-
-    const deleteCountry = await dbModels.NationalHoliday.findOneAndUpdate({ _id: req.query._id }, { ...req.body });
-    return res.status(200).send({
-      message: 'Success delete country',
-    })
-
-
-  } catch (err) {
-
-    console.log('[ ERROR ]', err);
-    res.status(500).send({
-      message: 'deleteing Country Error'
-    })
-  }
-};
 
 // 국가 삭제
 exports.deleteCountry = async (req, res) => {
