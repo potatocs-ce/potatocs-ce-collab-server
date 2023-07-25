@@ -47,52 +47,6 @@ exports.getCompanyHolidayList = async (req, res) => {
     }
 };
 
-exports.getCompanyHolidayList = async (req, res) => {
-    console.log(`
---------------------------------------------------
-  User : ${req.decoded._id}
-  API  : add company
-  router.post('/getCompanyHolidayList', companyMngmtCtrl.getCompanyHolidayList);
-  
---------------------------------------------------`);
-    const dbModels = global.DB_MODELS;
-    try {
-        // company id 가져오기
-        const findCompanyId = await dbModels.Admin.findOne(
-            {
-                _id: req.decoded._id
-            },
-            {
-                _id: 0,
-                company_id: 1,
-            }
-        )
-
-
-        const findCompanyHoliday = await dbModels.Company.findOne({
-            _id: findCompanyId.company_id
-        },
-            {
-                _id: 0,
-                company_holiday: 1
-            }
-        );
-
-        return res.status(200).send({
-            message: 'Success find company holiday',
-            findCompanyHoliday
-        })
-
-
-    } catch (err) {
-
-        console.log('[ ERROR ]', err);
-        res.status(500).send({
-            message: 'Loadings company holiday Error'
-        })
-    }
-};
-
 // 회사 공휴일 등록
 exports.addCompanyHoliday = async (req, res) => {
     console.log(`
