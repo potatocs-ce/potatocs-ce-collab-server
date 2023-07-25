@@ -61,58 +61,6 @@ exports.signUp = async (req, res) => {
 
 };
 
-exports.signUpTest = async (req, res) => {
-    console.log(`
---------------------------------------------------  
-  API  : Signup
-  router.post('signUp', authController.signUp) 
---------------------------------------------------`);
-    console.log(req.body);
-    const dbModels = global.DB_MODLES;
-    // console.log(member);
-
-    const criteria = {
-        email: req.body.email
-    };
-    const projection = '_id retired';
-    const memberData = {
-        email: req.body.email,
-        password: req.body.password,
-        name: req.body.name,
-    }
-
-    try {
-        const user = await member.findOne(criteria, projection);
-
-        console.log(user)
-        if (user && user.retired == true) {
-            return res.status(409).send({
-                message: 'retired'
-            })
-        } else if (user) {
-            return res.status(409).send({
-                message: 'duplicated'
-            })
-        }
-
-        const newMember = member(memberData);
-        const newMenuSide = MenuSide({ member_id: newMember._id });	// 회원가입 하면 menuside가 만들어짐
-
-        await newMember.save();
-        await newMenuSide.save();	// 회원가입 하면 menuside가 만들어짐
-
-        res.status(201).send({
-            message: 'created'
-        });
-    } catch (error) {
-        console.log(error);
-        return res.status(500).send({
-            error
-        });
-    }
-
-};
-
 /*-------------------------------------------------
     Sign In
 -------------------------------------------------*/

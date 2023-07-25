@@ -3,7 +3,6 @@ const authController = require('./auth_controller');
 
 /* 회원가입  */
 router.post('/signUp', authController.signUp);
-router.post('/signUpTest', authController.signUpTest);
 /* 로그인  */
 router.post('/signIn', authController.signIn);
 /* Find password > Create a verification + Send an email  */
