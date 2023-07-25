@@ -104,8 +104,6 @@ exports.editNotification = async (req, res) => {
   }
 };
 
-
-
 exports.allReadNotification = async (req, res) => {
   console.log(`
 --------------------------------------------------
@@ -149,41 +147,6 @@ exports.allReadNotification = async (req, res) => {
       }
     ]);
 
-    // console.log(notification);
-
-    return res.status(200).send({
-      message: 'get notification list',
-      notification
-    });
-
-  } catch (err) {
-    console.log(err)
-    return res.status(500).send({
-      message: 'DB Error'
-    });
-  }
-};
-
-
-exports.deleteNotification = async (req, res) => {
-  console.log(`
---------------------------------------------------
-  User : ${req.decoded._id}
-  API  : All Read Notification
-  router.get('/allRead', notificationCtrl.allReadNotification);
---------------------------------------------------`);
-  const dbModels = global.DB_MODELS;
-
-  try {
-
-    const allReadNotification = await dbModels.Notification.deleteMany(
-      {
-        receiver: req.decoded._id
-      },
-      {
-        isRead: true
-      }
-    )
     // console.log(notification);
 
     return res.status(200).send({
