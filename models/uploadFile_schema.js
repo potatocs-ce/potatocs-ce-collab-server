@@ -19,9 +19,6 @@ const uploadFile = mongoose.Schema(
     key: {
       type: String
     },
-    location: {
-      type: String
-    },
     fileType: {
       type: String
     },

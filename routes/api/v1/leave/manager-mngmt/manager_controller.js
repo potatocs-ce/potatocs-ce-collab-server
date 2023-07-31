@@ -35,13 +35,10 @@ exports.getManager = async (req, res) => {
     // console.log('managerInfo', managerInfo);
 
     const getManager = {
-      _id: requestedManager._id,
-      accepted: requestedManager.accepted,
-      manager_id: requestedManager.myManager,
-      email: managerInfo.email,
-      name: managerInfo.name,
-      profile_img: managerInfo.profile_img,
+      ...requestedManager
     }
+
+
     // console.log(getManager);
 
     return res.status(200).send({
