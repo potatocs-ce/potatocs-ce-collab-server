@@ -6,21 +6,24 @@ const chatScehma = mongoose.Schema(
 			type: mongoose.Schema.Types.ObjectId,
 			ref: 'Document',
 		},
-        chatMember: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'Member',
-        },
+		chatMember: {
+			type: mongoose.Schema.Types.ObjectId,
+			ref: 'Member',
+		},
 		chatContent: {
 			type: String,
 		},
 		isDialog: {
 			type: Boolean
 		},
-        reply: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'Chat',
-        }
-        
+		isChating: {
+			type: Boolean
+		},
+		reply: {
+			type: mongoose.Schema.Types.ObjectId,
+			ref: 'Chat',
+		}
+
 	},
 	{
 		timestamps: true

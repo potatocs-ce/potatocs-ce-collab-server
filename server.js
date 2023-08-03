@@ -13,7 +13,7 @@ app.use(express.json());
     npm run prod
 ----------------------------------------- */
 if (process.env.NODE_ENV.trim() === 'production') {
-  require('dotenv').config({ path: path.join(__dirname, '/env/prods.env') });
+  require('dotenv').config({ path: path.join(__dirname, '/env/prod.env') });
 } else if (process.env.NODE_ENV.trim() === 'development') {
   require('dotenv').config({ path: path.join(__dirname, '/env/dev.env') });
 }
