@@ -16,9 +16,6 @@ const chatScehma = mongoose.Schema(
 		isDialog: {
 			type: Boolean
 		},
-		isChating: {
-			type: Boolean
-		},
 		reply: {
 			type: mongoose.Schema.Types.ObjectId,
 			ref: 'Chat',

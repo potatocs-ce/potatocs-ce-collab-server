@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 const whiteBoardSchema = mongoose.Schema(
-	{
+    {
         creator: {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'Member',
@@ -13,16 +13,19 @@ const whiteBoardSchema = mongoose.Schema(
         recordingTitle: {
             type: String
         },
-		gstd_key: {
-			type: String
-		},
-		image_key: {
-			type: String
-		},
-	},
-	{
-		timestamps: true
-	}
+        gstd_key: {
+            type: String
+        },
+        image_key: {
+            type: String
+        },
+        isImage: {
+            type: Boolean
+        }
+    },
+    {
+        timestamps: true
+    }
 );
 
 const WhiteBoard = mongoose.model('WhiteBoard', whiteBoardSchema);
