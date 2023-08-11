@@ -107,23 +107,23 @@ exports.addCountry = async (req, res) => {
 };
 
 // 국가 삭제
-exports.updateCountry = async (req, res) => {
+exports.deleteCountry = async (req, res) => {
   console.log(`
 --------------------------------------------------
   User : ${req.decoded._id}
-  API  : update company
-  router.post('/updateCountry', countryMngmtCtrl.updateCountry);
+  API  : delete company
+  router.post('/deleteCountry', countryMngmtCtrl.deleteCountry);
   
 --------------------------------------------------`);
   const dbModels = global.DB_MODELS;
   try {
     // 작업중
-    // const findupdateMemberCountry = await dbModels.Member.find({location: req.query._id},{_id:false, name:true, location:true })
-    // console.log(findupdateMemberCountry)
+    // const findDeleteMemberCountry = await dbModels.Member.find({location: req.query._id},{_id:false, name:true, location:true })
+    // console.log(findDeleteMemberCountry)
 
-    const updateCountry = await dbModels.NationalHoliday.findOneAndupdate({ _id: req.query._id });
+    const deleteCountry = await dbModels.NationalHoliday.findOneAndDelete({ _id: req.query._id });
     return res.status(200).send({
-      message: 'Success update country',
+      message: 'Success delete country',
     })
 
 
@@ -219,46 +219,3 @@ exports.deleteCountryHoliday = async (req, res) => {
     })
   }
 };
-
-
-exports.deleteCountryHoliday = async (req, res) => {
-  console.log(`
---------------------------------------------------
-  User : ${req.decoded._id}
-  API  : add company
-  router.post('/deleteCountryHoliday', countryMngmtCtrl.deleteCountryHoliday);
-  
---------------------------------------------------`);
-  const dbModels = global.DB_MODELS;
-  console.log(req.body)
-
-  try {
-    const deleteCountryHoliday = await dbModels.NationalHoliday.findOneAndUpdate({
-      _id: req.body.countryId,
-    },
-      {
-        $pull: {
-          countryHoliday: {
-            "_id": req.body.holidayId,
-          }
-        }
-      },
-      {
-        upsert: true,
-      }
-    ).exec();
-
-    return res.status(200).send({
-      message: 'Success delete country holiday',
-    })
-
-
-  } catch (err) {
-
-    console.log('[ ERROR ]', err);
-    res.status(500).send({
-      message: 'adding country holiday Error'
-    })
-  }
-};
-
