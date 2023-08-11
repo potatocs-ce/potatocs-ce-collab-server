@@ -11,6 +11,5 @@ const notificationCtrl = require("./notification_controller");
 router.get("/get", notificationCtrl.getNotificationList);
 router.post("/edit", notificationCtrl.editNotification);
 router.get("/allRead", notificationCtrl.allReadNotification);
-roguet.get("/Notice", notificationCtrl.allNotice);
 
 module.exports = router;
