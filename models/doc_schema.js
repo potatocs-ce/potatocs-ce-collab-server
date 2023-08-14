@@ -6,7 +6,7 @@ const docSchema = mongoose.Schema(
 			type: mongoose.Schema.Types.ObjectId,
 			ref: 'Space',
 		},
-		
+
 		docTitle: {
 			type: String
 		},
@@ -29,17 +29,10 @@ const docSchema = mongoose.Schema(
 		endDate: {
 			type: Date
 		},
-
-
-
-        done: {
-            type: Boolean,
-            default: false
-        },
-
-
-        
-
+		done: {
+			type: Boolean,
+			default: false
+		},
 		color: {
 			primary: {
 				type: String
@@ -48,9 +41,8 @@ const docSchema = mongoose.Schema(
 				type: String
 			}
 		},
-
-
-        labels: []
+		labels: [],
+		test_labels: []
 	},
 	{
 		timestamps: true
