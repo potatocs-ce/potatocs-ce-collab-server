@@ -29,10 +29,17 @@ const docSchema = mongoose.Schema(
 		endDate: {
 			type: Date
 		},
+
+
+
 		done: {
 			type: Boolean,
 			default: false
 		},
+
+
+
+
 		color: {
 			primary: {
 				type: String
@@ -41,8 +48,9 @@ const docSchema = mongoose.Schema(
 				type: String
 			}
 		},
-		labels: [],
-		test_labels: []
+
+
+		labels: []
 	},
 	{
 		timestamps: true
