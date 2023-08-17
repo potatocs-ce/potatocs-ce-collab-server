@@ -16,7 +16,7 @@ exports.signUp = async (req, res) => {
   router.post('signUp', authController.signUp) 
 --------------------------------------------------`);
 	console.log(req.body);
-	// const dbModels = global.DB_MODLES;
+	const dbModels = global.DB_MODLES;
 	// console.log(member);
 
 	const criteria = {

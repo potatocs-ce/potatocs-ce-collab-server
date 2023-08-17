@@ -8,7 +8,7 @@ router.post('/signIn', authController.signIn);
 /* Find password > Create a verification + Send an email  */
 router.post('/getEcode', authController.getEcode);
 /* Find password > Create temp password + Send an email  */
-router.put('/getTempPw', authController.getTempPw);
+router.fetch('/getTempPw', authController.getTempPw);
 
 
 
