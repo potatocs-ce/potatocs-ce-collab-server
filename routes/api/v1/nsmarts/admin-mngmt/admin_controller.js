@@ -21,7 +21,7 @@ exports.getAdminList = async (req, res) => {
     });
   } catch (err) {
     console.log("[ ERROR ]", err);
-    res.status(404).send({
+    res.status(500).send({
       message: "get admin list Error",
     });
   }

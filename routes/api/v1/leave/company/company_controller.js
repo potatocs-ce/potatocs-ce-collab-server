@@ -81,6 +81,8 @@ exports.addingCompany = async (req, res) => {
 };
 
 //박재현
+//Company 정보를 수정하는 부분
+//Company가 존재할때만 실행
 exports.editCompany = async (req, res) => {
   console.log(`
 --------------------------------------------------
