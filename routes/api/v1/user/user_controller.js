@@ -28,7 +28,7 @@ exports.profile = async (req, res) => {
 		//-----------------------------------------------------	
 		/// 우선 임시 ------------------------------------------
 		// user 에서 isAdmin이 true 면 ( admin 이면 )
-		if( user.isAdmin ){
+		if (user.isAdmin) {
 			console.log(user);
 			const adminCompany = await dbModels.Company.findOne(
 				{
@@ -70,7 +70,7 @@ exports.profile = async (req, res) => {
 
 		//-----------------------------------------------------
 		//-----------------------------------------------------
-		
+
 		const company = await dbModels.PendingCompanyRequest.findOne(
 			{
 				member_id: user._id
@@ -85,6 +85,25 @@ exports.profile = async (req, res) => {
 				myId: req.decoded._id,
 			},
 		).populate('myManager', projection);
+
+
+		const notification = await dbModels.Notification.aggregate([
+			{
+				$match: {
+					receiver: ObjectId(req.decoded._id)
+				}
+			},
+			{
+				$sort: {
+					isRead: 1,
+					createdAt: -1
+				}
+			},
+			{
+				$limit: 30
+			}
+		]);
+
 
 		const nationalHoliday = await dbModels.NationalHoliday.findOne(
 			{
@@ -204,7 +223,7 @@ exports.profileChange = async (req, res) => {
   User Profile: ${req.decoded._id}
   router.get('/profileChange', userController.profileChange) 
 --------------------------------------------------`);
-    const data = req.body;
+	const data = req.body;
 	// console.log(data);
 	let updateData;
 	try {
@@ -263,7 +282,7 @@ exports.profileImageChange = async (req, res) => {
   router.post('/profileImageChange', userController.profileImageChange)
 --------------------------------------------------`);
 
-    const data = req.files[0];
+	const data = req.files[0];
 	// console.log(data);
 
 	try {
