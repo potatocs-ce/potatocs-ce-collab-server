@@ -86,25 +86,6 @@ exports.profile = async (req, res) => {
 			},
 		).populate('myManager', projection);
 
-
-		const notification = await dbModels.Notification.aggregate([
-			{
-				$match: {
-					receiver: ObjectId(req.decoded._id)
-				}
-			},
-			{
-				$sort: {
-					isRead: 1,
-					createdAt: -1
-				}
-			},
-			{
-				$limit: 30
-			}
-		]);
-
-
 		const nationalHoliday = await dbModels.NationalHoliday.findOne(
 			{
 				countryName: user.location
