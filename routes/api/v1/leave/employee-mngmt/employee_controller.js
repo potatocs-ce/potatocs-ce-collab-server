@@ -49,38 +49,6 @@ exports.getPendingList = async (req, res) => {
 			}
 		]);
 
-		const pendingCompanyData = await dbModels.PendingCompanyRequest.aggregate([
-			{
-				$match: {
-					member_id: ObjectId(req.decoded._id)
-				}
-			},
-			{
-				$lookup: {
-					from: 'companies',
-					localField: 'company_id',
-					foreignField: '_id',
-					as: 'company'
-				}
-			},
-			{
-				$unwind: {
-					path: '$company',
-					preserveNullAndEmptyArrays: true
-				}
-			},
-			{
-				$project: {
-					request_id: '$_id',
-					_id: '$company._id',
-					company_code: '$company.company_code',
-					company_name: '$company.company_name',
-					status: 1,
-				}
-			}
-		]);
-
-
 		return res.status(200).send({
 			message: 'found',
 			pendingList
@@ -145,7 +113,19 @@ exports.acceptRequest = async (req, res) => {
 	const dbModels = global.DB_MODELS;
 
 	try {
-
+		const deleteManager = await dbModels.Manager.findOneAndDelete(criteria);
+		// console.log(deleteManager);
+		await member.findOneAndUpdate(
+			{
+				_id: deleteManager.myManager
+			},
+			{
+				isManager: false
+			}
+		);
+		return res.status(200).send({
+			message: 'canceled'
+		});
 		const updateCriteria = {
 			_id: req.body.docId,
 			myId: req.body.userId
