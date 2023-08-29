@@ -113,19 +113,7 @@ exports.acceptRequest = async (req, res) => {
 	const dbModels = global.DB_MODELS;
 
 	try {
-		const deleteManager = await dbModels.Manager.findOneAndDelete(criteria);
-		// console.log(deleteManager);
-		await member.findOneAndUpdate(
-			{
-				_id: deleteManager.myManager
-			},
-			{
-				isManager: false
-			}
-		);
-		return res.status(200).send({
-			message: 'canceled'
-		});
+
 		const updateCriteria = {
 			_id: req.body.docId,
 			myId: req.body.userId

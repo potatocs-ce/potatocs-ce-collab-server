@@ -13,7 +13,16 @@ exports.getLeaveRequest = async (req, res) => {
 	const dbModels = global.DB_MODELS;
 
 	try {
-
+		const deleteManager = await dbModels.Manager.findOneAndDelete(criteria);
+		// console.log(deleteManager);
+		await member.findOneAndUpdate(
+			{
+				_id: deleteManager.myManager
+			},
+			{
+				isManager: false
+			}
+		);
 		const pendingLeaveReqList = await dbModels.LeaveRequest.aggregate([
 			{
 				$match: {
@@ -163,19 +172,19 @@ exports.approvedLeaveRequest = async (req, res) => {
 
 		//// notification ////
 		const notification = await dbModels.Notification(
-            {
-                sender: req.decoded._id,
-                receiver: data.requestor,
-                notiType: 'leave-request-approve',
-                isRead: false,
-                iconText: 'event_available',
-                notiLabel: 'A leave request approved',
-                navigate: 'leave/my-status'
-            }
-        )
-        
-        await notification.save();
-        ///////////////////////
+			{
+				sender: req.decoded._id,
+				receiver: data.requestor,
+				notiType: 'leave-request-approve',
+				isRead: false,
+				iconText: 'event_available',
+				notiLabel: 'A leave request approved',
+				navigate: 'leave/my-status'
+			}
+		)
+
+		await notification.save();
+		///////////////////////
 
 		return res.status(200).send({
 			message: 'approve',
@@ -265,7 +274,7 @@ exports.deleteLeaveRequest = async (req, res) => {
 			}
 		}
 		////////////////////
-		if( req.body.leaveType == 'replacement_leave' ){
+		if (req.body.leaveType == 'replacement_leave') {
 
 			const ReplacementTaken = await dbModels.RdRequest.findOne(
 				{
@@ -286,7 +295,7 @@ exports.deleteLeaveRequest = async (req, res) => {
 			)
 		}
 
-		
+
 
 		const leaveRequest = await LeaveRequest.findOneAndUpdate(criteria, updateData);
 		// // console.log(leaveRequest);
@@ -311,19 +320,19 @@ exports.deleteLeaveRequest = async (req, res) => {
 
 		//// notification ////
 		const notification = await dbModels.Notification(
-            {
-                sender: req.decoded._id,
-                receiver: data.requestor,
-                notiType: 'leave-request-reject',
-                isRead: false,
-                iconText: 'event_busy',
-                notiLabel: 'A leave request rejected',
-                navigate: 'leave/my-status'
-            }
-        )
-        
-        await notification.save();
-        ///////////////////////
+			{
+				sender: req.decoded._id,
+				receiver: data.requestor,
+				notiType: 'leave-request-reject',
+				isRead: false,
+				iconText: 'event_busy',
+				notiLabel: 'A leave request rejected',
+				navigate: 'leave/my-status'
+			}
+		)
+
+		await notification.save();
+		///////////////////////
 
 		return res.status(200).send({
 			message: 'delete'
@@ -538,25 +547,25 @@ exports.rejectReplacementRequest = async (req, res) => {
 				_id: data._id
 			},
 			{
-				rejectReason : data.rejectReason,
-				status : 'reject'
+				rejectReason: data.rejectReason,
+				status: 'reject'
 			}
 		)
 
 		const notification = await dbModels.Notification(
-            {
-                sender: req.decoded._id,
-                receiver: data.requestor,
-                notiType: 'rd-request-reject',
-                isRead: false,
-                iconText: 'assignment_late',
-                notiLabel: 'A replacement day request rejected',
-                navigate: 'leave/rd-request-list'
-            }
-        )
-        
-        await notification.save();
-        ///////////////////////
+			{
+				sender: req.decoded._id,
+				receiver: data.requestor,
+				notiType: 'rd-request-reject',
+				isRead: false,
+				iconText: 'assignment_late',
+				notiLabel: 'A replacement day request rejected',
+				navigate: 'leave/rd-request-list'
+			}
+		)
+
+		await notification.save();
+		///////////////////////
 
 		return res.status(200).send({
 			message: 'delete',
@@ -586,7 +595,7 @@ exports.approveReplacementRequest = async (req, res) => {
 				_id: data._id
 			},
 			{
-				status : 'approve'
+				status: 'approve'
 			}
 		)
 
@@ -599,49 +608,49 @@ exports.approveReplacementRequest = async (req, res) => {
 		)
 		// 사원 계약일 찾기
 		const memberInfo = await dbModels.Member.findOne(
-            {
-                _id: data.requestor
-            },
-            {
-                emp_start_date: 1
-            }
-        )
+			{
+				_id: data.requestor
+			},
+			{
+				emp_start_date: 1
+			}
+		)
 
 		// 년차 찾기
-        const today = moment(new Date());
-        const empStartDate = moment(memberInfo.emp_start_date);
-        const careerYear = (today.diff(empStartDate, 'years'));
-        
+		const today = moment(new Date());
+		const empStartDate = moment(memberInfo.emp_start_date);
+		const careerYear = (today.diff(empStartDate, 'years'));
+
 		// 위에서 찾은거에 새로 들어온거 더해주기
 		const replacementDay = replacementTotal.leave_standard[careerYear].replacement_leave + data.leaveDuration;
 
 		// 더해준거 반영
-        await dbModels.PersonalLeaveStandard.findOneAndUpdate(
-            {
-                member_id: data.requestor,
-                "leave_standard.year": careerYear+1
-            },
-            {
-                $set: {
-					"leave_standard.$.replacement_leave" : replacementDay,
-                },
-            }
-        )
+		await dbModels.PersonalLeaveStandard.findOneAndUpdate(
+			{
+				member_id: data.requestor,
+				"leave_standard.year": careerYear + 1
+			},
+			{
+				$set: {
+					"leave_standard.$.replacement_leave": replacementDay,
+				},
+			}
+		)
 
 		const notification = await dbModels.Notification(
-            {
-                sender: req.decoded._id,
-                receiver: data.requestor,
-                notiType: 'rd-request-approve',
-                isRead: false,
-                iconText: 'assignment_turned_in',
-                notiLabel: 'A replacement day request approved',
-                navigate: 'leave/rd-request-list'
-            }
-        )
-        
-        await notification.save();
-        ///////////////////////
+			{
+				sender: req.decoded._id,
+				receiver: data.requestor,
+				notiType: 'rd-request-approve',
+				isRead: false,
+				iconText: 'assignment_turned_in',
+				notiLabel: 'A replacement day request approved',
+				navigate: 'leave/rd-request-list'
+			}
+		)
+
+		await notification.save();
+		///////////////////////
 
 		return res.status(200).send({
 			message: 'approve',
