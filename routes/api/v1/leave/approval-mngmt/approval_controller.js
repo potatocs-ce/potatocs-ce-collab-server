@@ -13,16 +13,7 @@ exports.getLeaveRequest = async (req, res) => {
 	const dbModels = global.DB_MODELS;
 
 	try {
-		const deleteManager = await dbModels.Manager.findOneAndDelete(criteria);
-		// console.log(deleteManager);
-		await member.findOneAndUpdate(
-			{
-				_id: deleteManager.myManager
-			},
-			{
-				isManager: false
-			}
-		);
+
 		const pendingLeaveReqList = await dbModels.LeaveRequest.aggregate([
 			{
 				$match: {
