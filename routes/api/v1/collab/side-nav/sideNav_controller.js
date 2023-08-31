@@ -34,7 +34,75 @@ exports.createFolder = async (req, res) => {
 		}
 
 		const newFolder = dbModels.Folder(criteria);
+		const spaceMembers = await dbModels.Space.aggregate([
+			// {
+			// 	$match: {
+			// 		$expr: {
+			// 			$eq: ['$_id', req.params.spaceTime]
+			// 		}
+			// 	}
+			// },
+			{
+				$match: {
+					_id: ObjectId(req.params.spaceTime)
+				}
+			},
+			{
+				$addFields: {
+					isAdmin: {
+						$cond: [
+							{ $in: [ObjectId(req.decoded._id), '$admins'] },
+							true,
+							false,
+						]
+					},
+				}
+			},
+			{
+				$lookup: {
+					from: 'members',
+					let: {
+						memberArray: '$members'
+					},
+					pipeline: [
+						{
+							$match: {
+								$expr: {
+									$in: ['$_id', '$$memberArray']
+								}
+							}
+						},
+						{
+							$project: {
+								email: 1,
+								name: 1,
+								profile_img: 1,
+								retired: 1,
+							}
+						},
+						{
+							$match: {
+								retired: false,
+							}
+						},
+					],
+					as: 'memberObjects'
+				}
+			},
+			{
+				$project: {
+					displayName: 1,
+					displayBrief: 1,
+					spaceTime: '$_id',
+					isAdmin: 1,
+					memberObjects: 1,
+					admins: 1,
+					docStatus: 1,
+					labels: 1
+				}
+			},
 
+		]);
 		////////////////
 		const menuside = await dbModels.MenuSide.updateOne(
 			{
@@ -143,8 +211,8 @@ exports.createSpace = async (req, res) => {
 
 		const scrumBoard = dbModels.ScrumBoard(
 			{
-				space_id : Space._id,
-				scrum:[
+				space_id: Space._id,
+				scrum: [
 					{
 						label: 'submitted',
 						children: []
@@ -220,11 +288,11 @@ exports.deleteFolder = async (req, res) => {
 	const dbModels = global.DB_MODELS;
 	const data = req.query;
 	// console.log(data);
-	try{
+	try {
 
 		const deleteFolder = await dbModels.Folder.deleteOne(
 			{
-				_id: data.folderId	
+				_id: data.folderId
 			}
 		)
 		const deleteFolderForMenuSide = await dbModels.MenuSide.updateOne(
@@ -241,7 +309,7 @@ exports.deleteFolder = async (req, res) => {
 		});
 
 
-	}catch (err) {
+	} catch (err) {
 		console.log('[ ERROR ]', err);
 		res.status(500).send({
 			message: 'delete folder Error'
@@ -261,7 +329,7 @@ exports.deleteSpace = async (req, res) => {
 	const dbModels = global.DB_MODELS;
 	const data = req.query;
 	// console.log(data);
-	try{
+	try {
 
 		const spaceInMember = await dbModels.Space.findOne(
 			{
@@ -290,7 +358,7 @@ exports.deleteSpace = async (req, res) => {
 					doc_id: element
 				}
 			)
-			
+
 			// console.log('docInUploadFile');
 			// console.log(docInUploadFile);
 			// 업로드된 파일 삭제하고 디비에서도 삭제
@@ -328,7 +396,7 @@ exports.deleteSpace = async (req, res) => {
 
 		const deleteMeeting = await dbModels.Meeting.deleteMany(
 			{
-				spaceId : data.spaceTime
+				spaceId: data.spaceTime
 			}
 		)
 
@@ -363,7 +431,7 @@ exports.deleteSpace = async (req, res) => {
 		});
 
 
-	}catch (err) {
+	} catch (err) {
 		console.log('[ ERROR ]', err);
 		res.status(500).send({
 			message: 'delete space Error'
@@ -449,16 +517,16 @@ exports.updateSideMenu = async (req, res) => {
 					member_id: ObjectId(req.decoded._id)
 				}
 			},
-			
+
 		]);
 
 		// const navList = menuside[0].folders;
 		// // const navList = spaceNav;
 		// navList.push(...menuside[0].spaces);
-		
+
 		const navList = menuside;
 		// console.log(navList);
-		folderNav.push({_id:'thisplace',displayName :'Main'});
+		folderNav.push({ _id: 'thisplace', displayName: 'Main' });
 		return res.status(200).send({
 			message: 'updated',
 			navList,
@@ -497,23 +565,23 @@ exports.updateSpacePlace = async (req, res) => {
 				children: ObjectId(space_id)
 			},
 			{
-				$pull: { children: ObjectId(space_id)}
+				$pull: { children: ObjectId(space_id) }
 			}
 		)
-		
+
 		// 밖으로 뺄경우 -> 메뉴사이드 스페이스리스트에 추가
-		if(folder_id == 'thisplace'){
+		if (folder_id == 'thisplace') {
 			const addMenuSideSpaceList = await dbModels.MenuSide.updateOne(
 				{
 					member_id: ObjectId(req.decoded._id)
 				},
 				{
-					$addToSet: { space_list : ObjectId(space_id) }
+					$addToSet: { space_list: ObjectId(space_id) }
 				}
 			)
 		}
 		// 다른폴더에 넣을경우 -> 폴더 children 에 추가
-		else{
+		else {
 			const updateSpacePlace = await dbModels.Folder.updateOne(
 				{
 					_id: ObjectId(folder_id)
@@ -527,12 +595,12 @@ exports.updateSpacePlace = async (req, res) => {
 					member_id: ObjectId(req.decoded._id)
 				},
 				{
-					$pull: { space_list : ObjectId(space_id) }
+					$pull: { space_list: ObjectId(space_id) }
 				}
 			)
 		}
-		
-	
+
+
 		return res.status(200).send({
 			message: 'update space place data',
 		});

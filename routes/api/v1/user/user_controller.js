@@ -99,8 +99,8 @@ exports.profile = async (req, res) => {
 		// 	// user.profile_img = 'https://potatocs-meeting-pdf.s3.ap-northeast-2.amazonaws.com/profile-img/1640743822555.person.png'
 		// }
 
-		let managerInfo = undefined;
-		let companyInfo = undefined;
+		let managerInfo = null;
+		let companyInfo = null;
 
 		// 매니저 id와 맴버의 매니저가 은퇴하지 않았으면 값을 가져온다
 		if (user2 && user2.myManager.retired == false) {
