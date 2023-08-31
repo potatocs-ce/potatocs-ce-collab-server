@@ -34,75 +34,7 @@ exports.createFolder = async (req, res) => {
 		}
 
 		const newFolder = dbModels.Folder(criteria);
-		const spaceMembers = await dbModels.Space.aggregate([
-			// {
-			// 	$match: {
-			// 		$expr: {
-			// 			$eq: ['$_id', req.params.spaceTime]
-			// 		}
-			// 	}
-			// },
-			{
-				$match: {
-					_id: ObjectId(req.params.spaceTime)
-				}
-			},
-			{
-				$addFields: {
-					isAdmin: {
-						$cond: [
-							{ $in: [ObjectId(req.decoded._id), '$admins'] },
-							true,
-							false,
-						]
-					},
-				}
-			},
-			{
-				$lookup: {
-					from: 'members',
-					let: {
-						memberArray: '$members'
-					},
-					pipeline: [
-						{
-							$match: {
-								$expr: {
-									$in: ['$_id', '$$memberArray']
-								}
-							}
-						},
-						{
-							$project: {
-								email: 1,
-								name: 1,
-								profile_img: 1,
-								retired: 1,
-							}
-						},
-						{
-							$match: {
-								retired: false,
-							}
-						},
-					],
-					as: 'memberObjects'
-				}
-			},
-			{
-				$project: {
-					displayName: 1,
-					displayBrief: 1,
-					spaceTime: '$_id',
-					isAdmin: 1,
-					memberObjects: 1,
-					admins: 1,
-					docStatus: 1,
-					labels: 1
-				}
-			},
 
-		]);
 		////////////////
 		const menuside = await dbModels.MenuSide.updateOne(
 			{
