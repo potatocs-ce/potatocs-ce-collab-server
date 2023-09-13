@@ -86,19 +86,6 @@ exports.profileChange = async (req, res) => {
       profileChange.profile_img = "/assets/image/person.png";
     }
 
-    //박재현
-    const profileUpdate = await admin.findOneAndUpdate(
-      {
-        _id: data._id,
-      },
-      updateData,
-      {
-        fields: { password: 0 },
-        new: true,
-      }
-    );
-    //end
-
     return res.send({
       message: "changed",
       profileChange,

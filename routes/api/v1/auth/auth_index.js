@@ -10,7 +10,4 @@ router.post("/getEcode", authController.getEcode);
 /* Find password > Create temp password + Send an email  */
 router.put("/getTempPw", authController.getTempPw);
 
-//박재현
-router.get("/getEmail", authController.getEmail);
-
 module.exports = router;

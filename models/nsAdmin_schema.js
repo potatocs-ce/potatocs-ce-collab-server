@@ -18,11 +18,6 @@ const nsAdmin_Schema = mongoose.Schema(
       type: String,
       required: true,
     },
-    //박재현
-    recommendationEmail: {
-      type: String,
-    },
-    //end
     profile_img_key: {
       type: String,
       default: "",
