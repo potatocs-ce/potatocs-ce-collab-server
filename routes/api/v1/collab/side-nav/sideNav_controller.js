@@ -27,16 +27,10 @@ exports.createFolder = async (req, res) => {
 
   try {
 
-    // const criteria = {
-    // 	member_id: req.decoded._id,
-    // 	displayName: req.body.folder_name,
-    // 	in_order: order + 1
-    // }
-
     const criteria = {
-      member_id: _id,
-      displayName: body
-			in_order: order + 1
+      member_id: req.decoded._id,
+      displayName: req.body.folder_name,
+      in_order: order + 1
     }
 
     const newFolder = dbModels.Folder(criteria);
