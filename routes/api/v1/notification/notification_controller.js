@@ -28,7 +28,7 @@ exports.getNotificationList = async (req, res) => {
         $limit: 30
       }
     ]);
-
+    notification.filter((x) => x == !x)
     // console.log(notification);
 
     return res.status(200).send({

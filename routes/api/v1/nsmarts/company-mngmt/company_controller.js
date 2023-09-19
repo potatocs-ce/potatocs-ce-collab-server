@@ -13,9 +13,9 @@ exports.getCompanyList = async (req, res) => {
 
   try {
 
-    const criteria = {
-      spaceTime_id: req.params.spaceTime
-    }
+    // const criteria = {
+    // 	spaceTime_id: req.params.spaceTime
+    // }
 
     const getCompany = await dbModels.Company.find();
 
