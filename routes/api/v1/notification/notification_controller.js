@@ -28,7 +28,7 @@ exports.getNotificationList = async (req, res) => {
         $limit: 30
       }
     ]);
-    notification.filter((x) => x == !x)
+
     // console.log(notification);
 
     return res.status(200).send({
@@ -66,28 +66,28 @@ exports.editNotification = async (req, res) => {
       }
     )
 
-    // const notification = await dbModels.Notification.find(
-    //     {
-    //         receiver: req.decoded._id
-    //     }
-    // )
-
-    const notification = await dbModels.Notification.aggregate([
+    const notification = await dbModels.Notification.find(
       {
-        $match: {
-          receiver: ObjectId(req.decoded._id)
-        }
-      },
-      {
-        $sort: {
-          isRead: 1,
-          createdAt: -1
-        }
-      },
-      {
-        $limit: 30
+        receiver: req.decoded._id
       }
-    ]);
+    )
+
+    // const notification = await dbModels.Notification.aggregate([
+    //   {
+    //     $match: {
+    //       receiver: ObjectId(req.decoded._id)
+    //     }
+    //   },
+    //   {
+    //     $sort: {
+    //       isRead: 1,
+    //       createdAt: -1
+    //     }
+    //   },
+    //   {
+    //     $limit: 30
+    //   }
+    // ]);
 
     // console.log(notification);
 
