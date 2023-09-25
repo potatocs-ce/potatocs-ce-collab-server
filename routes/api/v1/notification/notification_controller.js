@@ -66,28 +66,28 @@ exports.editNotification = async (req, res) => {
       }
     )
 
-    const notification = await dbModels.Notification.find(
-      {
-        receiver: req.decoded._id
-      }
-    )
+    // const notification = await dbModels.Notification.find(
+    //     {
+    //         receiver: req.decoded._id
+    //     }
+    // )
 
-    // const notification = await dbModels.Notification.aggregate([
-    //   {
-    //     $match: {
-    //       receiver: ObjectId(req.decoded._id)
-    //     }
-    //   },
-    //   {
-    //     $sort: {
-    //       isRead: 1,
-    //       createdAt: -1
-    //     }
-    //   },
-    //   {
-    //     $limit: 30
-    //   }
-    // ]);
+    const notification = await dbModels.Notification.aggregate([
+      {
+        $match: {
+          receiver: ObjectId(req.decoded._id)
+        }
+      },
+      {
+        $sort: {
+          isRead: 1,
+          createdAt: -1
+        }
+      },
+      {
+        $limit: 30
+      }
+    ]);
 
     // console.log(notification);
 
