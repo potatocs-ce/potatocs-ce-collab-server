@@ -49,8 +49,6 @@ exports.getPendingList = async (req, res) => {
       }
     ]);
 
-    pendingList.filter((x) => x == !ObjectId(req.decoded._id))
-
     return res.status(200).send({
       message: 'found',
       pendingList
