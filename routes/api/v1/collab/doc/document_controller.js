@@ -83,25 +83,25 @@ exports.createDoc = async (req, res) => {
     // scrumBoard//////////////////////////////
 
     //////  mySpaceHistory  ////////
-    const spaceId = await dbModels.Space.findOne(
-      {
-        _id: req.body.spaceTime,
-      }
-    )
-    console.log(inviteSpaceMember);
-    console.log(memberName);
-    const mySpaceHistory = await dbModels.MySpaceHistory(
-      {
-        space_id: spaceId._id,
-        // 1 이면 스페이스, 2 면 도큐먼트
-        doc_id: doc._id,
-        type: 2,
+    // const spaceId = await dbModels.Space.findOne(
+    // 	{
+    // 		_id: req.body.spaceTime,
+    // 	}
+    // )
+    // console.log(inviteSpaceMember);
+    // console.log(memberName);
+    // const mySpaceHistory = await dbModels.MySpaceHistory(
+    // 	{
+    // 		space_id: spaceId._id,
+    // 		// 1 이면 스페이스, 2 면 도큐먼트
+    // 		doc_id: doc._id,
+    // 		type: 2,
 
-        content: doc.docTitle + ' 문서가 생성되었습니다.'
-      }
-    )
+    // 		content: doc.docTitle + ' 문서가 생성되었습니다.'
+    // 	}
+    // )
 
-    await mySpaceHistory.save();
+    // await mySpaceHistory.save();
     //////////////////////////////////////
 
     return res.status(200).send({
