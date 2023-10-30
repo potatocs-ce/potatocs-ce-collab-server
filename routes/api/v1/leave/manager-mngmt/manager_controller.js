@@ -78,10 +78,6 @@ exports.findManager = async (req, res) => {
     const projection = 'email name profile_img mobile department company_id retired';
 
     const user = await member.findOne(criteria, projection);
-    console.log(user);
-
-    const { password, ...rest } = user;
-    const result = { ...rest }
 
     if (user && user.retired == true) {
       return res.status(400).send({

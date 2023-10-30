@@ -89,6 +89,8 @@ exports.editNotification = async (req, res) => {
       }
     ]);
 
+    notification.filter(x => x.name === data.name)
+
     // console.log(notification);
 
     return res.status(200).send({
