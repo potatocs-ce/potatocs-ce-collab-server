@@ -80,6 +80,9 @@ exports.findManager = async (req, res) => {
     const user = await member.findOne(criteria, projection);
     console.log(user);
 
+    const { password, ...rest } = user;
+    const result = { ...rest }
+
     if (user && user.retired == true) {
       return res.status(400).send({
         message: `An employee who's retired at the company.`
