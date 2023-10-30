@@ -2227,17 +2227,28 @@ exports.titleChange = async (req, res) => {
       }
     )
 
-    for (let i = 0; i < scrumBoard.scrum.length; i++) {
-      const docs = scrumBoard.scrum[i].children;
+    // for (let i = 0; i < scrumBoard.scrum.length; i++) {
+    //   const docs = scrumBoard.scrum[i].children;
 
-      for (let j = 0; j < docs.length; j++) {
+    //   for (let j = 0; j < docs.length; j++) {
+    //     const doc_id = docs[j].doc_id;
+
+    //     if (doc_id == data.doc_id) {
+    //       scrumBoard.scrum[i].children[j].docTitle = data.changeTitle;
+    //     }
+    //   }
+    // }
+
+    scrumBoard.scrum.forEach(element => {
+      const docs = element[i].children
+      docs.forEach(j => {
         const doc_id = docs[j].doc_id;
-
         if (doc_id == data.doc_id) {
           scrumBoard.scrum[i].children[j].docTitle = data.changeTitle;
         }
-      }
-    }
+      })
+    });
+
     await scrumBoard.save();
 
 
@@ -2285,6 +2296,7 @@ exports.titleChange = async (req, res) => {
         }
       }
     ]);
+
 
     return res.status(200).send({
       message: 'Doc title change',
