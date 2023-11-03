@@ -156,12 +156,6 @@ exports.getSpace = async (req, res) => {
       }
     )
 
-    if (!scrumBoard) {
-      return res.status(404).send({
-        message: 'ScrumBoard was not found'
-      })
-    }
-
     // scrumBoard//////////////////
 
     // console.log('spaceDocs')

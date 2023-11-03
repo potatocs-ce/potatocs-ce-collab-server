@@ -16,7 +16,11 @@ exports.getCountryList = async (req, res) => {
 
     const getCountry = await dbModels.NationalHoliday.find();
 
-    console.log(getCountry);
+    if (getCountry) {
+      return res.status(404).send({
+        message: 'Country was not found'
+      })
+    }
 
     return res.status(200).send({
       message: 'getCountry',
