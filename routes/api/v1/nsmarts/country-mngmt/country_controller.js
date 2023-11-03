@@ -16,12 +16,6 @@ exports.getCountryList = async (req, res) => {
 
     const getCountry = await dbModels.NationalHoliday.find();
 
-    if (getCountry) {
-      return res.status(404).send({
-        message: 'Country was not found'
-      })
-    }
-
     return res.status(200).send({
       message: 'getCountry',
       getCountry
@@ -51,9 +45,6 @@ exports.getCountryInfo = async (req, res) => {
   try {
     console.log(req.query)
     const getCountryInfo = await dbModels.NationalHoliday.findOne({ _id: req.query.countryId });
-
-    console.log(getCountryInfo);
-
     return res.status(200).send({
       message: 'getCountryInfo',
       getCountryInfo
