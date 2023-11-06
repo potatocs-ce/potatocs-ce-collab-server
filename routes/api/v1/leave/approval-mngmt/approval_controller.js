@@ -56,9 +56,6 @@ exports.getLeaveRequest = async (req, res) => {
       }
     ]);
 
-    if (!pendingLeaveReqList) {
-      return res.status(404).send({ message: 'LeaveReqList was not found' })
-    }
     // console.log(pendingLeaveReqList);
 
     return res.status(200).send({
