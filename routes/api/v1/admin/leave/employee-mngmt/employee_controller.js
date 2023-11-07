@@ -363,7 +363,7 @@ exports.getMyEmployee = async (req, res) => {
         }
       }
     ])
-
+    myEmployeeList.filter((x) => x.nationalholidays > moment.date.now())
 
     console.log(myEmployeeList);
 
