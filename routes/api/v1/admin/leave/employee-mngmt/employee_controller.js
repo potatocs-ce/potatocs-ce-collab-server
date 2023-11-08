@@ -23,15 +23,9 @@ exports.getMyEmployee = async (req, res) => {
     )
     // console.log(companyId);
 
-    // if(companyId.company_id == null || companyId.company_id == ''){
-    //     return res.status(500).send({
-    //         message: 'noCompany'
-    //     })
-    // }
-
-    if (!companyId.company_id) {
-      return res.status(404).send({
-        message: 'company was not found'
+    if (companyId.company_id == null || companyId.company_id == '') {
+      return res.status(500).send({
+        message: 'noCompany'
       })
     }
 
@@ -363,7 +357,7 @@ exports.getMyEmployee = async (req, res) => {
         }
       }
     ])
-    myEmployeeList.filter((x) => x.nationalholidays > moment.date.now())
+
 
     console.log(myEmployeeList);
 
