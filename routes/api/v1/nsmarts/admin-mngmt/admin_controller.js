@@ -12,7 +12,7 @@ exports.getAdminList = async (req, res) => {
 
   try {
     const adminList = await dbModels.Admin.find().populate('company_id');
-    adminList.filter((x) => x.company._id === req.decoded.company_id)
+
     // console.log(adminList);
 
     return res.status(200).send({
