@@ -40,18 +40,25 @@ exports.requestLeave = async (req, res) => {
     req.body.approver = getManagerData.myManager;
     req.body.year = careerYear;
 
+    // const leaveReqInput = {
+    //   leaveType: req.body.leaveType,
+    //   leaveDay: req.body.leaveDay,
+    //   leaveDuration: req.body.leaveDuration,
+    //   leave_start_date: req.body.leave_start_date,
+    //   leave_end_date: req.body.leave_end_date,
+    //   leave_reason: req.body.leave_reason,
+    //   status: req.body.status,
+    //   requestor: req.decoded._id,
+    //   approver: getManagerData.myManager,
+    //   year: careerYear,
+
+    // }
+
     const leaveReqInput = {
-      leaveType: req.body.leaveType,
-      leaveDay: req.body.leaveDay,
-      leaveDuration: req.body.leaveDuration,
-      leave_start_date: req.body.leave_start_date,
-      leave_end_date: req.body.leave_end_date,
-      leave_reason: req.body.leave_reason,
-      status: req.body.status,
+      ...req.body,
       requestor: req.decoded._id,
       approver: getManagerData.myManager,
       year: careerYear,
-
     }
 
     const emailInput = {

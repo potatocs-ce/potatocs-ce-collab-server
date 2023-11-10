@@ -67,7 +67,7 @@ exports.getPendingRequest = async (req, res) => {
       }
 
     ])
-    pendingRequestData.filter((x) => x.memberId === req.decoded.memberId)
+
     // console.log(pendingRequestData);
 
     return res.status(200).send({
