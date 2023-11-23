@@ -8,16 +8,16 @@ exports.getAdminMain = async (req, res) => {
 	router.get('/getAdminMain', adAdminMainCtrl.getAdminMain);
 --------------------------------------------------`);
     const dbModels = global.DB_MODELS;
-    
+
     try {
-        
+
         const adUser = await dbModels.Admin.findOne(
             {
                 _id: req.decoded._id
             }
         ).lean();
 
-        if(adUser.company_id == null || adUser.company_id == '') {
+        if (adUser.company_id == null || adUser.company_id == '') {
             return res.send({
                 message: 'not found'
             });
@@ -29,11 +29,11 @@ exports.getAdminMain = async (req, res) => {
                 status: 'pending'
             }
         ).lean();
-        
+
         const countPendingCompany = pendingCompany.length;
-        
-        
-        
+
+
+
         const companyEmployee = await dbModels.Member.find(
             {
                 company_id: adUser.company_id,

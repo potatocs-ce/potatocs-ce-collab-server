@@ -24,8 +24,8 @@ exports.getCompanyHolidayList = async (req, res) => {
 
 
         const findCompanyHoliday = await dbModels.Company.findOne({
-                _id: findCompanyId.company_id
-            }, 
+            _id: findCompanyId.company_id
+        },
             {
                 _id: 0,
                 company_holiday: 1
@@ -75,7 +75,7 @@ exports.addCompanyHoliday = async (req, res) => {
         //     company_holiday: [{ ch_date:
         //         {$in:req.body.ch_date}
         //     }]
-            
+
         //     })
 
         // console.log(CompanyHolidayCheck)
@@ -87,17 +87,18 @@ exports.addCompanyHoliday = async (req, res) => {
         // }
 
         const updateCompanyHoliday = await dbModels.Company.findOneAndUpdate({
-                _id: findCompanyId.company_id,
-            },
+            _id: findCompanyId.company_id,
+        },
             {
-                $push: { company_holiday: {
-                    "ch_name": req.body.ch_name,
-                    "ch_date": req.body.ch_date,
+                $push: {
+                    company_holiday: {
+                        "ch_name": req.body.ch_name,
+                        "ch_date": req.body.ch_date,
                     }
                 }
             },
             {
-                upsert: true ,
+                upsert: true,
             }
         ).exec();
 
@@ -140,11 +141,12 @@ exports.deleteCompanyHoliday = async (req, res) => {
 
 
         const updateCompanyHoliday = await dbModels.Company.findOneAndUpdate({
-                _id: findCompanyId.company_id
-            },
+            _id: findCompanyId.company_id
+        },
             {
-                $pull: { company_holiday: {
-                    "_id": req.body._id,
+                $pull: {
+                    company_holiday: {
+                        "_id": req.body._id,
                     }
                 }
             },

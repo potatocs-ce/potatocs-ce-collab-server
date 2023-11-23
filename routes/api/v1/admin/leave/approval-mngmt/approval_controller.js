@@ -165,7 +165,7 @@ exports.approveRequest = async (req, res) => {
             }
         ).lean();
 
-        
+
         // console.log('companyLeaveStandard');
         // console.log(companyLeaveStandard.leave_standard);
 
