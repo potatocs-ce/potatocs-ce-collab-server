@@ -11,36 +11,7 @@ exports.getMainInfo = async (req, res) => {
 
 
     try {
-        const scrumBoard = await dbModels.ScrumBoard.findOne(
-            {
-                space_id: req.body.spaceTime
-            },
-        )
-        console.log(scrumBoard);
 
-        const scrumCriteria = {
-            doc_id: doc._id,
-            creator: doc.creator,
-            docTitle: doc.docTitle,
-            startDate: doc.startDate,
-            endDate: doc.endDate,
-            color: doc.color,
-
-
-            done: doc.done,
-
-
-            docDescription: '',
-        }
-
-        for (let index = 0; index < scrumBoard.scrum.length; index++) {
-            const element = scrumBoard.scrum[index].label;
-
-            if (element == req.body.status) {
-                scrumBoard.scrum[index].children.push(scrumCriteria);
-            }
-        }
-        console.log(scrumBoard);
         const spaceHistory = await dbModels.Space.aggregate([
             {
                 $match: {
