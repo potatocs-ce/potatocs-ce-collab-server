@@ -178,41 +178,41 @@ exports.getSpace = async (req, res) => {
 
 }
 
-exports.getDocs = async (req, res) => {
+// exports.getDocs = async (req, res) => {
 
-	console.log(`
---------------------------------------------------
-  User : ${req.decoded._id}
-  API  : Get my docs
-  router.get(/space/getDocs/:spaceTime', spaceController.getDocs);
-  Params: ${req.params.spaceTime}
---------------------------------------------------`);
-	const dbModels = global.DB_MODELS;
+// 	console.log(`
+// --------------------------------------------------
+//   User : ${req.decoded._id}
+//   API  : Get my docs
+//   router.get(/space/getDocs/:spaceTime', spaceController.getDocs);
+//   Params: ${req.params.spaceTime}
+// --------------------------------------------------`);
+// 	const dbModels = global.DB_MODELS;
 
-	try {
+// 	try {
 
-		// const criteria = {
-		// 	spaceTime_id: req.params.spaceTime
-		// }
+// 		// const criteria = {
+// 		// 	spaceTime_id: req.params.spaceTime
+// 		// }
 
-		// const spaceDocs = await dbModels.Document.find(criteria);
+// 		// const spaceDocs = await dbModels.Document.find(criteria);
 
-		// console.log(spaceDocs);
+// 		// console.log(spaceDocs);
 
-		return res.status(200).send({
-			message: 'getDocs',
+// 		return res.status(200).send({
+// 			message: 'getDocs',
 
-		})
+// 		})
 
 
-	} catch (err) {
+// 	} catch (err) {
 
-		console.log('[ ERROR ]', err);
-		res.status(500).send({
-			message: 'Loadings Docs Error'
-		})
-	}
-}
+// 		console.log('[ ERROR ]', err);
+// 		res.status(500).send({
+// 			message: 'Loadings Docs Error'
+// 		})
+// 	}
+// }
 
 exports.changeSpaceName = async (req, res) => {
 
