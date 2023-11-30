@@ -11,15 +11,44 @@ exports.getMainInfo = async (req, res) => {
 
 
     try {
+        const scrumBoard = await dbModels.ScrumBoard.findOne(
+            {
+                space_id: req.body.spaceTime
+            },
+        )
+        console.log(scrumBoard);
 
+        const scrumCriteria = {
+            doc_id: doc._id,
+            creator: doc.creator,
+            docTitle: doc.docTitle,
+            startDate: doc.startDate,
+            endDate: doc.endDate,
+            color: doc.color,
+
+
+            done: doc.done,
+
+
+            docDescription: '',
+        }
+
+        for (let index = 0; index < scrumBoard.scrum.length; index++) {
+            const element = scrumBoard.scrum[index].label;
+
+            if (element == req.body.status) {
+                scrumBoard.scrum[index].children.push(scrumCriteria);
+            }
+        }
+        console.log(scrumBoard);
         const spaceHistory = await dbModels.Space.aggregate([
             {
-                $match:{
+                $match: {
                     members: ObjectId(req.decoded._id)
                 }
             },
             {
-                $lookup:{
+                $lookup: {
                     from: 'myspacehistories',
                     localField: '_id',
                     foreignField: 'space_id',
@@ -27,14 +56,14 @@ exports.getMainInfo = async (req, res) => {
                 }
             },
             {
-                $unwind:{
+                $unwind: {
                     path: '$history',
                     preserveNullAndEmptyArrays: false
                 }
             },
             {
-                $project:{
-                    space_id : 1,
+                $project: {
+                    space_id: 1,
                     space_name: '$displayName',
                     spaceTime: '$_id',
                     doc_id: '$history.doc_id',
@@ -56,15 +85,15 @@ exports.getMainInfo = async (req, res) => {
         //         enlistedMembers: req.decoded._id
         //     }
         // )
-        
+
         const meeting = await dbModels.Meeting.aggregate([
             {
-                $match:{
+                $match: {
                     enlistedMembers: ObjectId(req.decoded._id)
                 }
             },
             {
-                $lookup:{
+                $lookup: {
                     from: 'documents',
                     localField: 'docId',
                     foreignField: '_id',
@@ -92,7 +121,7 @@ exports.getMainInfo = async (req, res) => {
                 }
             },
             {
-                $project:{
+                $project: {
                     _id: 1,
                     meetingTitle: 1,
                     isDone: 1,
@@ -100,7 +129,7 @@ exports.getMainInfo = async (req, res) => {
                     docTitle: '$document.docTitle',
                     spaceName: '$spaces.displayName',
                 }
-            }   
+            }
         ]);
         // console.log(meeting);
 
@@ -136,12 +165,12 @@ exports.getMainInfo = async (req, res) => {
 
         const manager = await dbModels.Manager.aggregate([
             {
-                $match:{
+                $match: {
                     myId: ObjectId(req.decoded._id)
                 }
             },
             {
-                $lookup:{
+                $lookup: {
                     from: 'members',
                     localField: 'myManager',
                     foreignField: '_id',
@@ -149,7 +178,7 @@ exports.getMainInfo = async (req, res) => {
                 }
             },
             {
-                $unwind:{
+                $unwind: {
                     path: '$manager',
                     preserveNullAndEmptyArrays: true
                 }
