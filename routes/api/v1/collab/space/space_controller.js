@@ -341,25 +341,25 @@ exports.deleteSpaceMember = async (req, res) => {
 
 	console.log('getDocId', getDocId);
 
-	// // meeting이 doc 안에 있었을때 
-	// for (let index = 0; index < getDocId.length; index++) {
-	// 	const element = getDocId[index]._id;
-	// 	console.log(element)
-	// 	const enlistMeeting = await dbModels.Meeting.updateMany(
-	// 		{
-	// 			docId: element
-	// 		},
-	// 		{
-	// 			$pull: { 
-	// 				// currentMembers 도 반영해준다.
-	// 				currentMembers: {
-	// 					member_id : data.member_id						
-	// 				},
-	// 				enlistedMembers: data.member_id,
-	// 			}
-	// 		}
-	// 	)
-	// }
+	// meeting이 doc 안에 있었을때 
+	for (let index = 0; index < getDocId.length; index++) {
+		const element = getDocId[index]._id;
+		console.log(element)
+		const enlistMeeting = await dbModels.Meeting.updateMany(
+			{
+				docId: element
+			},
+			{
+				$pull: {
+					// currentMembers 도 반영해준다.
+					currentMembers: {
+						member_id: data.member_id
+					},
+					enlistedMembers: data.member_id,
+				}
+			}
+		)
+	}
 	const enlistMeeting = await dbModels.Meeting.updateMany(
 		{
 			spaceId: data.id
