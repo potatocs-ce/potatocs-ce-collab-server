@@ -87,9 +87,9 @@ exports.getSpace = async (req, res) => {
 		]);
 
 		// list of docs START
-		// const criteria = {
-		// 	spaceTime_id: req.params.spaceTime
-		// }
+		const criteria = {
+			spaceTime_id: req.params.spaceTime
+		}
 
 		const spaceDocs = await dbModels.Document.aggregate([
 			{
@@ -178,41 +178,41 @@ exports.getSpace = async (req, res) => {
 
 }
 
-// exports.getDocs = async (req, res) => {
+exports.getDocs = async (req, res) => {
 
-// 	console.log(`
-// --------------------------------------------------
-//   User : ${req.decoded._id}
-//   API  : Get my docs
-//   router.get(/space/getDocs/:spaceTime', spaceController.getDocs);
-//   Params: ${req.params.spaceTime}
-// --------------------------------------------------`);
-// 	const dbModels = global.DB_MODELS;
+	console.log(`
+--------------------------------------------------
+  User : ${req.decoded._id}
+  API  : Get my docs
+  router.get(/space/getDocs/:spaceTime', spaceController.getDocs);
+  Params: ${req.params.spaceTime}
+--------------------------------------------------`);
+	const dbModels = global.DB_MODELS;
 
-// 	try {
+	try {
 
-// 		// const criteria = {
-// 		// 	spaceTime_id: req.params.spaceTime
-// 		// }
+		// const criteria = {
+		// 	spaceTime_id: req.params.spaceTime
+		// }
 
-// 		// const spaceDocs = await dbModels.Document.find(criteria);
+		// const spaceDocs = await dbModels.Document.find(criteria);
 
-// 		// console.log(spaceDocs);
+		// console.log(spaceDocs);
 
-// 		return res.status(200).send({
-// 			message: 'getDocs',
+		return res.status(200).send({
+			message: 'getDocs',
 
-// 		})
+		})
 
 
-// 	} catch (err) {
+	} catch (err) {
 
-// 		console.log('[ ERROR ]', err);
-// 		res.status(500).send({
-// 			message: 'Loadings Docs Error'
-// 		})
-// 	}
-// }
+		console.log('[ ERROR ]', err);
+		res.status(500).send({
+			message: 'Loadings Docs Error'
+		})
+	}
+}
 
 exports.changeSpaceName = async (req, res) => {
 
@@ -324,7 +324,7 @@ exports.deleteSpaceMember = async (req, res) => {
 			new: true
 		}
 	)
-	// console.log('updateDeleteMember', updateDeleteMember);
+	console.log('updateDeleteMember', updateDeleteMember);
 
 	const getDocId = await dbModels.Document.aggregate([
 		{
@@ -341,25 +341,25 @@ exports.deleteSpaceMember = async (req, res) => {
 
 	console.log('getDocId', getDocId);
 
-	// meeting이 doc 안에 있었을때 
-	for (let index = 0; index < getDocId.length; index++) {
-		const element = getDocId[index]._id;
-		console.log(element)
-		const enlistMeeting = await dbModels.Meeting.updateMany(
-			{
-				docId: element
-			},
-			{
-				$pull: {
-					// currentMembers 도 반영해준다.
-					currentMembers: {
-						member_id: data.member_id
-					},
-					enlistedMembers: data.member_id,
-				}
-			}
-		)
-	}
+	// // meeting이 doc 안에 있었을때 
+	// for (let index = 0; index < getDocId.length; index++) {
+	// 	const element = getDocId[index]._id;
+	// 	console.log(element)
+	// 	const enlistMeeting = await dbModels.Meeting.updateMany(
+	// 		{
+	// 			docId: element
+	// 		},
+	// 		{
+	// 			$pull: { 
+	// 				// currentMembers 도 반영해준다.
+	// 				currentMembers: {
+	// 					member_id : data.member_id						
+	// 				},
+	// 				enlistedMembers: data.member_id,
+	// 			}
+	// 		}
+	// 	)
+	// }
 	const enlistMeeting = await dbModels.Meeting.updateMany(
 		{
 			spaceId: data.id
