@@ -324,7 +324,7 @@ exports.deleteSpaceMember = async (req, res) => {
 			new: true
 		}
 	)
-	console.log('updateDeleteMember', updateDeleteMember);
+	// console.log('updateDeleteMember', updateDeleteMember);
 
 	const getDocId = await dbModels.Document.aggregate([
 		{
