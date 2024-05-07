@@ -9,6 +9,18 @@ const companySchema = mongoose.Schema(
     company_name: {
       type: String
     },
+    leaveStandards: [
+      {
+        _id: false, // 추가 : array 내에 object ID 생성 안함
+
+        year: {
+          type: Number
+        },
+        annual_leave: {
+          type: Number
+        }
+      }
+    ],
     leave_standard: [
       {
         _id: false, // 추가 : array 내에 object ID 생성 안함
@@ -22,12 +34,12 @@ const companySchema = mongoose.Schema(
         sick_leave: {
           type: Number
         },
-        replacement_leave: {
-          type: Number
-        },
-        rollover: {
-          type: Number
-        }
+        // replacement_leave: {
+        //   type: Number
+        // },
+        // rollover: {
+        //   type: Number
+        // }
       }
     ],
 
@@ -62,7 +74,10 @@ const companySchema = mongoose.Schema(
         }
 
       }
-    ]
+    ],
+    leaveStandardsLength: {
+      type: Number
+    }
 
   },
   {

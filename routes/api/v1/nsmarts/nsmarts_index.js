@@ -3,45 +3,59 @@ const multer = require('multer');
 
 /*-----------------------------------
 
-	Contollers
+  Contollers
 
 -----------------------------------*/
-const companyMngmtCtrl = require('./company-mngmt/company_controller');
+const companies = require('./companies/companies_index');
 const nsProfileCtrl = require('./nsProfile/nsProfile_controller');
-const adminMngmtCtrl = require('./admin-mngmt/admin_controller');
+const admins = require('./admins/admins_index');
+const countries = require('./countries/countries_index');
+const holidays = require('./holidays/holidays_index');
+
 const countryMngmtCtrl = require('./country-mngmt/country_controller');
 
 
 
 /*-----------------------------------
 
-	** API **
+  ** API **
 
 -----------------------------------*/
 
 /*-----------------------------------
-	COMPANY API
+  COMPANY API
 -----------------------------------*/
-router.get('/getCompanyList', companyMngmtCtrl.getCompanyList);
-router.post('/addCompany', companyMngmtCtrl.addCompany);
-router.get('/getCompanyInfo', companyMngmtCtrl.getCompanyInfo);
-router.patch('/editCompany', companyMngmtCtrl.editCompany);
-router.delete('/deleteCompany', companyMngmtCtrl.deleteCompany);
+router.use('/companies', companies);
 
 /*-----------------------------------
-	PROFILE API
+  ADMIN API
+-----------------------------------*/
+router.use('/admins', admins);
+/*-----------------------------------
+  COUNTRIES API
+-----------------------------------*/
+router.use('/countries', countries);
+
+/*-----------------------------------
+  COUNTRIES API
+-----------------------------------*/
+router.use('/holidays', holidays);
+
+
+/*-----------------------------------
+  PROFILE API
 -----------------------------------*/
 /* Profile Image Update */
 const storage = multer.diskStorage({
-    destination(req, file, cb) {
-        cb(null, 'uploads/profile_img/temp');
-    },
-    filename(req, file, cb) {
-        // fileName = encodeURI(file.originalname);
-        cb(null, `${Date.now()}_${file.originalname}`);
+  destination(req, file, cb) {
+    cb(null, 'uploads/profile_img/temp');
+  },
+  filename(req, file, cb) {
+    // fileName = encodeURI(file.originalname);
+    cb(null, `${Date.now()}_${file.originalname}`);
 
-        // cb(null, `${file.originalname}`);
-    }
+    // cb(null, `${file.originalname}`);
+  }
 });
 const upload = multer({ storage });
 /* Profile */
@@ -50,15 +64,9 @@ router.put('/profileChange', nsProfileCtrl.profileChange);
 router.post('/profileImageChange', upload.any(), nsProfileCtrl.profileImageChange);
 
 
-/*-----------------------------------
-	ADMIN API
------------------------------------*/
-router.get('/getAdminList', adminMngmtCtrl.getAdminList); // admin list 가져오기
-router.put('/connectAdminCompany', adminMngmtCtrl.connectAdminCompany); // admin과 company 연결시켜준다.
-router.put('/disconnectAdminCompany', adminMngmtCtrl.disconnectAdminCompany); // admin과 company 연결을 끊어준다.
 
 /*-----------------------------------
-	HOLIDAY API
+  HOLIDAY API
 -----------------------------------*/
 router.get('/getCountryList', countryMngmtCtrl.getCountryList); // country list 가져오기
 router.get('/getCountryInfo', countryMngmtCtrl.getCountryInfo); // 나라 가져오기

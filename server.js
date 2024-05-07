@@ -4,7 +4,28 @@ const http = require('http');
 const cors = require('cors');
 //박재혆ㅎ
 const app = express();
-app.use(cors());
+
+const allowedOrigins = [
+  "http://localhost:4200",
+  "http://localhost:4300",
+  "http://localhost:4400",
+  "http://192.168.0.8:4200",
+  "http://192.168.0.8:4300",
+  "http://192.168.0.8:4400",
+  "http://192.168.0.5:4200",
+  "http://192.168.0.10:4200",
+  "http://192.168.0.5:4300",
+  "http://192.168.0.42:4200",
+  "https://potatocs.com",
+  "https://test-potatocs.com",
+];
+
+
+app.use(cors({
+  origin: allowedOrigins,
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true,
+}));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 

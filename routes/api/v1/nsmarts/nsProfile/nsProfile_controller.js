@@ -3,8 +3,8 @@ var path = require('path');
 const { promisify } = require('util');
 const unlinkAsync = promisify(fs.unlink);
 const sharp = require('sharp');
-const s3 = global.AWS_S3.s3;
-const bucket = global.AWS_S3.bucket
+// const s3 = global.AWS_S3.s3;
+// const bucket = global.AWS_S3.bucket
 
 exports.profile = async (req, res) => {
   console.log(`
