@@ -18,18 +18,18 @@ const nsmarts = require('./nsmarts/nsmarts_index');
 
 
 /*-----------------------------------
-	not needed to verify
+  not needed to verify
 -----------------------------------*/
 router.use('/auth', auth);
 router.use('/adAuth', adAuth);
 router.use('/nsAuth', nsAuth);
 /*-----------------------------------
-	Token verify
+  Token verify
 -----------------------------------*/
 router.use(isAuthenticated);
 
 /*-----------------------------------
-	API
+  API
 -----------------------------------*/
 router.use('/admin', admin);
 router.use('/user', user);
@@ -37,8 +37,9 @@ router.use('/leave', leave);
 router.use('/collab', collab);
 router.use('/notification', notification)
 
+
 /*-----------------------------------
-	Nsmarts
+  Nsmarts
 -----------------------------------*/
 router.use('/nsmarts', nsmarts);
 

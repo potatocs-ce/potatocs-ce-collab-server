@@ -1,7 +1,7 @@
 const router = require('express').Router();
 
 /*-----------------------------------
-	API
+  API
 -----------------------------------*/
 const adApprovalCtrl = require('./approval-mngmt/approval_controller');
 const adEmployeeCtrl = require('./employee-mngmt/employee_controller');
@@ -9,13 +9,13 @@ const adMainCtrl = require('./admin-main/admin-main-controller');
 const adHolidayCtrl = require('./holiday-mngmt/holiday_controller');
 
 /*-----------------------------------
-	Admin Controller
+  Admin Controller
     admin Main 페이지
 -----------------------------------*/
 router.get('/getAdminMain', adMainCtrl.getAdminMain);
 
 /*-----------------------------------
-	Approval Controller
+  Approval Controller
     회사 등록 승인 요청 리스트
 -----------------------------------*/
 router.get('/getPendingRequest', adApprovalCtrl.getPendingRequest);
@@ -23,10 +23,10 @@ router.put('/approveRequest', adApprovalCtrl.approveRequest);
 router.delete('/deleteRequest', adApprovalCtrl.deleteRequest);
 
 /*-----------------------------------
-	Employee Controller
+  Employee Controller
     회사 직원 리스트
 -----------------------------------*/
-router.get('/getMyEmployee', adEmployeeCtrl.getMyEmployee);
+router.get('/', adEmployeeCtrl.getMyEmployee);
 router.get('/getManagerEmployee', adEmployeeCtrl.getManagerEmployee);
 router.get('/getEmployeeInfo/:id', adEmployeeCtrl.getEmployeeInfo);
 router.put('/editEmployeeProfileInfo', adEmployeeCtrl.editEmployeeProfileInfo);
@@ -35,7 +35,7 @@ router.get('/employeeLeaveListSearch', adEmployeeCtrl.employeeLeaveListSearch);
 router.post('/importEmployeeList', adEmployeeCtrl.importEmployeeList)
 
 /*-----------------------------------
-	Employee Controller
+  Employee Controller
     회사 퇴사자 리스트
 -----------------------------------*/
 router.get('/getMyRetiredEmployee', adEmployeeCtrl.getMyRetiredEmployee); // 퇴사자 목록
@@ -45,7 +45,7 @@ router.patch('/cancelRetireEmployee', adEmployeeCtrl.cancelRetireEmployee); // �
 
 
 /*-----------------------------------
-	Holiday Controller
+  Holiday Controller
     공휴일 리스트
 -----------------------------------*/
 router.get('/getCompanyHolidayList', adHolidayCtrl.getCompanyHolidayList); // 회사 내 공휴일/지정휴일 목록 띄우기

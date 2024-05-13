@@ -9,14 +9,27 @@ exports.getPendingRequest = async (req, res) => {
 --------------------------------------------------`);
   const dbModels = global.DB_MODELS;
   try {
+    const {
+      active = 'createdAt',
+      direction = 'asc',
+      pageIndex = '0',
+      pageSize = '10'
+    } = req.query;
+
+    const limit = parseInt(pageSize, 10);
+    const skip = parseInt(pageIndex, 10) * limit;
+    const sortCriteria = {
+      [active]: direction === 'desc' ? -1 : 1,
+    };
+
 
     const criteria = {
-      _id: ObjectId(req.decoded._id)
+      _id: req.decoded._id
     }
 
     const projection = '_id company_id'
 
-    const adminInfo = await dbModels.Admin.findOne(criteria, projection).lean();
+    const adminInfo = await dbModels.Admin.findById(criteria, projection).lean();
 
     // console.log(adminInfo);
 
@@ -64,18 +77,22 @@ exports.getPendingRequest = async (req, res) => {
           status: 1,
           createdAt: 1
         }
-      }
+      },
+      { $sort: sortCriteria },
+      { $skip: skip },
+      { $limit: limit }
 
     ])
 
-    // console.log(pendingRequestData);
+    console.log(pendingRequestData);
 
     return res.status(200).send({
       message: 'loaded',
-      pendingRequestData
+      data: pendingRequestData
     })
 
   } catch (err) {
+    console.log(err)
     return res.status(500).send({
       message: 'DB Error'
     });
