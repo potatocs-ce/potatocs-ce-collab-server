@@ -4,6 +4,7 @@ var path = require('path');
 const { promisify } = require('util');
 const unlinkAsync = promisify(fs.unlink);
 const sharp = require('sharp');
+const { default: mongoose } = require('mongoose');
 // const s3 = global.AWS_S3.s3;
 // const bucket = global.AWS_S3.bucket;
 
@@ -349,7 +350,7 @@ exports.companyConnections = async (req, res) => {
     );
 
 
-    if (!isExisted) {
+    if (isExisted) {
       return res.status(500).send({
         message: '4'
       });
@@ -362,7 +363,7 @@ exports.companyConnections = async (req, res) => {
       }
     )
 
-    if (isCompany == null) {
+    if (!isCompany) {
       return res.status(404).send({
         message: '5'
       });
@@ -380,7 +381,7 @@ exports.companyConnections = async (req, res) => {
     const pendingCompanyData = await dbModels.PendingCompanyRequest.aggregate([
       {
         $match: {
-          member_id: ObjectId(req.decoded._id)
+          member_id: new mongoose.Types.ObjectId(req.decoded._id)
         }
       },
       {

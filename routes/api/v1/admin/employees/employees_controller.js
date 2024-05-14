@@ -55,22 +55,6 @@ exports.getEmployees = async (req, res) => {
       },
       {
         $addFields: {
-          // year: {
-          //     $floor: {
-          //         $let: {
-          //             vars: {
-          //                 diff: {
-          //                     $subtract: [new Date(), "$emp_start_date"]
-          //                 }
-          //             },
-          //             in: {
-          //                 $divide: ["$$diff", (365 * 24 * 60 * 60 * 1000)]
-          //             }
-          //         }
-          //     }
-          // }
-
-          // dateDiff : 년차를 계산 -> 단 년만 보고 계산함 월이랑 일은 생각안함
           dateDiff: {
             $dateDiff: {
               startDate: "$emp_start_date",
@@ -78,44 +62,44 @@ exports.getEmployees = async (req, res) => {
               unit: "year"
             }
           },
-
-          // dateCompare : 그래서 이 친구가 필요, 이 친구가 현재와 계약 달, 일을 비교해서 1을 빼줄지 말지 정해줌 -> 오류
-          // 오류 수정을 위한 수정된 코드
-          // 달끼리 일끼리 비교하니까 오류가 나서 달일 달일 로 비교하기 위한 방법
           emp_start: {
             $dateFromParts: {
-              'year': { $year: '$$NOW' }, 'month': { $month: '$$NOW' }, 'day': { $dayOfMonth: '$$NOW' }
+              year: { $year: '$$NOW' },
+              month: { $month: '$$NOW' },
+              day: { $dayOfMonth: '$$NOW' }
             }
           },
           now_date: {
             $dateFromParts: {
-              'year': { $year: '$$NOW' }, 'month': { $month: '$emp_start_date' }, 'day': { $dayOfMonth: '$emp_start_date' }
+              year: { $year: '$$NOW' },
+              month: { $month: '$emp_start_date' },
+              day: { $dayOfMonth: '$emp_start_date' }
             }
-          },
+          }
         }
       },
       {
-        // 위의 emp_start, now_date 를 가지고 dateCompare
         $addFields: {
           dateCompare: {
-            $cond: [{
-              $and: [
-                // {$gte: [ {$month: '$$NOW'}, {$month:'$emp_start_date'}]},
-                // {$gte: [ {$dayOfMonth :"$$NOW"}, {$dayOfMonth: '$emp_start_date'}]},
-                { $gte: ['$emp_start', '$now_date'] },
-              ]
-            }, 0, 1
+            $cond: [
+              {
+                $and: [
+                  { $gte: ['$emp_start', '$now_date'] }
+                ]
+              },
+              0,
+              1
             ]
-          },
+          }
         }
       },
-      {   // dateDiff 와 dateCompare 의 차 를 year로
+      {
         $addFields: {
           year: {
-            $cond: [{
-              $gte: [{ $subtract: ["$dateDiff", "$dateCompare"] }, 0]
-            },
-            { $subtract: ["$dateDiff", "$dateCompare"] }, 0
+            $cond: [
+              { $gte: [{ $subtract: ["$dateDiff", "$dateCompare"] }, 0] },
+              { $subtract: ["$dateDiff", "$dateCompare"] },
+              0
             ]
           }
         }
@@ -125,7 +109,7 @@ exports.getEmployees = async (req, res) => {
           from: 'leaverequests',
           let: {
             userId: '$_id',
-            years: '$year',
+            years: '$year'
           },
           pipeline: [
             {
@@ -134,7 +118,6 @@ exports.getEmployees = async (req, res) => {
                   $and: [
                     { $eq: ["$requestor", "$$userId"] },
                     { $eq: ["$year", "$$years"] }
-
                   ]
                 }
               }
@@ -160,9 +143,7 @@ exports.getEmployees = async (req, res) => {
                   {
                     $group: {
                       _id: null,
-                      sum: {
-                        "$sum": "$leaveDuration"
-                      }
+                      sum: { "$sum": "$leaveDuration" }
                     }
                   }
                 ],
@@ -185,9 +166,7 @@ exports.getEmployees = async (req, res) => {
                   {
                     $group: {
                       _id: null,
-                      sum: {
-                        "$sum": "$leaveDuration"
-                      }
+                      sum: { "$sum": "$leaveDuration" }
                     }
                   }
                 ],
@@ -210,9 +189,7 @@ exports.getEmployees = async (req, res) => {
                   {
                     $group: {
                       _id: null,
-                      sum: {
-                        "$sum": "$leaveDuration"
-                      }
+                      sum: { "$sum": "$leaveDuration" }
                     }
                   }
                 ],
@@ -235,39 +212,23 @@ exports.getEmployees = async (req, res) => {
                   {
                     $group: {
                       _id: null,
-                      sum: {
-                        "$sum": "$leaveDuration"
-                      }
+                      sum: { "$sum": "$leaveDuration" }
                     }
                   }
                 ]
               }
             }
-          ]
-          , as: "usedLeave"
+          ],
+          as: 'usedLeave'
         }
       },
-
-      //////////// mongo 5.0 이상에서
-      // {
-      //     $addFields:{
-      //         year11: {
-      //             $dateDiff: {
-      //                 startDate: '$emp_start_date', endDate:"$$NOW", unit: "year"
-      //             }
-      //         }
-      //     }
-      // },
-      ///////////
-
-      // {
-      //     usedLeave:{
-      //         $elemMatch:{
-      //             "leaveType" : "annual_leave"
-      //         }
-      //     }
-
-      // },
+      {
+        $addFields: {
+          usedLeave: {
+            $arrayElemAt: ['$usedLeave', 0]
+          }
+        }
+      },
       {
         $unwind: {
           path: '$manager',
@@ -281,9 +242,13 @@ exports.getEmployees = async (req, res) => {
         }
       },
       {
-        $unwind: {
-          path: '$usedLeave',
-          preserveNullAndEmptyArrays: true
+        $addFields: {
+          usedLeave: {
+            used_annual_leave: { $ifNull: [{ $arrayElemAt: ['$usedLeave.used_annual_leave.sum', 0] }, 0] },
+            used_rollover: { $ifNull: [{ $arrayElemAt: ['$usedLeave.used_rollover.sum', 0] }, 0] },
+            used_sick_leave: { $ifNull: [{ $arrayElemAt: ['$usedLeave.used_sick_leave.sum', 0] }, 0] },
+            used_replacement_leave: { $ifNull: [{ $arrayElemAt: ['$usedLeave.used_replacement_leave.sum', 0] }, 0] }
+          }
         }
       },
       {
@@ -299,10 +264,10 @@ exports.getEmployees = async (req, res) => {
           isManager: 1,
           department: 1,
           totalLeave: {
-            $arrayElemAt: ["$totalLeave.leave_standard", "$year"]
+            $arrayElemAt: ['$totalLeave.leave_standard', '$year']
           },
           usedLeave: 1,
-          managerId: "$manager.myManager"
+          managerId: '$manager.myManager'
         }
       },
       {
@@ -310,12 +275,12 @@ exports.getEmployees = async (req, res) => {
           from: 'members',
           localField: 'managerId',
           foreignField: '_id',
-          as: 'member'
+          as: 'manager'
         }
       },
       {
         $unwind: {
-          path: '$member',
+          path: '$manager',
           preserveNullAndEmptyArrays: true
         }
       },
@@ -347,17 +312,24 @@ exports.getEmployees = async (req, res) => {
           department: 1,
           totalLeave: 1,
           usedLeave: 1,
-          managerId: "$member.email"
+          managerId: '$manager.email'
         }
       },
-
+      {
+        $group: {
+          _id: '$_id',
+          doc: { $first: '$$ROOT' }
+        }
+      },
+      {
+        $replaceRoot: { newRoot: "$doc" }
+      },
       {
         $sort: {
           isManager: 1
         }
       }
-    ])
-
+    ]);
 
     console.log(myEmployeeList);
 

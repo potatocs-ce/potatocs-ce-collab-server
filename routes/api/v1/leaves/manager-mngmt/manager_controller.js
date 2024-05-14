@@ -1,5 +1,6 @@
 const member = require('../../../../../models/member_schema');
 const manager = require('../../../../../models/manager_schema');
+const { default: mongoose } = require('mongoose');
 
 exports.getManager = async (req, res) => {
   console.log(`
@@ -64,10 +65,10 @@ exports.findManager = async (req, res) => {
   API  : Find My Manager
   router.get('/find-manager/:id', managerMngmtCtrl.findManager);
   
-  manager_email_id : ${req.query.searchStr}
+  manager_email_id : ${req.decoded._id}
 --------------------------------------------------`);
 
-  // console.log(req.query);
+  console.log(req.query);
 
   try {
 
@@ -78,6 +79,8 @@ exports.findManager = async (req, res) => {
     const projection = 'email name profile_img mobile department company_id retired';
 
     const user = await member.findOne(criteria, projection);
+
+    console.log(user)
 
     if (user && user.retired == true) {
       return res.status(400).send({
@@ -113,7 +116,7 @@ exports.addManager = async (req, res) => {
 --------------------------------------------------
 	User : ${req.decoded._id}
 	API  : Add Manager
-	router.get('/add-manager', managerMngmtCtrl.addManager);
+	router.post('/add-manager', managerMngmtCtrl.addManager);
 
 	manager_id : ${req.body.manager_id}
 --------------------------------------------------`);
@@ -130,7 +133,7 @@ exports.addManager = async (req, res) => {
 
     const isManager = await member.findOneAndUpdate(
       {
-        _id: req.body.manager_id
+        _id: new mongoose.Types.ObjectId(req.body.manager_id)
       },
       {
         isManager: true
@@ -152,7 +155,7 @@ exports.addManager = async (req, res) => {
 
 
   } catch (err) {
-    // console.log(err);
+    console.log(err);
     return res.status(500).send({
       message: 'DB Error'
     });

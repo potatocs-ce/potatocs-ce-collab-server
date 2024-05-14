@@ -1,4 +1,5 @@
 const { ObjectId } = require("bson");
+const mongoose = require("mongoose");
 
 exports.getPendingRequest = async (req, res) => {
   console.log(`
@@ -113,7 +114,7 @@ exports.approveRequest = async (req, res) => {
   console.log(req.body);
   try {
     const matchCriteria = {
-      _id: ObjectId(req.body._id)
+      _id: new mongoose.Types.ObjectId(req.body._id)
     }
 
     const updateData = {
@@ -122,7 +123,7 @@ exports.approveRequest = async (req, res) => {
     // const projection = 'member_id company_id status';
 
     // 1. 수락 업데이트
-    const updatedRequest = await dbModels.PendingCompanyRequest.findOneAndUpdate(matchCriteria, updateData);
+    const updatedRequest = await dbModels.PendingCompanyRequest.findByIdAndUpdate(matchCriteria, updateData);
     // console.log(updatedRequest);
     if (!updatedRequest) {
       return res.status(404).send({
@@ -166,7 +167,7 @@ exports.approveRequest = async (req, res) => {
         _id: updatedRequest.member_id,
       },
       {
-        company_id: ObjectId(updatedRequest.company_id),
+        company_id: new mongoose.Types.ObjectId(updatedRequest.company_id),
         emp_start_date: req.body.startDate,
         emp_end_date: req.body.endDate,
         // years: careerYear

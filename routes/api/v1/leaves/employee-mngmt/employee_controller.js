@@ -1,6 +1,7 @@
 const member = require('../../../../../models/member_schema');
 const manager = require('../../../../../models/manager_schema');
 const { ObjectId } = require('bson');
+const { default: mongoose } = require('mongoose');
 
 exports.getPendingList = async (req, res) => {
   console.log(`
@@ -15,7 +16,7 @@ exports.getPendingList = async (req, res) => {
     const pendingList = await dbModels.Manager.aggregate([
       {
         $match: {
-          myManager: ObjectId(req.decoded._id),
+          myManager: new mongoose.Types.ObjectId(req.decoded._id),
           accepted: false
         }
       },
@@ -48,6 +49,8 @@ exports.getPendingList = async (req, res) => {
         }
       }
     ]);
+
+    console.log(pendingList)
 
     return res.status(200).send({
       message: 'found',

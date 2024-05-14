@@ -8,7 +8,7 @@ const adAuth = require('./admin/adAuth/adAuth_index');
 const nsAuth = require('./nsmarts/nsAuth/nsAuth_index');
 // AUTH
 const user = require('./user/user_index');
-const leave = require('./leave/leave_index');
+const leaves = require('./leaves/leave_index');
 const collab = require('./collab/collab_index');
 const admin = require('./admin/admin_index');
 
@@ -33,7 +33,7 @@ router.use(isAuthenticated);
 -----------------------------------*/
 router.use('/admin', admin);
 router.use('/user', user);
-router.use('/leave', leave);
+router.use('/leaves', leaves);
 router.use('/collab', collab);
 router.use('/notification', notification)
 
