@@ -1,14 +1,11 @@
-const router = require('express').Router();
+const router = require("express").Router();
 
 /*-----------------------------------
 
   Contollers
 
 -----------------------------------*/
-const admins = require('./admins_controller');
-
-
-
+const admins = require("./admins_controller");
 
 /*-----------------------------------
 
@@ -19,14 +16,13 @@ const admins = require('./admins_controller');
 /*-----------------------------------
   COMPANY API
 -----------------------------------*/
-router.get('/', admins.getAdminList);
-router.patch('/connectAdminCompany', admins.connectAdminCompany);
+router.get("/", admins.getAdminList);
+router.patch("/connectAdminCompany", admins.connectAdminCompany);
+router.patch("/disconnectAdminCompany", admins.disconnectAdminCompany);
 
 // router.post('/', admins.addCompany);
 // router.get('/:id', admins.getCompanyInfo);
 // router.patch('/:id', admins.editCompany);
 // router.delete('/:id', admins.deleteCompany);
-
-
 
 module.exports = router;
