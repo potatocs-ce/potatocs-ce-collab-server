@@ -10,7 +10,23 @@ exports.getEmployees = async (req, res) => {
 --------------------------------------------------`);
 
   const dbModels = global.DB_MODELS;
+
+  const {
+    active = 'createdAt',
+    direction = 'asc',
+    pageIndex = '0',
+    pageSize = '10'
+  } = req.query;
+
+  const limit = parseInt(pageSize, 10);
+  const skip = parseInt(pageIndex, 10) * limit;
+  const sortCriteria = {
+    [active]: direction === 'desc' ? -1 : 1,
+  };
+
   try {
+
+
 
     // company id 가져오기
     const companyId = await dbModels.Admin.findOne(
@@ -324,11 +340,9 @@ exports.getEmployees = async (req, res) => {
       {
         $replaceRoot: { newRoot: "$doc" }
       },
-      {
-        $sort: {
-          isManager: 1
-        }
-      }
+      { $sort: sortCriteria },
+      { $skip: skip },
+      { $limit: limit }
     ]);
 
     console.log(myEmployeeList);
