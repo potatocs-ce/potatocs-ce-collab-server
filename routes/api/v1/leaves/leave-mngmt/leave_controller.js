@@ -1419,9 +1419,8 @@ exports.getNationList = async (req, res) => {
 --------------------------------------------------`);
 
   const dbModels = global.DB_MODELS;
-  const data = req.query._id;
+  const data = req.query.id;
   try {
-
     const nation = await dbModels.NationalHoliday.find(
       {
         _id: data
@@ -1434,7 +1433,7 @@ exports.getNationList = async (req, res) => {
     })
 
   } catch (err) {
-
+    console.log(err)
     return res.status(500).send({
       message: 'DB Error'
     });
