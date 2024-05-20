@@ -3,6 +3,7 @@ const moment = require("moment");
 const { string } = require('sharp/lib/is');
 
 const nodemailer = require("nodemailer");
+const { default: mongoose } = require('mongoose');
 
 exports.requestLeave = async (req, res) => {
   console.log(`
@@ -529,7 +530,7 @@ exports.getMyRequestListSearch = async (req, res) => {
   const endDate = new Date(data.leave_end_date);
 
   let match_criteria = {
-    requestor: ObjectId(req.decoded._id),
+    requestor: new mongoose.Types.ObjectId(req.decoded._id),
     leave_start_date: { $gte: startDate, $lte: endDate }
   }
   if (data.status != 'all') {
