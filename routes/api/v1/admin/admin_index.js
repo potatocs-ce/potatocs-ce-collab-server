@@ -1,5 +1,6 @@
 const router = require('express').Router();
 const multer = require('multer');
+const { profileUpload } = require("../../../../utils/s3Utils");
 
 /*-----------------------------------
   ADMIN TOP TIER FOLDER
@@ -41,8 +42,8 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 /* Profile */
 router.get('/profile', adProfileCtrl.profile);
-router.put('/profileChange', adProfileCtrl.profileChange);
-router.post('/profileImageChange', upload.any(), adProfileCtrl.profileImageChange);
+router.patch('/profileChange', adProfileCtrl.profileChange);
+router.post("/profileImageChange", profileUpload.single("file"), adProfileCtrl.profileImageChange);
 
 
 module.exports = router;

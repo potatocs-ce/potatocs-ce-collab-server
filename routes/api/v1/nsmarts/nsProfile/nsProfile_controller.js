@@ -25,7 +25,7 @@ exports.profile = async (req, res) => {
   try {
     const nsAdmin = await dbModels.NsAdmin.findOne(criteria, projection);
 
-    // console.log(nsAdmin);
+    console.log(nsAdmin);
 
     if (!nsAdmin) {
       return res.status(401).send({
