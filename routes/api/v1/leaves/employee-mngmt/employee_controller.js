@@ -168,7 +168,18 @@ exports.myEmployeeList = async (req, res) => {
 --------------------------------------------------`);
 
   const dbModels = global.DB_MODELS;
+  const {
+    active = 'createdAt',
+    direction = 'asc',
+    pageIndex = '0',
+    pageSize = '10'
+  } = req.query;
 
+  const limit = parseInt(pageSize, 10);
+  const skip = parseInt(pageIndex, 10) * limit;
+  const sortCriteria = {
+    [active]: direction === 'desc' ? -1 : 1,
+  };
   try {
 
     // 관리하고 있는 직원들 in manager
@@ -177,7 +188,7 @@ exports.myEmployeeList = async (req, res) => {
 
     const manager = await dbModels.Manager.find(
       {
-        myManager: ObjectId(req.decoded._id)
+        myManager: new mongoose.Types.ObjectId(req.decoded._id)
       },
       {
         myId: 1,
@@ -438,7 +449,10 @@ exports.myEmployeeList = async (req, res) => {
           },
           usedLeave: 1
         }
-      }
+      },
+      { $sort: sortCriteria },
+      { $skip: skip },
+      { $limit: limit }
     ]);
 
 

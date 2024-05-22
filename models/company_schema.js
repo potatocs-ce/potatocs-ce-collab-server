@@ -1,38 +1,38 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
-// company_code 
+// company_code
 const companySchema = mongoose.Schema(
   {
     company_code: {
-      type: String
+      type: String,
     },
     company_name: {
-      type: String
+      type: String,
     },
-    leaveStandards: [
-      {
-        _id: false, // 추가 : array 내에 object ID 생성 안함
+    // leaveStandards: [
+    //     {
+    //         _id: false, // 추가 : array 내에 object ID 생성 안함
 
-        year: {
-          type: Number
-        },
-        annual_leave: {
-          type: Number
-        }
-      }
-    ],
+    //         year: {
+    //             type: Number,
+    //         },
+    //         annual_leave: {
+    //             type: Number,
+    //         },
+    //     },
+    // ],
     leave_standard: [
       {
         _id: false, // 추가 : array 내에 object ID 생성 안함
 
         year: {
-          type: Number
+          type: Number,
         },
         annual_leave: {
-          type: Number
+          type: Number,
         },
         sick_leave: {
-          type: Number
+          type: Number,
         },
         // replacement_leave: {
         //   type: Number
@@ -40,53 +40,52 @@ const companySchema = mongoose.Schema(
         // rollover: {
         //   type: Number
         // }
-      }
+      },
     ],
-
 
     // rollover 회사 규칙대로 하기 위한 필드
     rollover: {
-      type: Boolean
+      type: Boolean,
     },
     rollover_max_month: {
-      type: Number
+      type: Number,
     },
     rollover_max_day: {
-      type: Number
+      type: Number,
     },
     isReplacementDay: {
-      type: Boolean
+      type: Boolean,
     },
     rd_validity_term: {
-      type: Number
+      type: Number,
     },
-    annual_policy: { // 계약일 기준인지, 연차기준인지
+    annual_policy: {
+      // 계약일 기준인지, 연차기준인지
       type: String,
-      enum: ['byYear', 'byContract'],
+      enum: ["byYear", "byContract"],
+    },
+    isMinusAnnualLeave: {
+      type: Boolean,
     },
     company_holiday: [
       {
         ch_name: {
-          type: String
+          type: String,
         },
         ch_date: {
-          type: String
-        }
-
-      }
+          type: String,
+        },
+      },
     ],
     leaveStandardsLength: {
-      type: Number
-    }
-
+      type: Number,
+    },
   },
   {
-    timestamps: true
+    timestamps: true,
   }
 );
 
-const Company = mongoose.model('Company', companySchema);
+const Company = mongoose.model("Company", companySchema);
 
 module.exports = Company;
-
-
