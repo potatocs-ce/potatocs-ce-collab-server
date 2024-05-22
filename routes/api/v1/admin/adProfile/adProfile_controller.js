@@ -56,34 +56,14 @@ exports.profileChange = async (req, res) => {
   console.log("req.body:", req.body);
 
   try {
-    // const hasPwd = data.new_password;
-    // if (hasPwd == null || hasPwd == '') {
-    //   updateData = {
-    //     name: data.name,
-    //     email: data.email,
-    //     mobile: data.mobile,
-    //     department: data.department,
-    //     position: data.position,
-    //   }
-    // } else {
-    //   updateData = {
-    //     name: data.name,
-    //     password: data.new_password,
-    //     email: data.email,
-    //     mobile: data.mobile,
-    //     department: data.department,
-    //     position: data.position,
-    //   }
-    // }
-
-    const salt = await bcrypt.genSalt(10);
-
-    const hashPassword = await bcrypt.hash(data.password, salt);
-
-    let updateData = {
+    updateData = {
       name: data.name,
-      password: hashPassword,
-    }; 
+      password: data.password,
+      email: data.email,
+      mobile: data.mobile,
+      department: data.department,
+      position: data.position,
+    }
 
     const profileChange = await admin
         .findOneAndUpdate(
@@ -92,15 +72,14 @@ exports.profileChange = async (req, res) => {
             },
             updateData,
             {
-                // fields: { password: 0 },
+                fields: { password: 0 },
                 new: true,
             }
         )
-        .exec();
 
-    // if (profileChange.profile_img == '') {
-    //   profileChange.profile_img = "/assets/image/person.png"
-    // }
+    if (profileChange.profile_img == '') {
+      profileChange.profile_img = "/assets/image/person.png"
+    }
 
      res.status(201).json({
          success: true,
