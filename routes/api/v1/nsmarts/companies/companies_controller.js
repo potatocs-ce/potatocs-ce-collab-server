@@ -67,7 +67,6 @@ exports.addCompany = async (req, res) => {
             company_code: company_code,
             company_name: req.body.company_name,
             leave_standard: req.body.leave_standard,
-            leaveStandards: req.body.leaveStandards,
             rollover: req.body.rollover,
             rollover_max_month: req.body.rollover == true ? req.body.rollover_max_month : null,
             rollover_max_day: req.body.rollover == true ? req.body.rollover_max_day : null,
@@ -142,7 +141,6 @@ exports.editCompany = async (req, res) => {
         editCompany = {
             company_name: req.body.company_name,
             leave_standard: req.body.leave_standard,
-            leaveStandards: req.body.leaveStandards,
             rollover: req.body.rollover,
             rollover_max_month: req.body.rollover == true ? req.body.rollover_max_month : null,
             rollover_max_day: req.body.rollover == true ? req.body.rollover_max_day : null,
