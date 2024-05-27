@@ -420,3 +420,56 @@ exports.getTempPw = async (req, res) => {
         return res.ststus(500).send("Server Error");
     }
 };
+
+/*-------------------------------------------------
+  refreshToken
+-------------------------------------------------*/
+exports.refreshToken = async (req, res) => {
+    console.log(`
+--------------------------------------------------  
+  API  : refreshToken
+  router.post('refreshToken', nsAuthcontroller.refreshToken) 
+--------------------------------------------------`);
+    const criteria = {
+        email: req.body.email,
+    };
+
+    try {
+        const nsAdminUser = await nsAdmin.findOne(criteria);
+
+        if (!nsAdminUser) {
+            return res.status(404).send({
+                message: "not found",
+            });
+        }
+
+        if (nsAdminUser && nsAdminUser.retired == true) {
+            return res.status(400).send({
+                message: `retired`,
+            });
+        }
+
+        const payload = {
+            _id: nsAdminUser._id,
+            name: nsAdminUser.name,
+            email: nsAdminUser.email,
+            isNsAdmin: nsAdminUser.isNsAdmin,
+        };
+
+        const jwtOption = {
+            expiresIn: "1d",
+        };
+
+        const token = jwt.sign(payload, process.env.JWT_SECRET, jwtOption);
+
+        /*------------------------------------------
+      5. send token and profile info to client
+    --------------------------------------------*/
+        res.send({
+            token,
+        });
+    } catch (error) {
+        console.log(error);
+        return res.status(500).send("An error has occurred in the server");
+    }
+};
