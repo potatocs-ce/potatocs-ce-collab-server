@@ -53,7 +53,7 @@ exports.profileChange = async (req, res) => {
     let updateData;
 
     try {
-        const hasPwd = data.new_password;
+        const hasPwd = data.password;
         if (hasPwd == null || hasPwd == "") {
             updateData = {
                 name: data.name,
@@ -62,7 +62,7 @@ exports.profileChange = async (req, res) => {
         } else {
             updateData = {
                 name: data.name,
-                password: data.new_password,
+                password: data.password,
                 // email: data.email,
             };
         }
