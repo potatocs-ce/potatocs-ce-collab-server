@@ -1,6 +1,6 @@
 const router = require("express").Router();
 const multer = require("multer");
-
+const { nsProfileUpload } = require("../../../../utils/s3Utils");
 /*-----------------------------------
 
   Contollers
@@ -45,7 +45,7 @@ router.use("/holidays", holidays);
 /* Profile Image Update */
 const storage = multer.diskStorage({
     destination(req, file, cb) {
-        cb(null, "uploads/profile_img/temp");
+        cb(null, "uploads/nsProfile_img/temp");
     },
     filename(req, file, cb) {
         // fileName = encodeURI(file.originalname);
@@ -58,7 +58,7 @@ const upload = multer({ storage });
 /* Profile */
 router.get("/profile", nsProfileCtrl.profile);
 router.patch("/profileChange", nsProfileCtrl.profileChange);
-router.post("/profileImageChange", upload.any(), nsProfileCtrl.profileImageChange);
+router.post("/profileImageChange", nsProfileUpload.single("file"), nsProfileCtrl.profileImageChange);
 
 /*-----------------------------------
   HOLIDAY API

@@ -96,6 +96,7 @@ exports.signIn = async (req, res) => {
             name: nsAdminUser.name,
             email: nsAdminUser.email,
             isNsAdmin: nsAdminUser.isNsAdmin,
+            profile_img: nsAdminUser.profile_img,
         };
 
         const jwtOption = {
@@ -454,6 +455,7 @@ exports.refreshToken = async (req, res) => {
             name: nsAdminUser.name,
             email: nsAdminUser.email,
             isNsAdmin: nsAdminUser.isNsAdmin,
+            profile_img: nsAdminUser.profile_img,
         };
 
         const jwtOption = {

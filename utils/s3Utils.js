@@ -36,7 +36,27 @@ const profileUpload = multer({
     }),
 });
 
+const nsProfileUpload = multer({
+    storage: multer.diskStorage({
+        destination(req, file, cb) {
+            cb(null, "uploads/nsProfile_img/temp");
+        },
+        fileFilter: function (req, file, cb) {
+            const allowedMimes = ["image/jpeg", "image/png"];
+            if (allowedMimes.includes(file.mimetype)) {
+                cb(null, true);
+            } else {
+                cb(new Error("Invalid file type. Only JPEG and PNG are allowed."));
+            }
+        },
+        metadata: function (req, file, cb) {
+            cb(null, { fieldName: file.fieldname });
+        },
+    }),
+});
+
 module.exports = {
     profileUpload,
+    nsProfileUpload,
     s3Client,
 };

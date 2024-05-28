@@ -3,8 +3,8 @@ var path = require("path");
 const { promisify } = require("util");
 const unlinkAsync = promisify(fs.unlink);
 const sharp = require("sharp");
-// const s3 = global.AWS_S3.s3;
-// const bucket = global.AWS_S3.bucket
+const { s3Client } = require("../../../../../utils/s3Utils");
+const { PutObjectCommand, DeleteObjectCommand } = require("@aws-sdk/client-s3");
 
 exports.profile = async (req, res) => {
     console.log(`
@@ -86,70 +86,84 @@ exports.profileChange = async (req, res) => {
     }
 };
 
+/**
+ *
+ * @param {*} req image file
+ * @param {*} res
+ */
 exports.profileImageChange = async (req, res) => {
     console.log(`
---------------------------------------------------
-    NsAdmin Profile: ${req.decoded._id}
-    router.post('/profileImageChange', nsProfileCtrl.profileImageChange)
---------------------------------------------------`);
+  --------------------------------------------------
+    User Profile: ${req.decoded._id}
+    router.post('/profileImageChange', adProfileCtrl.profileImageChange)
+  --------------------------------------------------`);
+
     const dbModels = global.DB_MODELS;
-    const data = req.files[0];
+
+    const data = req.file;
 
     try {
         const previousProfileImage = await dbModels.NsAdmin.findOne({
             _id: req.decoded._id,
         });
-        const resizePath = "uploads/profile_img/" + data.filename;
+
+        const profileImgPath = previousProfileImage.profile_img.substring(previousProfileImage.profile_img.indexOf("nsProfile_img"));
+
+        const params = {
+            Bucket: process.env.AWS_S3_BUCKET,
+            Key: profileImgPath,
+        };
+        await s3Client.send(new DeleteObjectCommand(params));
+
+        const resizePath = "uploads/nsProfile_img/" + data.filename;
 
         // 이미지 리사이즈 작업 -> 원본을 리사이즈한 뒤에 원본을 제거
         await sharp(data.path).resize(300, 300).toFile(resizePath);
-        await unlinkAsync(data.path);
-        // console.log(previousProfileImage)
 
-        const resizeImgName = `profile-img/${Date.now()}.${data.originalname}`;
-        var params = {
-            Bucket: bucket,
+        // 임시 저장소(로컬)에 저장된 오리지날 파일 제거
+        await unlinkAsync(data.path);
+
+        //파일 명 디코딩
+        data.originalname = Buffer.from(data.originalname, "latin1").toString("utf8");
+
+        //s3 저장소 파일 이름
+        const resizeImgName = `nsProfile_img/${Date.now()}.${data.originalname}`;
+        console.log("resizeImgName:" + resizeImgName);
+        var uploadParams = {
+            // 'Bucket': bucket,
+            Bucket: process.env.AWS_S3_BUCKET,
             Key: resizeImgName,
-            ACL: "public-read",
-            Body: fs.createReadStream("./uploads/profile_img/" + data.filename),
-            ContentType: "image/png",
+            // Body: fs.createReadStream("./uploads/profile_img/" + data.filename),
+            Body: fs.createReadStream(resizePath),
+            // ACL: 'public-read',
+            // ContentType: "image/png",
+            ContentType: req.file.mimetype,
         };
 
-        // https://www.w3schools.com/jsref/jsref_decodeuri.asp
-        // s3로부터 받은 Location이 깨졌을 경우 해결
-        await s3.upload(params, async function (err, data) {
-            // console.log(data);
-            const changeProfileImage = await dbModels.NsAdmin.findOneAndUpdate(
-                {
-                    _id: req.decoded._id,
-                },
-                {
-                    profile_img_key: data.key,
-                    profile_img: decodeURI(data.Location),
-                },
-                {
-                    fields: { password: 0 },
-                    new: true,
-                }
-            );
-            // 로컬에 저장된 리사이즈 파일 제거
-            await unlinkAsync(resizePath);
-            // S3에 저장된 프로필 수정 전 리사이즈 파일 삭제
-            if (previousProfileImage.profile_img_key != "") {
-                const params = {
-                    Bucket: bucket,
-                    Key: previousProfileImage.profile_img_key,
-                };
-                s3.deleteObject(params, function (err, data) {
-                    if (err) console.log(err, err.stack);
-                    else console.log("previous S3 pofile image delete Success");
-                });
+        if (process.env.NODE_ENV.trim() === "development") {
+            uploadParams.ACL = "public-read";
+        }
+
+        await s3Client.send(new PutObjectCommand(uploadParams));
+
+        // 로컬에 저장된 리사이즈 파일 제거
+        await unlinkAsync(resizePath);
+
+        const location = `${process.env.AWS_LOCATION}${resizeImgName}`;
+        console.log("location:" + location);
+        await dbModels.NsAdmin.updateOne(
+            { _id: req.decoded._id },
+            {
+                profile_img_key: data.key,
+                profile_img: location, //s3 저장된 경로
+            },
+            {
+                fields: { password: 0 },
+                new: true,
             }
-            return res.send({
-                message: "profile image change",
-                user: changeProfileImage,
-            });
-        });
+        );
+
+        res.status(201).send({ message: "success", data: location });
     } catch (err) {
         console.log(err);
         return res.status(500).send("db Error");
