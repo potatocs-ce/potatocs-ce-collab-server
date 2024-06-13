@@ -1,4 +1,3 @@
-const { ObjectId } = require("bson");
 const randomize = require("randomatic");
 
 exports.getCompanyList = async (req, res) => {
@@ -10,20 +9,25 @@ exports.getCompanyList = async (req, res) => {
   
 --------------------------------------------------`);
     const dbModels = global.DB_MODELS;
-    const { active, direction, pageIndex, pageSize } = req.query;
-    console.log("a");
+    const { nameFormControl, active, direction, pageIndex, pageSize } = req.query;
 
     const sortOption = {};
     sortOption[active] = direction === "asc" ? 1 : -1;
+
+    const query = {
+        // 대소문자 상관없는 정규표현식으로 바꾸는 코드
+        company_name: new RegExp(nameFormControl, "i"),
+    };
+
     try {
-        const foundCompanyList = await dbModels.Company.find()
+        const foundCompanyList = await dbModels.Company.find(query)
             .select("rollover rollover_max_day rollover_max_month company_code company_name")
             .sort(sortOption)
             .skip(pageIndex * pageSize)
             .limit(pageSize)
             .lean();
 
-        const totalCount = await dbModels.Company.countDocuments();
+        const totalCount = await dbModels.Company.countDocuments(query);
 
         return res.status(200).send({
             message: "success, found CompanyList",
@@ -58,8 +62,6 @@ exports.addCompany = async (req, res) => {
     if (findCompanyCode) {
         company_code = randomize("aA0", 6);
     }
-
-    console.log(req.body.leaveStandards);
 
     try {
         let addCompanyData;
@@ -103,8 +105,6 @@ exports.getCompanyInfo = async (req, res) => {
     const dbModels = global.DB_MODELS;
 
     try {
-        console.log(req.params);
-
         const criteria = {
             _id: req.params.id,
         };
@@ -135,10 +135,7 @@ exports.editCompany = async (req, res) => {
     const dbModels = global.DB_MODELS;
 
     try {
-        let editCompany;
-
-        console.log(req.body);
-        editCompany = {
+        let editCompany = {
             company_name: req.body.company_name,
             leave_standard: req.body.leave_standard,
             rollover: req.body.rollover,
