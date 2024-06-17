@@ -40,7 +40,7 @@ exports.signUp = async (req, res) => {
             name: req.body.name,
         };
 
-        await new NsAdmin(adminData).save();
+        await new nsAdmin(adminData).save();
 
         return res.status(201).send({
             message: "created",
@@ -132,6 +132,7 @@ exports.getEcode = async (req, res) => {
 --------------------------------------------------`);
 
     try {
+        console.log("req.body.email" + req.body.email);
         // Check the email up in order to exist
         const criteria = {
             email: req.body.email,
@@ -146,14 +147,15 @@ exports.getEcode = async (req, res) => {
             pw_reset_date: eCodeDate,
         };
 
-        const user = await admin.findOneAndUpdate(criteria, passwordReset);
+        const user = await nsAdmin.findOneAndUpdate(criteria, passwordReset);
 
-        if (!user) {
-            console.log("NO RESULT");
-            return res.status(404).send({
-                message: "not found",
-            });
-        }
+        // if (!user) {
+        //     console.log("req.body.email" + req.body.email);
+        //     console.log("NO RESULT");
+        //     return res.status(404).send({
+        //         message: "not found",
+        //     });
+        // }
 
         // --------------------------- AWS_SES
 
@@ -274,7 +276,7 @@ exports.getTempPw = async (req, res) => {
     console.log(`
 --------------------------------------------------  
   API  : getTempPw
-  router.put('getTempPw', adAuthcontroller.getEcode) 
+  router.put('getTempPw', adAuthcontroller.getEcode2) 
 --------------------------------------------------`);
 
     console.log(req.body);
@@ -290,7 +292,7 @@ exports.getTempPw = async (req, res) => {
             pw_reset_date: 1,
         };
 
-        const user = await admin.findOne(emailMatch, projection).lean();
+        const user = await nsAdmin.findOne(emailMatch, projection).lean();
 
         if (user.pw_reset_code !== req.body.eCode) {
             console.log("NOT MATCHED");
@@ -303,9 +305,10 @@ exports.getTempPw = async (req, res) => {
             password: tempPw,
         };
 
-        const getTempPw = await admin.findOneAndUpdate(emailMatch, updatePw);
+        const getTempPw = await nsAdmin.findOneAndUpdate(emailMatch, updatePw);
 
         if (!getTempPw) {
+            console.log("req.body.email" + req.body.email);
             console.log("NO RESULT");
             return res.status(404).send({
                 message: "pwd err",
