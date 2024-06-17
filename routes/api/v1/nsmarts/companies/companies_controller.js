@@ -1,11 +1,12 @@
 const randomize = require("randomatic");
 
+// 회사 목록 조회
 exports.getCompanyList = async (req, res) => {
     console.log(`
 --------------------------------------------------
   User : ${req.decoded._id}
-  API  : Get company Info
-  router.get('/getCompanyList', companyMngmtCtrl.getCompanyList);
+  API  : Get Company List
+  router.get('/companies', companies.getCompanyList);
   
 --------------------------------------------------`);
     const dbModels = global.DB_MODELS;
@@ -30,14 +31,14 @@ exports.getCompanyList = async (req, res) => {
         const totalCount = await dbModels.Company.countDocuments(query);
 
         return res.status(200).send({
-            message: "success, found CompanyList",
+            message: "Successfully retrieved the company list",
             foundCompanyList,
             totalCount,
         });
     } catch (err) {
         console.log("[ ERROR ]", err);
         res.status(500).send({
-            message: "Loadings Docs Error",
+            message: "Error fetching company list",
         });
     }
 };
@@ -47,8 +48,8 @@ exports.addCompany = async (req, res) => {
     console.log(`
 --------------------------------------------------
   User : ${req.decoded._id}
-  API  : add company
-  router.post('/addCompany', companyMngmtCtrl.addCompany);
+  API  : Add Company
+  router.post('/companies', companies.addCompany);
   
 --------------------------------------------------`);
     const dbModels = global.DB_MODELS;
@@ -83,23 +84,23 @@ exports.addCompany = async (req, res) => {
         await addCompany.save();
 
         return res.status(200).send({
-            message: "Success add company",
+            message: "Successfully added the company",
         });
     } catch (err) {
         console.log("[ ERROR ]", err);
         res.status(500).send({
-            message: "Loadings Docs Error",
+            message: "Error adding the company",
         });
     }
 };
 
-// 회사 정보 가져오기
+// 회사 상세 조회
 exports.getCompanyInfo = async (req, res) => {
     console.log(`
 --------------------------------------------------
   User : ${req.decoded._id}
-  API  : get company info
-  router.get('/companies', companies.getCompanyInfo);
+  API  : Get Company Info
+  router.get('/companies/:id', companies.getCompanyInfo);
   
 --------------------------------------------------`);
     const dbModels = global.DB_MODELS;
@@ -112,13 +113,13 @@ exports.getCompanyInfo = async (req, res) => {
         const foundCompany = await dbModels.Company.findOne(criteria);
 
         return res.status(200).send({
-            message: "getCompany",
+            message: "Successfully retrieved the company info",
             data: foundCompany,
         });
     } catch (err) {
         console.log("[ ERROR ]", err);
         res.status(500).send({
-            message: "Loadings Docs Error",
+            message: "Error fetching company info",
         });
     }
 };
@@ -128,8 +129,8 @@ exports.editCompany = async (req, res) => {
     console.log(`
 --------------------------------------------------
   User : ${req.decoded._id}
-  API  : add company
-  router.post('/addCompany', companyMngmtCtrl.addCompany);
+  API  : Edit Company
+  router.patch('/companies/:id', companies.editCompany);
   
 --------------------------------------------------`);
     const dbModels = global.DB_MODELS;
@@ -151,22 +152,23 @@ exports.editCompany = async (req, res) => {
         const updateCompany = await dbModels.Company.findOneAndUpdate({ _id: req.params.id }, editCompany);
 
         return res.status(200).send({
-            message: "Success edit company",
+            message: "Successfully edited the company",
         });
     } catch (err) {
         console.log("[ ERROR ]", err);
         res.status(500).send({
-            message: "Loadings Docs Error",
+            message: "Error editing the company",
         });
     }
 };
 
+// 회사 삭제
 exports.deleteCompany = async (req, res) => {
     console.log(`
 --------------------------------------------------
   User : ${req.decoded._id}
-  API  : Get company Info
-  router.get('/deleteCompany', companyMngmtCtrl.deleteCompany);
+  API  : Delete Company
+  router.delete('/deleteCompany/:id', companies.deleteCompany);
   
 --------------------------------------------------`);
     const dbModels = global.DB_MODELS;
@@ -174,12 +176,12 @@ exports.deleteCompany = async (req, res) => {
         const deleteCompany = await dbModels.Company.deleteOne({ _id: req.params.id });
 
         return res.status(200).send({
-            message: "delete company",
+            message: "Successfully deleted the company",
         });
     } catch (err) {
         console.log("[ ERROR ]", err);
         res.status(500).send({
-            message: "Loadings Docs Error",
+            message: "Error deleting the company",
         });
     }
 };

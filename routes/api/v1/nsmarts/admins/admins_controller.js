@@ -1,11 +1,10 @@
-const { ObjectId } = require("bson");
-
+// 어드민 목록 조회
 exports.getAdminList = async (req, res) => {
     console.log(`
 --------------------------------------------------
   User : ${req.decoded._id}
-  API  : Get Admin List Info
-  router.get('/getAdminList', admins.getAdminList);
+  API  : Get Admin List
+  router.get('/admins', admins.getAdminList);
   
 --------------------------------------------------`);
     const dbModels = global.DB_MODELS;
@@ -30,7 +29,7 @@ exports.getAdminList = async (req, res) => {
         ]);
 
         res.status(200).json({
-            message: "Get admin list successful",
+            message: "Successfully retrieved the admin list",
             data: adminList,
             total_count: total,
         });
@@ -43,19 +42,20 @@ exports.getAdminList = async (req, res) => {
     }
 };
 
+// 어드민과 회사 연결
 exports.connectAdminCompany = async (req, res) => {
     console.log(`
 --------------------------------------------------
   User : ${req.decoded._id}
-  API  : Connect company and admin
-  router.put('/connectAdminCompany', adminMngmtCtrl.connectAdminCompany);
+  API  : Connect Admin And Company
+  router.patch('/admins/connectAdminCompany', admins.connectAdminCompany);
   
 --------------------------------------------------`);
     const dbModels = global.DB_MODELS;
     const data = req.body;
-    console.log(data);
+
     try {
-        const adminInfo = await dbModels.Admin.findOneAndUpdate(
+        await dbModels.Admin.findOneAndUpdate(
             {
                 _id: data.admin_id,
             },
@@ -66,30 +66,30 @@ exports.connectAdminCompany = async (req, res) => {
                 new: true,
             }
         );
-        console.log(adminInfo);
 
         return res.status(200).send({
-            message: "connect company and admin",
+            message: "Successfully connected the admin and the company",
         });
     } catch (err) {
         console.log("[ ERROR ]", err);
         res.status(500).send({
-            message: "connect company and admin Error",
+            message: "Error connecting the admin and the company",
         });
     }
 };
 
+// 어드민과 회사 연결해제
 exports.disconnectAdminCompany = async (req, res) => {
     console.log(`
 --------------------------------------------------
   User : ${req.decoded._id}
-  API  : Connect company and admin
-  router.put('/disconnectAdminCompany', adminMngmtCtrl.disconnectAdminCompany);
+  API  : Disconnect Admin And Company
+  router.patch('/admins/disconnectAdminCompany', admins.disconnectAdminCompany);
   
 --------------------------------------------------`);
     const dbModels = global.DB_MODELS;
     const data = req.body;
-    console.log(data);
+
     try {
         await dbModels.Admin.findOneAndUpdate(
             {
@@ -101,12 +101,12 @@ exports.disconnectAdminCompany = async (req, res) => {
         );
 
         return res.status(200).send({
-            message: "disconnect company and admin",
+            message: "Successfully disconnected the admin and the company",
         });
     } catch (err) {
         console.log("[ ERROR ]", err);
         res.status(500).send({
-            message: "disconnect company and admin Error",
+            message: "Error disconnecting the admin and the company",
         });
     }
 };

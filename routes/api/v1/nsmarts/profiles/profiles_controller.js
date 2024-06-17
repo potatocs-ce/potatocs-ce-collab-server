@@ -1,50 +1,18 @@
 var fs = require("fs");
-var path = require("path");
 const { promisify } = require("util");
 const unlinkAsync = promisify(fs.unlink);
 const sharp = require("sharp");
 const { s3Client } = require("../../../../../utils/s3Utils");
 const { PutObjectCommand, DeleteObjectCommand } = require("@aws-sdk/client-s3");
 
-exports.profile = async (req, res) => {
+// 프로필 수정
+exports.editProfile = async (req, res) => {
     console.log(`
 --------------------------------------------------
-    NsAdmin Profile: ${req.decoded._id}
-    router.get('/profile', nsProfileCtrl.profile) 
---------------------------------------------------`);
-
-    const dbModels = global.DB_MODELS;
-
-    const criteria = { _id: req.decoded._id };
-    const projection = {
-        password: false,
-        createdAt: false,
-        updatedAt: false,
-    };
-
-    try {
-        const nsAdmin = await dbModels.NsAdmin.findOne(criteria, projection);
-
-        if (!nsAdmin) {
-            return res.status(401).send({
-                message: "An error has occurred",
-            });
-        }
-
-        return res.send({
-            user: nsAdmin,
-        });
-    } catch (err) {
-        console.log(err);
-        return res.status(500).send("db Error");
-    }
-};
-
-exports.profileChange = async (req, res) => {
-    console.log(`
---------------------------------------------------
-    NsAdmin Profile: ${req.decoded._id}
-    router.get('/profileChange', nsProfileCtrl.profileChange) 
+  User : ${req.decoded._id}
+  API  : Edit Profile
+  router.patch('/profiles', profiles.editProfile);
+        
 --------------------------------------------------`);
     const dbModels = global.DB_MODELS;
     const data = req.body;
@@ -55,13 +23,11 @@ exports.profileChange = async (req, res) => {
         if (hasPwd == null || hasPwd == "") {
             updateData = {
                 name: data.name,
-                // email: data.email,
             };
         } else {
             updateData = {
                 name: data.name,
                 password: data.password,
-                // email: data.email,
             };
         }
 
@@ -76,28 +42,27 @@ exports.profileChange = async (req, res) => {
             }
         );
 
-        return res.send({
-            message: "changed",
+        return res.status(200).send({
+            message: "Successfully edited the profile",
             profileChange,
         });
     } catch (err) {
-        console.log(err);
-        return res.status(500).send("db Error");
+        console.log("[ ERROR ]", err);
+        return res.status(500).send({
+            message: "Error editing the profile",
+        });
     }
 };
 
-/**
- *
- * @param {*} req image file
- * @param {*} res
- */
-exports.profileImageChange = async (req, res) => {
+// 프로필 이미지 수정
+exports.editProfileImage = async (req, res) => {
     console.log(`
-  --------------------------------------------------
-    User Profile: ${req.decoded._id}
-    router.post('/profileImageChange', adProfileCtrl.profileImageChange)
-  --------------------------------------------------`);
+--------------------------------------------------
+  User : ${req.decoded._id}
+  API  : Edit Profile Image
+  router.post('/profiles', profiles.editProfileImage);
 
+--------------------------------------------------`);
     const dbModels = global.DB_MODELS;
 
     const data = req.file;
@@ -128,7 +93,7 @@ exports.profileImageChange = async (req, res) => {
 
         //s3 저장소 파일 이름
         const resizeImgName = `nsProfile_img/${Date.now()}.${data.originalname}`;
-        console.log("resizeImgName:" + resizeImgName);
+
         var uploadParams = {
             // 'Bucket': bucket,
             Bucket: process.env.AWS_S3_BUCKET,
@@ -150,7 +115,7 @@ exports.profileImageChange = async (req, res) => {
         await unlinkAsync(resizePath);
 
         const location = `${process.env.AWS_LOCATION}${resizeImgName}`;
-        console.log("location:" + location);
+
         await dbModels.NsAdmin.updateOne(
             { _id: req.decoded._id },
             {
@@ -163,9 +128,11 @@ exports.profileImageChange = async (req, res) => {
             }
         );
 
-        res.status(201).send({ message: "success", data: location });
+        res.status(201).send({ message: "Successfully edited the profile image", data: location });
     } catch (err) {
-        console.log(err);
-        return res.status(500).send("db Error");
+        console.log("[ ERROR ]", err);
+        return res.status(500).send({
+            message: "Error editing the profile iamge",
+        });
     }
 };
