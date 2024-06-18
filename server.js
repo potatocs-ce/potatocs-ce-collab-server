@@ -1,31 +1,33 @@
-const path = require('path')
-const express = require('express');
-const http = require('http');
-const cors = require('cors');
+const path = require("path");
+const express = require("express");
+const http = require("http");
+const cors = require("cors");
 //박재혆ㅎ
 const app = express();
 
 const allowedOrigins = [
-  "http://localhost:4200",
-  "http://localhost:4300",
-  "http://localhost:4400",
-  "http://192.168.0.8:4200",
-  "http://192.168.0.8:4300",
-  "http://192.168.0.8:4400",
-  "http://192.168.0.5:4200",
-  "http://192.168.0.10:4200",
-  "http://192.168.0.5:4300",
-  "http://192.168.0.42:4200",
-  "https://potatocs.com",
-  "https://test-potatocs.com",
+	"http://localhost:4200",
+	"http://localhost:4201",
+	"http://localhost:4300",
+	"http://localhost:4400",
+	"http://192.168.0.8:4200",
+	"http://192.168.0.8:4300",
+	"http://192.168.0.8:4400",
+	"http://192.168.0.5:4200",
+	"http://192.168.0.10:4200",
+	"http://192.168.0.5:4300",
+	"http://192.168.0.42:4200",
+	"https://potatocs.com",
+	"https://test-potatocs.com",
 ];
 
-
-app.use(cors({
-  origin: allowedOrigins,
-  allowedHeaders: ["Content-Type", "Authorization"],
-  credentials: true,
-}));
+app.use(
+	cors({
+		origin: allowedOrigins,
+		allowedHeaders: ["Content-Type", "Authorization"],
+		credentials: true,
+	})
+);
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
@@ -34,27 +36,26 @@ app.use(express.json());
     npm run prod
 ----------------------------------------- */
 
-const listenAddress = process.env.LISTEN_ADDRESS
+const listenAddress = process.env.LISTEN_ADDRESS;
 
-if (process.env.NODE_ENV.trim() === 'production') {
-  require('dotenv').config({ path: path.join(__dirname, '/env/prod.env') });
-} else if (process.env.NODE_ENV.trim() === 'development') {
-  require('dotenv').config({ path: path.join(__dirname, '/env/dev.env') });
-} else if (process.env.NODE_ENV.trim() === 'staging') {
-  require('dotenv').config({ path: path.join(__dirname, '/env/staging.env') });
+if (process.env.NODE_ENV.trim() === "production") {
+	require("dotenv").config({ path: path.join(__dirname, "/env/prod.env") });
+} else if (process.env.NODE_ENV.trim() === "development") {
+	require("dotenv").config({ path: path.join(__dirname, "/env/dev.env") });
+} else if (process.env.NODE_ENV.trim() === "staging") {
+	require("dotenv").config({ path: path.join(__dirname, "/env/staging.env") });
 }
-
 
 /* -----------------------------------------
     PORT
 ----------------------------------------- */
 var port = normalizePort(process.env.PORT);
-app.set('port', port);
+app.set("port", port);
 
 /* -----------------------------------------
     DB
 ----------------------------------------- */
-const mongApp = require('./database/mongoDB');
+const mongApp = require("./database/mongoDB");
 
 /* -----------------------------------------
     AWS
@@ -89,64 +90,67 @@ const fs = require("fs");
 // };
 
 // [API] Routers
-app.use('/api/v1', require('./routes/api/v1'));
+app.use("/api/v1", require("./routes/api/v1"));
 
 // static
-app.use('/', express.static(path.join(__dirname, '/dist/client')));
+app.use("/", express.static(path.join(__dirname, "/dist/client")));
 // app.use('/', express.static(path.join(__dirname, '../client/dist/client')));
 
-app.use('/uploads', express.static(path.join(__dirname, '/uploads')));
-app.use('/asset', express.static(path.join(__dirname, '/asset/icons')));
+app.use("/uploads", express.static(path.join(__dirname, "/uploads")));
+app.use("/asset", express.static(path.join(__dirname, "/asset/icons")));
 // app.use('/profile_img', express.static(path.join(__dirname, '/uploads/profile_img')));
 
 app.locals.whiteBoardFolderPath = path.join(__dirname, process.env.whiteBoardFolderName);
-app.use('/white_board', express.static(app.locals.whiteBoardFolderPath));
+app.use("/white_board", express.static(app.locals.whiteBoardFolderPath));
 
-http.createServer(app).listen(app.get('port'), listenAddress, () => {
-  console.log(` 
+http.createServer(app).listen(app.get("port"), listenAddress, () => {
+	console.log(
+		` 
     +---------------------------------------------+
     |                                                 
     |      [ Potatocs Server ]
     |
-    |      - Version:`, process.env.VERSION, `
+    |      - Version:`,
+		process.env.VERSION,
+		`
     |
     |      - Mode: ${process.env.MODE}
     |                                      
-    |      - Server is running on port ${app.get('port')}
+    |      - Server is running on port ${app.get("port")}
     |
     +---------------------------------------------+
-    `);
+    `
+	);
 
-  /*----------------------------------
+	/*----------------------------------
       CONNECT TO MONGODB SERVER
   ------------------------------------*/
-  mongApp.appSetObjectId(app);
+	mongApp.appSetObjectId(app);
 });
 
 function normalizePort(val) {
-  var port = parseInt(val, 10);
+	var port = parseInt(val, 10);
 
-  if (isNaN(port)) {
-    // named pipe
-    return val;
-  }
+	if (isNaN(port)) {
+		// named pipe
+		return val;
+	}
 
-  if (port >= 0) {
-    // port number
-    return port;
-  }
+	if (port >= 0) {
+		// port number
+		return port;
+	}
 
-  return false;
+	return false;
 }
 
-
 app.use(function (req, res) {
-  console.log(`
+	console.log(`
     ============================================
 		>>>>>> Invalid Request! <<<<<<
 
 		Req: "${req.url}"
 		=> Redirect to 'index.html'
-    ============================================`)
-  res.sendFile(__dirname + '/client/index.html');
+    ============================================`);
+	res.sendFile(__dirname + "/client/index.html");
 });
