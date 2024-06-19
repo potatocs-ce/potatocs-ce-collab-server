@@ -36,7 +36,7 @@ router.get('/myEmployee-leaveList-search', employeeMngmtCtrl.myEmployeeLeaveList
 /*-----------------------------------
   Main Leave Management
 -----------------------------------*/
-router.post('/request-leave', leaveMngmtCtrl.requestLeave); // 휴가 요청
+router.post('/', leaveMngmtCtrl.requestLeave); // 휴가 요청
 router.put('/cancel-my-request-leave', leaveMngmtCtrl.cancelMyRequestLeave); // 신청한 휴가 취소
 router.get('/my-status', leaveMngmtCtrl.getMyLeaveStatus); // 내 휴가 현황(쓴거, 남은거, 토탈)
 router.get('/my-request', leaveMngmtCtrl.getMyRequestList); //// 내가 신청한 내역(3개월내의 approve만)
