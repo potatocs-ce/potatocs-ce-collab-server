@@ -1,9 +1,11 @@
-const { ObjectId } = require('bson');
+// const { ObjectId } = require('bson');
 const moment = require("moment");
 const { string } = require('sharp/lib/is');
 
 const nodemailer = require("nodemailer");
 const { default: mongoose } = require('mongoose');
+const { ObjectId } = require('mongodb')
+
 exports.requestLeave = async (req, res) => {
   console.log(`
 --------------------------------------------------  
@@ -404,6 +406,7 @@ exports.getMyRequestList = async (req, res) => {
     });
 
   } catch (err) {
+    console.log(err)
     return res.status(500).send({
       message: 'DB Error'
     });
