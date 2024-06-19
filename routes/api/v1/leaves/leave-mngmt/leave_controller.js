@@ -22,6 +22,8 @@ exports.requestLeave = async (req, res) => {
       accepted: true
     }
 
+
+
     const getManagerData = await dbModels.Manager.findOne(findMyManagerCriteria).populate('myManager', 'email');
 
     // console.log(req.body)
