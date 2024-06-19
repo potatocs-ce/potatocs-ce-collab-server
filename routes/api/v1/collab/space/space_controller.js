@@ -459,6 +459,104 @@ exports.addSpaceAdmin = async (req, res) => {
 	});
 };
 
+exports.deleteSpace = async (req, res) => {
+	console.log(`
+--------------------------------------------------
+  User : ${req.decoded._id}
+  API  : delete my space
+  router.delete('/delete-space', sideNavContoller.deleteSpace);
+--------------------------------------------------`);
+	const dbModels = global.DB_MODELS;
+	const data = req.query;
+	// console.log(data);
+	try {
+		const spaceInMember = await dbModels.Space.findOne({
+			_id: data.spaceTime,
+		});
+		// console.log('spaceInMember');
+		// console.log(spaceInMember);
+		// spaceTime으로 space 안에 있는 문서들 가져오기
+		const spaceInDoc = await dbModels.Document.find({
+			spaceTime_id: data.spaceTime,
+		});
+		// console.log('spaceInDoc');
+		// console.log(spaceInDoc);
+
+		// 문서와 문서 안에 있는 파일 삭제
+		for (let i = 0; i < spaceInDoc.length; i++) {
+			const element = spaceInDoc[i]._id;
+			// console.log('element');
+			// console.log(element);
+			// 문서 안에 있는 파일을 가져오기 위한 문서 아이디
+			const docInUploadFile = await dbModels.UploadFile.find({
+				doc_id: element,
+			});
+
+			// console.log('docInUploadFile');
+			// console.log(docInUploadFile);
+			// 업로드된 파일 삭제하고 디비에서도 삭제
+			for (let j = 0; j < docInUploadFile.length; j++) {
+				const element = docInUploadFile[j].filename;
+				// await unlinkAsync('uploads/upload_file/' + element);
+				await dbModels.UploadFile.deleteOne({
+					filename: element,
+				});
+			}
+			// 채팅 제거
+			const deleteChat = await dbModels.Chat.deleteMany({
+				docId: element,
+			});
+
+			// // 미팅 제거
+			// const deleteMeeting = await dbModels.Meeting.deleteMany(
+			// 	{
+			// 		docId : element
+			// 	}
+			// )
+
+			// 파일들 다 삭제 되면 문서 삭제
+			await dbModels.Document.deleteOne({
+				_id: element,
+			});
+		}
+
+		const deleteMeeting = await dbModels.Meeting.deleteMany({
+			spaceId: data.spaceTime,
+		});
+
+		// 문서도 다 삭제 되면 스페이스 삭제
+		await dbModels.Space.deleteOne({
+			_id: data.spaceTime,
+		});
+
+		await dbModels.ScrumBoard.deleteOne({
+			space_id: data.spaceTime,
+		});
+
+		for (let index = 0; index < spaceInMember.members.length; index++) {
+			const element = spaceInMember.members[index];
+			// console.log(element);
+			await dbModels.MenuSide.updateOne(
+				{
+					member_id: element,
+				},
+				{
+					$pull: { space_list: spaceInMember._id },
+				}
+			);
+		}
+
+		return res.status(200).send({
+			message: "delete space and doc, upload file",
+		});
+	} catch (err) {
+		console.log("[ ERROR ]", err);
+		res.status(500).send({
+			message: "delete space Error",
+		});
+	}
+};
+
 exports.searchSpaceMember = async (req, res) => {
 	console.log(`
 --------------------------------------------------
