@@ -24,12 +24,12 @@ router.put("/update-space-place", sideNavContoller.updateSpacePlace);
 
 // in Space
 router.get("/space/:spaceTime", spaceController.getSpace);
-router.put("/change-space-name", spaceController.changeSpaceName);
+router.put("/space/change-space-name", spaceController.changeSpaceName);
 router.put("/change-space-brief", spaceController.changeSpaceBrief);
 router.put("/delete-space-member", spaceController.deleteSpaceMember);
 router.put("/quit-space-admin", spaceController.quitSpaceAdmin);
 router.put("/add-space-member", spaceController.addSpaceAdmin);
-router.delete("/deleteSpace", spaceController.deleteSpace); //
+router.delete("/space/deleteSpace", spaceController.deleteSpace); //
 //hokyun - 2022-08-16
 router.put("/add-space-label", spaceController.addSpaceLabel);
 router.put("/delete-space-label", spaceController.deleteSpaceLabel);

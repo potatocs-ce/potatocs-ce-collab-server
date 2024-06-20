@@ -445,7 +445,7 @@ exports.addSpaceAdmin = async (req, res) => {
 
 	const updateGetAdmin = await dbModels.Space.updateOne(
 		{
-			_id: ObjectId(data.id),
+			_id: new mongoose.Types.ObjectId(data.id),
 		},
 		{
 			$addToSet: { admins: ObjectId(data.member_id) },
@@ -468,7 +468,8 @@ exports.deleteSpace = async (req, res) => {
 --------------------------------------------------`);
 	const dbModels = global.DB_MODELS;
 	const data = req.query;
-	// console.log(data);
+	console.log("여기?");
+	console.log(data);
 	try {
 		const spaceInMember = await dbModels.Space.findOne({
 			_id: data.spaceTime,
@@ -613,8 +614,8 @@ exports.inviteSpaceMember = async (req, res) => {
 		const confirmMember = await dbModels.Space.aggregate([
 			{
 				$match: {
-					members: ObjectId(data.member_id),
-					_id: ObjectId(data.spaceTime),
+					members: new mongoose.Types.ObjectId(data.member_id),
+					_id: new mongoose.Types.ObjectId(data.spaceTime),
 				},
 			},
 			{
@@ -641,7 +642,7 @@ exports.inviteSpaceMember = async (req, res) => {
 			},
 			{
 				$match: {
-					id: ObjectId(data.member_id),
+					id: new mongoose.Types.ObjectId(data.member_id),
 				},
 			},
 		]);
@@ -687,7 +688,7 @@ exports.inviteSpaceMember = async (req, res) => {
 		const getDocId = await dbModels.Document.aggregate([
 			{
 				$match: {
-					spaceTime_id: ObjectId(data.spaceTime),
+					spaceTime_id: new mongoose.Types.ObjectId(data.spaceTime),
 				},
 			},
 			{
