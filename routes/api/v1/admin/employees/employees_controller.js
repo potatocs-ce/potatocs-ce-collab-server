@@ -1,12 +1,13 @@
 const { ObjectId } = require("bson");
 const moment = require("moment");
 
-exports.getEmployees = async (req, res) => {
+// 직원 목록
+exports.getEmployeeList = async (req, res) => {
     console.log(`
 --------------------------------------------------
 	User : ${req.decoded._id}
-	API  : get my company employee
-	router.get('/getEmployees', employeeCtrl.getEmployees);
+	API  : get employees
+	router.get('/employees', employeesCtrl.getEmployeeList);
 --------------------------------------------------`);
 
     const dbModels = global.DB_MODELS;
@@ -649,32 +650,25 @@ exports.getManagerEmployee = async (req, res) => {
     }
 };
 
+// 직원 상세 조회
 exports.getEmployeeInfo = async (req, res) => {
     console.log(`
 --------------------------------------------------
 	User : ${req.decoded._id}
-	API  : get edit employee info
-	router.get('/getEmployeeInfo', adEmployeeCtrl.getEmployeeInfo);
+	API  : get employee
+	router.get('/employees/:id', employeesCtrl.getEmployeeInfo);
 --------------------------------------------------`);
-
     const dbModels = global.DB_MODELS;
-    // console.log(req.params.id);
-    try {
-        // totalLeave: {
-        //     $arrayElemAt: ["$totalLeave.leave_standard","$year"]
-        // },
 
+    try {
         const employeeInfo = await dbModels.Member.findOne({
             _id: req.params.id,
         });
-        // console.log(employeeInfo);
 
         // user location name 찾아오기
         const nationName = await dbModels.NationalHoliday.findOne({
             _id: employeeInfo.location,
         });
-
-        // console.log(nationName);
 
         const today = moment(new Date());
         const empStartDate = moment(employeeInfo.emp_start_date);
@@ -712,24 +706,18 @@ exports.getEmployeeInfo = async (req, res) => {
     }
 };
 
-exports.editEmployeeProfileInfo = async (req, res) => {
+// 직원 디테일 수정
+exports.editEmployeeDetail = async (req, res) => {
     console.log(`
 --------------------------------------------------
 	User : ${req.decoded._id}
-	API  : Edit employ profile info
-	router.put('/editEmployeeProfileInfo', adEmployeeCtrl.editEmployeeProfileInfo);
+	API  : Edit employee detail
+	router.put('/employees/editEmployeeDetail', employeesCtrl.editEmployeeDetail);
 --------------------------------------------------`);
     const dbModels = global.DB_MODELS;
     const data = req.body;
-    console.log(data);
 
     try {
-        // const nationName = await dbModels.NationalHoliday.findOne(
-        //     {
-        //         location: data.location
-        //     }
-        // )
-
         const editEmployee = await dbModels.Member.findOneAndUpdate(
             {
                 _id: data.employeeId,
@@ -743,24 +731,6 @@ exports.editEmployeeProfileInfo = async (req, res) => {
             }
         );
 
-        // const today = moment(new Date());
-        // const empStartDate = moment(data.emp_start_date);
-        // const careerYear = (today.diff(empStartDate, 'years')) + 1;
-        //     // console.log(careerYear);
-        // const editTotalLeave = await dbModels.PersonalLeaveStandard.findOneAndUpdate(
-        //     {
-        //         member_id: data.employeeId,
-        //         "leave_standard.year": careerYear
-        //     },
-        //     {
-        //         $set: {
-        //             "leave_standard.$.annual_leave": data.annual_leave,
-        //             'leave_standard.$.sick_leave': data.sick_leave,
-        //             "leave_standard.$.replacement_leave": data.replacement_leave,
-        //         },
-        //     }
-        // )
-        // console.log(editTotalLeave)
         return res.send({
             message: "updated",
         });
@@ -772,12 +742,13 @@ exports.editEmployeeProfileInfo = async (req, res) => {
     }
 };
 
-exports.editEmployeeLeaveInfo = async (req, res) => {
+// 직원 휴가 수정
+exports.editEmployeeLeave = async (req, res) => {
     console.log(`
 --------------------------------------------------
 	User : ${req.decoded._id}
-	API  : Edit employ leave info
-	router.put('/editEmployeeLeaveInfo', adEmployeeCtrl.editEmployeeLeaveInfo);
+	API  : Edit employee leave
+	router.put('/employees/editEmployeeLeave', employeesCtrl.editEmployeeLeave);
 --------------------------------------------------`);
     const dbModels = global.DB_MODELS;
     const data = req.body;
@@ -791,13 +762,10 @@ exports.editEmployeeLeaveInfo = async (req, res) => {
                 emp_start_date: 1,
             }
         );
-        // console.log(memberInfo);
 
         const today = moment(new Date());
         const empStartDate = moment(memberInfo.emp_start_date);
         const careerYear = today.diff(empStartDate, "years") + 1;
-
-        // console.log(careerYear);
 
         const editTotalLeave = await dbModels.PersonalLeaveStandard.findOneAndUpdate(
             {
@@ -1232,13 +1200,13 @@ exports.cancelRetireEmployee = async (req, res) => {
 };
 
 // admin Employee List excel import
-// 직원 리스트 excel 파일 업로드
-exports.importEmployeeList = async (req, res) => {
+// 직원 목록 excel 추가
+exports.addExcelEmployeeList = async (req, res) => {
     console.log(`
 --------------------------------------------------
   User : ${req.decoded._id}
   API  : import employee list 
-  router.post('/importEmployeeList', adEmployeeCtrl.importEmployeeList);
+  router.post('/employees/addExcelEmployeeList', employeesCtrl.addExcelEmployeeList);
 --------------------------------------------------`);
 
     const dbModels = global.DB_MODELS;
