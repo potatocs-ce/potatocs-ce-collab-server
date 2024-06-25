@@ -1244,12 +1244,10 @@ exports.importEmployeeList = async (req, res) => {
     const dbModels = global.DB_MODELS;
     const data = req.body;
     // data 는 엑셀에 입력된 회원정보 array
-    // console.log(data)
     try {
         // admin의 회사 아이디 검색
         const findCompanyId = await dbModels.Admin.findOne({ _id: req.decoded._id }, { _id: false, company_id: true });
         const companyId = findCompanyId.company_id;
-        // console.log(data)
 
         // 인자값 유효성 검사 (엑셀 데이터 확인)
         // 배열인 인자값을 for문으로 푼다.
@@ -1334,23 +1332,19 @@ exports.importEmployeeList = async (req, res) => {
                     // years: careerYear
                 }
             );
-            // console.log('memberCompanyId');
-            // console.log(memberCompanyId);
+
             //// leave_standard 스키마 만들어주기
             //// Company 에서 leave_standard가져오기
             const companyLeaveStandard = await dbModels.Company.findOne({
                 _id: companyId,
             }).lean();
 
-            // console.log('companyLeaveStandard');
-            // console.log(companyLeaveStandard.leave_standard);
             const confirmLeaveStandard = await dbModels.PersonalLeaveStandard.findOne({ member_id: employeeId });
             if (!confirmLeaveStandard) {
                 const createLeaveStandard = dbModels.PersonalLeaveStandard({
                     member_id: employeeId,
                     leave_standard: companyLeaveStandard.leave_standard,
                 });
-                // console.log(createLeaveStandard);
                 await createLeaveStandard.save();
             }
             // --------------------------------------------
