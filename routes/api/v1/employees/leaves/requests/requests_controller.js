@@ -1,5 +1,8 @@
 const { default: mongoose } = require('mongoose');
 const moment = require("moment");
+const { Wallet, Gateway } = require('fabric-network');
+const { MongoWallet } = require('../../../../../../utils/mongo-wallet');
+const { buildCCP } = require('../../../../../../utils/ca-utils');
 
 exports.getLeaveRequest = async (req, res) => {
   console.log(`
@@ -375,6 +378,10 @@ exports.cancelMyRequestLeave = async (req, res) => {
   // console.log(match_criteria);
 
   const dbModels = global.DB_MODELS;
+
+  const session = await dbModels.LeaveRequest.startSession();
+  const session2 = await dbModels.PersonalLeaveStandard.startSession();
+  const session3 = await dbModels.RdRequest.startSession();
   try {
     ////////////////////
     // rollover 처리
@@ -407,6 +414,11 @@ exports.cancelMyRequestLeave = async (req, res) => {
     )
 
 
+
+    await session.startTransaction();
+    await session2.startTransaction();
+    await session3.startTransaction();
+
     const leaveRequest = await dbModels.LeaveRequest.findOneAndUpdate(
       {
         _id: data._id
@@ -421,6 +433,86 @@ exports.cancelMyRequestLeave = async (req, res) => {
     // console.log(rolloverTotal);
     // console.log(rolloverTotal.leave_standard[careerYear]);
     // console.log(rolloverTotal.leave_standard[careerYear]['rollover'] != undefined);
+
+    /**-----------------------------------
+   * blockchain 코드 시작 -------------------------------------------
+   */
+    const store = new MongoWallet();
+    const wallet = new Wallet(store);
+    const userIdentity = await wallet.get(userYear._id.toString());
+
+    const findMyManagerCriteria = {
+      myId: req.decoded._id,
+      accepted: true
+    }
+
+    const getManagerData = await dbModels.Manager.findOne(findMyManagerCriteria).populate('myManager', 'email');
+
+
+    const foundCompany = await dbModels.Company.findById(userYear._id).lean();
+
+    console.log(foundCompany)
+
+    let selectedCompany = '';
+    let mspId = '';
+    let channelId = '';
+    switch (foundCompany.company_name) {
+      case 'nsmartsolution':
+        selectedCompany = 'nsmarts'
+        mspId = "NsmartsMSP"
+        channelId = "nsmartschannel"
+        break;
+      case 'vice':
+        selectedCompany = 'vice'
+        mspId = "ViceMSP"
+        channelId = "vicechannel"
+        break;
+      default:
+        selectedCompany = 'vice-kr'
+        mspId = "ViceKRMSP"
+        channelId = "vice-krchannel"
+        break;
+    }
+    const ccp = buildCCP(selectedCompany);
+    const gateway = new Gateway();
+
+    await gateway.connect(ccp, { wallet, identity: userIdentity, discovery: { enabled: false, asLocalhost: false } });
+
+    // 네트워크 채널 가져오기
+    // 휴가는 전체 채널에 공유
+    // 계약서만 따로 따로
+    // vice-krchannel nsmarts, vice, vicekr 3조직 다있는 채널 사용. 
+    const network = await gateway.getNetwork('vice-krchannel');
+
+    // 스마트 컨트랙트 가져오기
+    const contract = network.getContract('leave');
+
+    try {
+      const result = await contract.submitTransaction(
+        'CreateLeaveRequest', // 스마트 컨트랙트의 함수 이름
+        leaveRequest._id,
+        leaveRequest.requestor,
+        getManagerData.myManager,
+        leaveRequest.leaveType,
+        leaveRequest.leaveDay,
+        leaveRequest.leaveDuration,
+        leaveRequest.leave_start_date.toISOString(),
+        leaveRequest.leave_end_date.toISOString(),
+        leaveRequest.leave_reason,
+        leaveRequest.status,
+        leaveRequest.year
+      );
+    } catch (bcError) {
+      console.error('Blockchain transaction failed:', bcError);
+      throw bcError;
+    }
+
+    await gateway.disconnect();
+    // 트랜잭션 커밋
+    await session.commitTransaction();
+    session.endSession();
+
+    // blockchain 코드 끝 ------------------------------------
 
     if (rolloverTotal.leave_standard[careerYear]['rollover'] != undefined) {
       if (req.body.leaveType == 'annual_leave') {
@@ -463,7 +555,10 @@ exports.cancelMyRequestLeave = async (req, res) => {
       )
     }
 
-
+    await session2.commitTransaction();
+    await session3.commitTransaction();
+    session2.endSession();
+    session3.endSession();
 
     return res.status(200).send({
       message: 'hihi'
@@ -471,6 +566,14 @@ exports.cancelMyRequestLeave = async (req, res) => {
 
   } catch (error) {
     console.log(error)
+    // 트랜잭션 롤백
+    await session.abortTransaction();
+    await session2.abortTransaction();
+    await session3.abortTransaction();
+    session.endSession();
+    session2.endSession();
+    session3.endSession();
+
     return res.status(500).send({
       message: 'DB Error'
     });

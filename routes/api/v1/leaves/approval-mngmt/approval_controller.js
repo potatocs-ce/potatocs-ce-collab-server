@@ -3,6 +3,9 @@ const LeaveRequestHistory = require('../../../../../models/leave_request_history
 const LeaveRequest = require('../../../../../models/leave_request_schema');
 const moment = require("moment");
 const { default: mongoose } = require('mongoose');
+const { MongoWallet } = require('../../../../../utils/mongo-wallet');
+const { Wallet, Gateway } = require('fabric-network');
+const { buildCCP } = require('../../../../../utils/ca-utils');
 
 exports.getLeaveRequest = async (req, res) => {
   console.log(`
@@ -553,17 +556,117 @@ exports.rejectReplacementRequest = async (req, res) => {
   const dbModels = global.DB_MODELS;
   const data = req.body
   console.log(data);
+  const session = await dbModels.RdRequest.startSession();
+
   try {
 
-    await dbModels.RdRequest.findOneAndUpdate(
+    await session.startTransaction();
+
+    const reRequest = await dbModels.RdRequest.findOneAndUpdate(
       {
         _id: data._id
       },
       {
         rejectReason: data.rejectReason,
         status: 'reject'
+      },
+      {
+        new: true
       }
     )
+
+
+    /**-----------------------------------
+* blockchain 코드 시작 -------------------------------------------
+*/
+    const foundMember = await dbModels.Member.findOne(
+      {
+        _id: data.requestor
+      }
+    ).lean()
+
+    if (!foundMember) {
+      return res.status(400).json({
+        message: 'Member was not found!'
+      })
+    }
+
+    const store = new MongoWallet();
+    const wallet = new Wallet(store);
+    const userIdentity = await wallet.get(data.requestor.toString());
+
+    const findMyManagerCriteria = {
+      myId: req.decoded._id,
+      accepted: true
+    }
+
+    const getManagerData = await dbModels.Manager.findOne(findMyManagerCriteria).populate('myManager', 'email');
+
+
+    const foundCompany = await dbModels.Company.findById(userYear._id).lean();
+
+    console.log(foundCompany)
+
+    let selectedCompany = '';
+    let mspId = '';
+    let channelId = '';
+    switch (foundCompany.company_name) {
+      case 'nsmartsolution':
+        selectedCompany = 'nsmarts'
+        mspId = "NsmartsMSP"
+        channelId = "nsmartschannel"
+        break;
+      case 'vice':
+        selectedCompany = 'vice'
+        mspId = "ViceMSP"
+        channelId = "vicechannel"
+        break;
+      default:
+        selectedCompany = 'vice-kr'
+        mspId = "ViceKRMSP"
+        channelId = "vice-krchannel"
+        break;
+    }
+    const ccp = buildCCP(selectedCompany);
+    const gateway = new Gateway();
+
+    await gateway.connect(ccp, { wallet, identity: userIdentity, discovery: { enabled: false, asLocalhost: false } });
+
+    // 네트워크 채널 가져오기
+    // 휴가는 전체 채널에 공유
+    // 계약서만 따로 따로
+    // vice-krchannel nsmarts, vice, vicekr 3조직 다있는 채널 사용. 
+    const network = await gateway.getNetwork('vice-krchannel');
+
+    // 스마트 컨트랙트 가져오기
+    const contract = network.getContract('leave');
+
+    try {
+      const result = await contract.submitTransaction(
+        'CreateLeaveRequest', // 스마트 컨트랙트의 함수 이름
+        reRequest._id,
+        reRequest.requestor,
+        getManagerData.myManager,
+        reRequest.leaveType,
+        reRequest.leaveDay,
+        reRequest.leaveDuration,
+        reRequest.leave_start_date.toISOString(),
+        reRequest.leave_end_date.toISOString(),
+        reRequest.leave_reason,
+        reRequest.status,
+        ''
+      );
+    } catch (bcError) {
+      console.error('Blockchain transaction failed:', bcError);
+      throw bcError;
+    }
+
+    await gateway.disconnect();
+    // 트랜잭션 커밋
+    await session.commitTransaction();
+    session.endSession();
+
+    // blockchain 코드 끝 ------------------------------------
 
     const notification = await dbModels.Notification(
       {
@@ -584,6 +687,9 @@ exports.rejectReplacementRequest = async (req, res) => {
       message: 'delete',
     });
   } catch (err) {
+    console.log(err)
+    await session.commitTransaction();
+    session.endSession();
     return res.status(500).send({
       message: 'DB Error'
     });
@@ -601,15 +707,22 @@ exports.approveReplacementRequest = async (req, res) => {
   const dbModels = global.DB_MODELS;
   const data = req.body;
   console.log(data);
+  const session = await dbModels.RdRequest.startSession();
+  const session2 = await dbModels.PersonalLeaveStandard.startSession();
   try {
 
-    await dbModels.RdRequest.findOneAndUpdate(
+    await session.startTransaction();
+    await session2.startTransaction();
+
+    const reRequest = await dbModels.RdRequest.findOneAndUpdate(
       {
         _id: data._id
       },
       {
         status: 'approve'
-      }
+      }, {
+      new: true
+    }
     )
 
     // personalLeaveRequest 에 더해줘야함
@@ -650,6 +763,86 @@ exports.approveReplacementRequest = async (req, res) => {
       }
     )
 
+    /**-----------------------------------
+ * blockchain 코드 시작 -------------------------------------------
+ */
+    const store = new MongoWallet();
+    const wallet = new Wallet(store);
+    const userIdentity = await wallet.get(memberInfo._id.toString());
+
+    const findMyManagerCriteria = {
+      myId: req.decoded._id,
+      accepted: true
+    }
+
+    const getManagerData = await dbModels.Manager.findOne(findMyManagerCriteria).populate('myManager', 'email');
+
+
+    const foundCompany = await dbModels.Company.findById(userYear._id).lean();
+
+    console.log(foundCompany)
+
+    let selectedCompany = '';
+    let mspId = '';
+    let channelId = '';
+    switch (foundCompany.company_name) {
+      case 'nsmartsolution':
+        selectedCompany = 'nsmarts'
+        mspId = "NsmartsMSP"
+        channelId = "nsmartschannel"
+        break;
+      case 'vice':
+        selectedCompany = 'vice'
+        mspId = "ViceMSP"
+        channelId = "vicechannel"
+        break;
+      default:
+        selectedCompany = 'vice-kr'
+        mspId = "ViceKRMSP"
+        channelId = "vice-krchannel"
+        break;
+    }
+    const ccp = buildCCP(selectedCompany);
+    const gateway = new Gateway();
+
+    await gateway.connect(ccp, { wallet, identity: userIdentity, discovery: { enabled: false, asLocalhost: false } });
+
+    // 네트워크 채널 가져오기
+    // 휴가는 전체 채널에 공유
+    // 계약서만 따로 따로
+    // vice-krchannel nsmarts, vice, vicekr 3조직 다있는 채널 사용. 
+    const network = await gateway.getNetwork('vice-krchannel');
+
+    // 스마트 컨트랙트 가져오기
+    const contract = network.getContract('leave');
+
+    try {
+      const result = await contract.submitTransaction(
+        'CreateLeaveRequest', // 스마트 컨트랙트의 함수 이름
+        reRequest._id,
+        reRequest.requestor,
+        getManagerData.myManager,
+        reRequest.leaveType,
+        reRequest.leaveDay,
+        reRequest.leaveDuration,
+        reRequest.leave_start_date.toISOString(),
+        reRequest.leave_end_date.toISOString(),
+        reRequest.leave_reason,
+        reRequest.status,
+        ''
+      );
+    } catch (bcError) {
+      console.error('Blockchain transaction failed:', bcError);
+      throw bcError;
+    }
+
+    await gateway.disconnect();
+    // 트랜잭션 커밋
+    await session.commitTransaction();
+    session.endSession();
+
+    // blockchain 코드 끝 ------------------------------------
+
     const notification = await dbModels.Notification(
       {
         sender: req.decoded._id,
@@ -665,10 +858,20 @@ exports.approveReplacementRequest = async (req, res) => {
     await notification.save();
     ///////////////////////
 
+    await session2.commitTransaction();
+    session2.endSession();
+
     return res.status(200).send({
       message: 'approve',
     });
   } catch (err) {
+    console.log(err)
+
+    await session.abortTransaction();
+    await session2.abortTransaction();
+    session.endSession();
+    session2.endSession();
+
     return res.status(500).send({
       message: 'DB Error'
     });

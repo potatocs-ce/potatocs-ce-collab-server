@@ -22,7 +22,7 @@
     "dotenv": "^16.4.5",
     "express": "^4.19.1",
     "fabric-ca-client": "^2.2.20",
-    "fabric-network": "^1.4.20",
+    "fabric-network": "^2.2.20",
     "jsonwebtoken": "^9.0.2",
     "jsrsasign": "^11.1.0",
     "moment": "^2.30.1",
