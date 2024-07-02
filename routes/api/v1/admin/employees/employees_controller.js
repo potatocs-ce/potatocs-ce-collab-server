@@ -12,7 +12,7 @@ exports.getEmployeeList = async (req, res) => {
 
     const dbModels = global.DB_MODELS;
 
-    const { nameFormControl, active = "createdAt", direction = "asc", pageIndex = "0", pageSize = "10" } = req.query;
+    const { nameFormControl, managerID, active = "createdAt", direction = "asc", pageIndex = "0", pageSize = "10" } = req.query;
 
     const limit = parseInt(pageSize, 10);
     const skip = parseInt(pageIndex, 10) * limit;
@@ -36,10 +36,36 @@ exports.getEmployeeList = async (req, res) => {
             });
         }
 
-        const query = {
+        let query = {
             // 대소문자 상관없는 정규표현식으로 바꾸는 코드
             name: new RegExp(nameFormControl, "i"),
         };
+
+        // employee 버튼을 눌렀을 경우
+        if (managerID !== "") {
+            const manager = await dbModels.Manager.find(
+                {
+                    myManager: managerID,
+                },
+                {
+                    myId: 1,
+                    accepted: 1,
+                }
+            ).lean();
+
+            const mngEmployee = [];
+
+            for (let index = 0; index < manager.length; index++) {
+                const element = manager[index].myId;
+                mngEmployee.push(element);
+            }
+
+            query = {
+                // 대소문자 상관없는 정규표현식으로 바꾸는 코드
+                name: new RegExp(nameFormControl, "i"),
+                _id: { $in: mngEmployee },
+            };
+        }
 
         const myEmployeeList = await dbModels.Member.aggregate([
             {
