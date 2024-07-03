@@ -1,4 +1,3 @@
-const { ObjectId } = require("bson");
 const moment = require("moment");
 
 // 직원 목록
@@ -9,7 +8,6 @@ exports.getEmployeeList = async (req, res) => {
 	API  : get employees
 	router.get('/employees', employeesCtrl.getEmployeeList);
 --------------------------------------------------`);
-
     const dbModels = global.DB_MODELS;
 
     const { nameFormControl, managerID, active = "createdAt", direction = "asc", pageIndex = "0", pageSize = "10" } = req.query;
@@ -370,303 +368,119 @@ exports.getEmployeeList = async (req, res) => {
     }
 };
 
-exports.getManagerEmployee = async (req, res) => {
+// 직원 휴가 목록
+exports.getEmployeeLeaveStatus = async (req, res) => {
     console.log(`
 --------------------------------------------------
 	User : ${req.decoded._id}
-	API  : get my company manager employee
-	router.get('/getManagerEmployee', adEmployeeCtrl.getManagerEmployee);
+	API  : employ leave list search
+	router.get('/employeeLeaveListSearch', adEmployeeCtrl.employeeLeaveListSearch);
 --------------------------------------------------`);
-
     const dbModels = global.DB_MODELS;
-    const data = req.query;
-    // console.log(data);
+
+    const { emailFormControl, active = "createdAt", direction = "asc", pageIndex = "0", pageSize = "10" } = req.query;
+
+    const limit = parseInt(pageSize, 10);
+    const skip = parseInt(pageIndex, 10) * limit;
+    const sortCriteria = {
+        [active]: direction === "desc" ? -1 : 1,
+    };
 
     try {
-        const manager = await dbModels.Manager.find(
+        const companyId = await dbModels.Admin.findOne(
             {
-                myManager: ObjectId(data.managerID),
+                _id: req.decoded._id,
             },
             {
-                myId: 1,
-                accepted: 1,
+                company_id: 1,
+                _id: false,
             }
-        ).lean();
-        // console.log(manager);
-        const mngEmployee = [];
+        );
 
-        for (let index = 0; index < manager.length; index++) {
-            const element = manager[index].myId;
-            mngEmployee.push(element);
-        }
-        // console.log(mngEmployee);
+        let query = {
+            // 대소문자 상관없는 정규표현식으로 바꾸는 코드
+            email: new RegExp(emailFormControl, "i"),
+        };
 
-        const myManagerEmployeeList = await dbModels.Member.aggregate([
+        const myEmployeeList = await dbModels.Member.aggregate([
             {
                 $match: {
-                    _id: { $in: mngEmployee },
-                },
-            },
-            {
-                $lookup: {
-                    from: "personalleavestandards",
-                    localField: "_id",
-                    foreignField: "member_id",
-                    as: "totalLeave",
-                },
-            },
-            {
-                $addFields: {
-                    // year: {
-                    //     $floor: {
-                    //         $let: {
-                    //             vars: {
-                    //                 diff: {
-                    //                     $subtract: [new Date(), "$emp_start_date"]
-                    //                 }
-                    //             },
-                    //             in: {
-                    //                 $divide: ["$$diff", (365 * 24 * 60 * 60 * 1000)]
-                    //             }
-                    //         }
-                    //     }
-                    // }
-
-                    // dateDiff : 년차를 계산 -> 단 년만 보고 계산함 월이랑 일은 생각안함
-                    dateDiff: {
-                        $dateDiff: {
-                            startDate: "$emp_start_date",
-                            endDate: "$$NOW",
-                            unit: "year",
-                        },
-                    },
-
-                    // dateCompare : 그래서 이 친구가 필요, 이 친구가 현재와 계약 달, 일을 비교해서 1을 빼줄지 말지 정해줌 -> 오류
-                    // 오류 수정을 위한 수정된 코드
-                    // 달끼리 일끼리 비교하니까 오류가 나서 달일 달일 로 비교하기 위한 방법
-                    emp_start: {
-                        $dateFromParts: {
-                            year: { $year: "$$NOW" },
-                            month: { $month: "$$NOW" },
-                            day: { $dayOfMonth: "$$NOW" },
-                        },
-                    },
-                    now_date: {
-                        $dateFromParts: {
-                            year: { $year: "$$NOW" },
-                            month: { $month: "$emp_start_date" },
-                            day: { $dayOfMonth: "$emp_start_date" },
-                        },
-                    },
-                },
-            },
-            {
-                // 위의 emp_start, now_date 를 가지고 dateCompare
-                $addFields: {
-                    dateCompare: {
-                        $cond: [
-                            {
-                                $and: [
-                                    // {$gte: [ {$month: '$$NOW'}, {$month:'$emp_start_date'}]},
-                                    // {$gte: [ {$dayOfMonth :"$$NOW"}, {$dayOfMonth: '$emp_start_date'}]},
-                                    { $gte: ["$emp_start", "$now_date"] },
-                                ],
-                            },
-                            0,
-                            1,
-                        ],
-                    },
-                },
-            },
-            {
-                // dateDiff 와 dateCompare 의 차 를 year로
-                $addFields: {
-                    year: {
-                        $subtract: ["$dateDiff", "$dateCompare"],
-                    },
+                    company_id: companyId.company_id,
+                    retired: false,
+                    ...query,
                 },
             },
             {
                 $lookup: {
                     from: "leaverequests",
-                    let: {
-                        userId: "$_id",
-                        years: "$year",
-                    },
-                    pipeline: [
-                        {
-                            $match: {
-                                $expr: {
-                                    $and: [{ $eq: ["$requestor", "$$userId"] }, { $eq: ["$year", "$$years"] }],
-                                },
-                            },
-                        },
-                        {
-                            $facet: {
-                                used_annual_leave: [
-                                    {
-                                        $match: {
-                                            $expr: {
-                                                $and: [
-                                                    { $eq: ["$leaveType", "annual_leave"] },
-                                                    {
-                                                        $or: [{ $eq: ["$status", "approve"] }, { $eq: ["$status", "pending"] }],
-                                                    },
-                                                ],
-                                            },
-                                        },
-                                    },
-                                    {
-                                        $group: {
-                                            _id: null,
-                                            sum: {
-                                                $sum: "$leaveDuration",
-                                            },
-                                        },
-                                    },
-                                ],
-                                used_rollover: [
-                                    {
-                                        $match: {
-                                            $expr: {
-                                                $and: [
-                                                    { $eq: ["$leaveType", "rollover"] },
-                                                    {
-                                                        $or: [{ $eq: ["$status", "approve"] }, { $eq: ["$status", "pending"] }],
-                                                    },
-                                                ],
-                                            },
-                                        },
-                                    },
-                                    {
-                                        $group: {
-                                            _id: null,
-                                            sum: {
-                                                $sum: "$leaveDuration",
-                                            },
-                                        },
-                                    },
-                                ],
-                                used_sick_leave: [
-                                    {
-                                        $match: {
-                                            $expr: {
-                                                $and: [
-                                                    { $eq: ["$leaveType", "sick_leave"] },
-                                                    {
-                                                        $or: [{ $eq: ["$status", "approve"] }, { $eq: ["$status", "pending"] }],
-                                                    },
-                                                ],
-                                            },
-                                        },
-                                    },
-                                    {
-                                        $group: {
-                                            _id: null,
-                                            sum: {
-                                                $sum: "$leaveDuration",
-                                            },
-                                        },
-                                    },
-                                ],
-                                used_replacement_leave: [
-                                    {
-                                        $match: {
-                                            $expr: {
-                                                $and: [
-                                                    { $eq: ["$leaveType", "replacement_leave"] },
-                                                    {
-                                                        $or: [{ $eq: ["$status", "approve"] }, { $eq: ["$status", "pending"] }],
-                                                    },
-                                                ],
-                                            },
-                                        },
-                                    },
-                                    {
-                                        $group: {
-                                            _id: null,
-                                            sum: {
-                                                $sum: "$leaveDuration",
-                                            },
-                                        },
-                                    },
-                                ],
-                            },
-                        },
-                    ],
-                    as: "usedLeave",
+                    localField: "_id",
+                    foreignField: "requestor",
+                    as: "leave",
                 },
             },
-
-            //////////// mongo 5.0 이상에서
-            // {
-            //     $addFields:{
-            //         year11: {
-            //             $dateDiff: {
-            //                 startDate: '$emp_start_date', endDate:"$$NOW", unit: "year"
-            //             }
-            //         }
-            //     }
-            // },
-            ///////////
-
-            // {
-            //     usedLeave:{
-            //         $elemMatch:{
-            //             "leaveType" : "annual_leave"
-            //         }
-            //     }
-
-            // },
             {
-                $unwind: {
-                    path: "$totalLeave",
-                    preserveNullAndEmptyArrays: true,
+                $lookup: {
+                    from: "managers",
+                    localField: "_id",
+                    foreignField: "myId",
+                    as: "manager",
                 },
             },
             {
                 $unwind: {
-                    path: "$usedLeave",
+                    path: "$manager",
                     preserveNullAndEmptyArrays: true,
                 },
             },
             {
                 $lookup: {
-                    from: "nationalholidays",
-                    localField: "location",
+                    from: "members",
+                    localField: "manager.myManager",
                     foreignField: "_id",
-                    as: "countryName",
+                    as: "managerName",
                 },
             },
             {
                 $unwind: {
-                    path: "$countryName",
+                    path: "$leave",
                     preserveNullAndEmptyArrays: true,
                 },
             },
             {
+                $addFields: {
+                    leaveTypeStand: "all",
+                    emailStand: "all",
+                },
+            },
+            {
                 $project: {
-                    _id: 1,
                     name: 1,
-                    year: 1,
-                    position: 1,
-                    location: "$countryName.countryName",
-                    emp_start_date: 1,
-                    emp_end_date: 1,
-                    isManager: 1,
-                    totalLeave: {
-                        $arrayElemAt: ["$totalLeave.leave_standard", "$year"],
-                    },
-                    usedLeave: 1,
+                    duration: "$leave.leaveDuration",
+                    leaveType: "$leave.leaveType",
+                    startDate: "$leave.leave_start_date",
+                    endDate: "$leave.leave_end_date",
+                    email: 1,
+                    status: "$leave.status",
+                    leave_reason: "$leave.leave_reason",
+                    approver: "$managerName.name",
+                    createdAt: "$leave.createdAt",
+                    rejectReason: "$leave.rejectReason",
+                },
+            },
+            {
+                $facet: {
+                    paginatedResults: [{ $sort: sortCriteria }, { $skip: skip }, { $limit: limit }],
+                    totalCount: [{ $count: "count" }],
                 },
             },
         ]);
 
-        // console.log(myManagerEmployeeList);
+        const results = myEmployeeList[0].paginatedResults;
+        const totalCount = myEmployeeList[0].totalCount[0] ? myEmployeeList[0].totalCount[0].count : 0;
 
         return res.send({
-            message: "getManagerEmployee HIHI",
-            myManagerEmployeeList,
+            myEmployeeList: results,
+            totalCount,
         });
     } catch (err) {
         console.log(err);
@@ -814,413 +628,6 @@ exports.editEmployeeLeave = async (req, res) => {
         console.log(err);
         return res.status(500).send({
             message: "An error has occurred",
-        });
-    }
-};
-
-exports.employeeLeaveListSearch = async (req, res) => {
-    console.log(`
---------------------------------------------------
-	User : ${req.decoded._id}
-	API  : employ leave list search
-	router.get('/employeeLeaveListSearch', adEmployeeCtrl.employeeLeaveListSearch);
---------------------------------------------------`);
-    const dbModels = global.DB_MODELS;
-    const data = req.query;
-
-    // console.log(data);
-    if (data.emailFind == "" || data.emailFind == "null") {
-        data.emailFind = "all";
-    }
-
-    startDatee = new Date(data.leave_start_date);
-    endDatee = new Date(data.leave_end_date);
-
-    try {
-        const companyId = await dbModels.Admin.findOne(
-            {
-                _id: req.decoded._id,
-            },
-            {
-                company_id: 1,
-                _id: false,
-            }
-        );
-        // console.log(companyId);
-        const myEmployeeLeaveListSearch = await dbModels.Member.aggregate([
-            {
-                $match: {
-                    company_id: ObjectId(companyId.company_id),
-                    retired: false,
-                },
-            },
-            {
-                $lookup: {
-                    from: "leaverequests",
-                    localField: "_id",
-                    foreignField: "requestor",
-                    as: "leave",
-                },
-            },
-            {
-                $lookup: {
-                    from: "managers",
-                    localField: "_id",
-                    foreignField: "myId",
-                    as: "manager",
-                },
-            },
-            {
-                $unwind: {
-                    path: "$manager",
-                    preserveNullAndEmptyArrays: true,
-                },
-            },
-            {
-                $lookup: {
-                    from: "members",
-                    localField: "manager.myManager",
-                    foreignField: "_id",
-                    as: "managerName",
-                },
-            },
-            {
-                $unwind: {
-                    path: "$leave",
-                    preserveNullAndEmptyArrays: true,
-                },
-            },
-            {
-                $addFields: {
-                    leaveTypeStand: "all",
-                    emailStand: "all",
-                },
-            },
-            {
-                $project: {
-                    name: 1,
-                    duration: "$leave.leaveDuration",
-                    leaveType: "$leave.leaveType",
-                    leaveTypeStand: {
-                        $cond: {
-                            if: { $eq: ["$leave.leaveType", data.type] },
-                            then: data.type,
-                            else: "all",
-                        },
-                    },
-                    startDate: "$leave.leave_start_date",
-                    endDate: "$leave.leave_end_date",
-                    email: 1,
-                    status: "$leave.status",
-                    emailStand: {
-                        $cond: {
-                            if: { $eq: ["$email", data.emailFind] },
-                            then: "$email",
-                            else: "all",
-                        },
-                    },
-                    leave_reason: "$leave.leave_reason",
-                    approver: "$managerName.name",
-                    createdAt: "$leave.createdAt",
-                    rejectReason: "$leave.rejectReason",
-                },
-            },
-            {
-                $match: {
-                    startDate: { $gte: startDatee, $lte: endDatee },
-                    emailStand: data.emailFind,
-                    leaveTypeStand: data.type,
-                },
-            },
-            // {
-            //     $sort: {
-            //         startDate: 1
-            //     }
-            // }
-        ]);
-
-        // console.log(myEmployeeLeaveListSearch);
-
-        const myEmployeeList = await dbModels.Member.aggregate([
-            {
-                $match: {
-                    company_id: ObjectId(companyId.company_id),
-                    retired: false,
-                },
-            },
-            {
-                $project: {
-                    name: 1,
-                    email: 1,
-                },
-            },
-        ]);
-        return res.send({
-            myEmployeeLeaveListSearch,
-            myEmployeeList,
-        });
-    } catch (err) {
-        console.log(err);
-        return res.status(500).send({
-            message: "An error has occurred",
-        });
-    }
-};
-
-// 퇴사자 목록
-exports.getMyRetiredEmployee = async (req, res) => {
-    console.log(`
---------------------------------------------------
-	User : ${req.decoded._id}
-	API  : get my company employee
-	router.get('/getMyRetiredEmployee', adEmployeeCtrl.getMyRetiredEmployee);
---------------------------------------------------`);
-
-    const dbModels = global.DB_MODELS;
-    try {
-        // company id 가져오기
-        const companyId = await dbModels.Admin.findOne(
-            {
-                _id: req.decoded._id,
-            },
-            {
-                company_id: 1,
-            }
-        );
-        // console.log(companyId);
-
-        if (companyId.company_id == null || companyId.company_id == "") {
-            return res.status(500).send({
-                message: "noCompany",
-            });
-        }
-
-        const myEmployeeList = await dbModels.Member.aggregate([
-            {
-                $match: {
-                    company_id: companyId.company_id,
-                    isAdmin: false,
-                    retired: true,
-                },
-            },
-            {
-                $lookup: {
-                    from: "personalleavestandards",
-                    localField: "_id",
-                    foreignField: "member_id",
-                    as: "totalLeave",
-                },
-            },
-            {
-                $project: {
-                    _id: 1,
-                    name: 1,
-                    email: 1,
-                    year: 1,
-                    position: 1,
-                    location: 1,
-                    emp_start_date: 1,
-                    emp_end_date: 1,
-                    isManager: 1,
-                    totalLeave: {
-                        $arrayElemAt: ["$totalLeave.leave_standard", "$year"],
-                    },
-                    usedLeave: 1,
-                    resignation_date: 1,
-                },
-            },
-            {
-                $sort: {
-                    isManager: 1,
-                },
-            },
-        ]);
-
-        console.log(myEmployeeList);
-
-        return res.status(200).send({
-            message: "found",
-            myEmployeeList,
-        });
-    } catch (err) {
-        console.log(err);
-        return res.status(500).send({
-            message: "An error has occurred",
-        });
-    }
-};
-
-// search for member
-// 퇴사 시킬 직원 찾기
-exports.searchEmployee = async (req, res) => {
-    console.log(`
---------------------------------------------------
-  User : ${req.decoded._id}
-  API  : search member 
-  router.get('/searchEmployee', adEmployeeCtrl.searchEmployee);
---------------------------------------------------`);
-
-    const dbModels = global.DB_MODELS;
-    const data = req.query;
-    // console.log(data);
-
-    try {
-        const searchEmployee = await dbModels.Member.findOne({
-            email: data.email,
-        });
-
-        return res.status(200).send({
-            message: "searchEmployee",
-            searchEmployee,
-        });
-    } catch {
-        return res.status(500).send({
-            message: "searchEmployee Error",
-        });
-    }
-};
-
-// retire member
-// 직원 퇴사
-
-exports.retireEmployee = async (req, res) => {
-    console.log(`
---------------------------------------------------
-  User : ${req.decoded._id}
-  API  : retireEmployee
-  router.patch('/retireEmployee', adEmployeeCtrl.retireEmployee);
---------------------------------------------------`);
-    const dbModels = global.DB_MODELS;
-
-    const data = req.body;
-    // console.log(data);
-
-    const criteria = {
-        _id: data.id,
-    };
-
-    const updateData = {
-        resignation_date: data.resignation_date,
-        retired: true,
-    };
-
-    try {
-        const retireEmployee = await dbModels.Member.findOneAndUpdate(criteria, updateData);
-        if (!retireEmployee) {
-            return res.status(500).send("the update1 has failed");
-        }
-        // 매니저가 퇴사 시 직원들에게 등록된 매니저 삭제
-        const myManager = await dbModels.Manager.find({ myManager: data.id });
-        // console.log('myManager---------------------------------------------------')
-        // console.log(myManager)
-        // console.log('---------------------------------------------------')
-
-        // 매니저가 퇴사 시 매니저에게 신청한 휴가 삭제
-        // 삭제할 휴가 되돌려 주기
-        ////////////////////
-        // rollover 처리
-        for (let i = 0; i < myManager.length; i++) {
-            if (myManager[i].leaveType == "annual_leave") {
-                // 휴가 신청자 계약일 받아오고
-                const userYear = await dbModels.Member.findOne({
-                    _id: myManager[i].requestor,
-                });
-                // console.log(userYear);
-
-                // 년차 뽑아옴
-                const date = new Date();
-                const today = moment(new Date());
-                const empStartDate = moment(userYear.emp_start_date);
-                const careerYear = today.diff(empStartDate, "years") + 1;
-                // console.log(careerYear);
-
-                // rollover 값을 우선 찾는다..
-                const rolloverTotal = await dbModels.PersonalLeaveStandard.findOne({
-                    member_id: myManager[i].requestor,
-                });
-                // rollover 변수에 duration 을 뺀 값을 저장
-
-                // console.log(rolloverTotal.leave_standard[careerYear]);
-                // console.log(rolloverTotal.leave_standard[careerYear]['rollover'] != undefined);
-
-                if (rolloverTotal.leave_standard[careerYear]["rollover"] != undefined) {
-                    rollover = rolloverTotal.leave_standard[careerYear].rollover + myManager[i].leaveDuration;
-                    // console.log(rollover);
-
-                    // 위에서 구한 변수로 set
-                    // 여기서 한번에 다 하고 싶었으나 안됨..
-                    const rolloverCal = await dbModels.PersonalLeaveStandard.findOneAndUpdate(
-                        {
-                            member_id: myManager[i].requestor,
-                            "leave_standard.year": careerYear + 1,
-                        },
-                        {
-                            $set: {
-                                "leave_standard.$.rollover": rollover,
-                            },
-                        },
-                        { new: true }
-                    );
-                    // console.log(rolloverCal.leave_standard[careerYear+1]);
-                }
-            }
-        }
-
-        const deletePendingReqest = await dbModels.LeaveRequest.deleteMany({ approver: data.id, status: "pending" });
-        // console.log(deletePendingReqest)
-
-        const deleteMyManager = await dbModels.Manager.deleteMany({ myManager: data.id });
-        // console.log(deleteMyManager)
-
-        return res.status(200).send({
-            message: "connect retireEmployee",
-        });
-    } catch (error) {
-        console.log(error);
-        return res.status(500).send({
-            message: "DB Error",
-        });
-    }
-};
-
-// retire member
-// 직원 퇴사 취소
-
-exports.cancelRetireEmployee = async (req, res) => {
-    console.log(`
---------------------------------------------------
-  User : ${req.decoded._id}
-  API  : cancelRetireEmployee
-  router.patch('/cancelRetireEmployee', adEmployeeCtrl.cancelRetireEmployee);
---------------------------------------------------`);
-    const dbModels = global.DB_MODELS;
-
-    const data = req.body;
-
-    const criteria = {
-        _id: data.id,
-    };
-
-    const updateData = {
-        resignation_date: "",
-        retired: false,
-    };
-
-    // 직원 퇴사 취소
-    try {
-        const retireEmployee = await dbModels.Member.findOneAndUpdate(criteria, updateData);
-        if (!retireEmployee) {
-            return res.status(500).send("the update1 has failed");
-        }
-
-        // console.log(updatedDisplayName);
-
-        return res.status(200).send({
-            message: "cancel Retire Employee",
-        });
-    } catch (error) {
-        return res.status(500).send({
-            message: "DB Error",
         });
     }
 };
