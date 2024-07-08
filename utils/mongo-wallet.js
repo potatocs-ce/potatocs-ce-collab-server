@@ -67,15 +67,18 @@ class MongoWallet {
     // Wallet class의 put() 함수에서 인자값을 통해 role을 가져올 수 없어서
     // DB에서 가져온다
     try {
-      const foundUser = await dbModels.User.findById({ _id: label }).lean();
+      const foundAdmin = await dbModels.Admin.findById({ _id: label }).lean();
+      const foundMember = await dbModels.Member.findById({ _id: label }).lean();
+
+      const foundUser = foundAdmin || foundMember;
+
       if (!foundUser) {
-        console.log("No admin found for the given ID:", label);
-        return;
+        return res.status(400).json({ message: 'User was not found' });
       }
 
       const input = {
         user: label,
-        role: foundUser.auth === "admin" ? "admin" : "client",
+        role: foundUser.isAdmin ? 'admin' : 'client',
         org: jsonData.mspId,
         credentials: jsonData.credentials,
         mspId: jsonData.mspId,

@@ -148,7 +148,7 @@ exports.enrollAdminMongo = async (caClient, wallet, mspId, userId) => {
     console.log('Successfully enrolled admin user and imported it into the wallet');
   } catch (error) {
     console.log(error)
-    await global.DB_MODELS.User.findByIdAndDelete(userId);
+    await global.DB_MODELS.Admin.findByIdAndDelete(userId);
     console.error(`Failed to enroll admin user : ${error}`);
   }
 };

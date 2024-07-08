@@ -92,14 +92,13 @@ exports.connectAdminCompany = async (req, res) => {
     let selectedCompany = '';
     let mspId = '';
     switch (foundCompany.company_name) {
-      case 'nsmartsolution':
+      case 'nsmarts':
         selectedCompany = 'nsmarts'
         mspId = "NsmartsMSP"
         break;
       case 'vice':
         selectedCompany = 'vice'
         mspId = "ViceMSP"
-
         break;
       default:
         selectedCompany = 'vice-kr'
@@ -113,7 +112,6 @@ exports.connectAdminCompany = async (req, res) => {
     // mongodb wallet 생성
     const store = new MongoWallet();
     const wallet = new Wallet(store);
-
     // 어드민 계정 wallet에 등록
     const enrollAdmin = await enrollAdminMongo(caClient, wallet, mspId, data.admin_id);
 
