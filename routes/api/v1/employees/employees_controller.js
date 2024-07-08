@@ -394,9 +394,7 @@ exports.approvedLeaveRequest = async (req, res) => {
     const getManagerData = await dbModels.Manager.findOne(findMyManagerCriteria).populate('myManager', 'email');
 
 
-    const foundCompany = await dbModels.Company.findById(userYear._id).lean();
-
-    console.log(foundCompany)
+    const foundCompany = await dbModels.Company.findById(foundMember.company_id).lean();
 
     let selectedCompany = '';
     let mspId = '';
@@ -675,7 +673,7 @@ exports.deleteLeaveRequest = async (req, res) => {
     const getManagerData = await dbModels.Manager.findOne(findMyManagerCriteria).populate('myManager', 'email');
 
 
-    const foundCompany = await dbModels.Company.findById(userYear._id).lean();
+    const foundCompany = await dbModels.Company.findById(userYear.company_id).lean();
 
     console.log(foundCompany)
 

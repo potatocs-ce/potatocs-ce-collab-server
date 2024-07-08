@@ -449,7 +449,7 @@ exports.cancelMyRequestLeave = async (req, res) => {
     const getManagerData = await dbModels.Manager.findOne(findMyManagerCriteria).populate('myManager', 'email');
 
 
-    const foundCompany = await dbModels.Company.findById(userYear._id).lean();
+    const foundCompany = await dbModels.Company.findById(userYear.company_id).lean();
 
     console.log(foundCompany)
 

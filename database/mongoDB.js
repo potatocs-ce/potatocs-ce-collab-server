@@ -25,7 +25,8 @@ function createSchema() {
   const dbModels = {};
 
   dbModels.Wallet = require('../models/wallet_schema');
-
+  dbModels.AdUploadDocument = require('../models/ad_upload_document_schema') // 블록체인 중요문서 보관소
+  dbModels.AdContract = require('../models/ad_contract_schema') // 블록체인 계약서 코드
 
   dbModels.Admin = require('../models/admin_schema');
   dbModels.NsAdmin = require('../models/nsAdmin_schema');

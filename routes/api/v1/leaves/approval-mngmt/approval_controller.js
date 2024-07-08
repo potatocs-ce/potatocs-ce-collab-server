@@ -603,7 +603,7 @@ exports.rejectReplacementRequest = async (req, res) => {
     const getManagerData = await dbModels.Manager.findOne(findMyManagerCriteria).populate('myManager', 'email');
 
 
-    const foundCompany = await dbModels.Company.findById(userYear._id).lean();
+    const foundCompany = await dbModels.Company.findById(foundMember.company_id).lean();
 
     console.log(foundCompany)
 
@@ -736,10 +736,8 @@ exports.approveReplacementRequest = async (req, res) => {
     const memberInfo = await dbModels.Member.findOne(
       {
         _id: data.requestor
-      },
-      {
-        emp_start_date: 1
       }
+
     )
 
     // 년차 찾기
@@ -778,7 +776,7 @@ exports.approveReplacementRequest = async (req, res) => {
     const getManagerData = await dbModels.Manager.findOne(findMyManagerCriteria).populate('myManager', 'email');
 
 
-    const foundCompany = await dbModels.Company.findById(userYear._id).lean();
+    const foundCompany = await dbModels.Company.findById(memberInfo.company_id).lean();
 
     console.log(foundCompany)
 
