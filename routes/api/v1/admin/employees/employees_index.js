@@ -4,6 +4,8 @@ const employeesCtrl = require("./employees_controller");
 
 // 직원 목록
 router.get("/", employeesCtrl.getEmployeeList);
+// 직원 휴가 목록
+router.get("/getEmployeeLeaveStatus", employeesCtrl.getEmployeeLeaveStatus);
 // 직원 상세 조회
 router.get("/:id", employeesCtrl.getEmployeeInfo);
 // 직원 디테일 수정
