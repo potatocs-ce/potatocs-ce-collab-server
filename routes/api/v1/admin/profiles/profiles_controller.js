@@ -4,6 +4,7 @@ const unlinkAsync = promisify(fs.unlink);
 const sharp = require("sharp");
 const { s3Client } = require("../../../../../utils/s3Utils");
 const { PutObjectCommand, DeleteObjectCommand } = require("@aws-sdk/client-s3");
+const admin = require("../../../../../models/admin_schema");
 
 // 프로필 수정
 exports.editProfile = async (req, res) => {
@@ -31,7 +32,7 @@ exports.editProfile = async (req, res) => {
             };
         }
 
-        const profileChange = await dbModels.NsAdmin.findOneAndUpdate(
+        const profileChange = await admin.findOneAndUpdate(
             {
                 _id: data._id,
             },
@@ -68,7 +69,7 @@ exports.editProfileImage = async (req, res) => {
     const data = req.file;
 
     try {
-        const previousProfileImage = await dbModels.NsAdmin.findOne({
+        const previousProfileImage = await dbModels.Admin.findOne({
             _id: req.decoded._id,
         });
 
@@ -118,7 +119,7 @@ exports.editProfileImage = async (req, res) => {
 
         const location = `${process.env.AWS_LOCATION}${resizeImgName}`;
 
-        await dbModels.NsAdmin.updateOne(
+        await dbModels.Admin.updateOne(
             { _id: req.decoded._id },
             {
                 profile_img_key: data.key,

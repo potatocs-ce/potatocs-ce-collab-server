@@ -16,6 +16,7 @@ const retired_employees = require("./retired_employees/retired_employees_index")
 const employment_contracts = require("./employment_contracts/employment_contracts_index");
 const holidays = require("./holidays/holidays_index");
 const dashboard = require("./dashboard/dashboard_index");
+const profiles = require("./profiles/profiles_index");
 
 /*-----------------------------------
   Controller
@@ -31,6 +32,7 @@ router.use("/retired_employees", retired_employees);
 router.use("/employment_contracts", employment_contracts);
 router.use("/holidays", holidays);
 router.use("/dashboard", dashboard);
+router.use("/profiles", profiles);
 
 /* Profile Image Update */
 const storage = multer.diskStorage({
@@ -46,8 +48,8 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 /* Profile */
-router.get("/profile", adProfileCtrl.profile);
-router.patch("/profileChange", adProfileCtrl.profileChange);
-router.post("/profileImageChange", profileUpload.single("file"), adProfileCtrl.profileImageChange);
+// router.get("/profile", adProfileCtrl.profile);
+// router.patch("/profileChange", adProfileCtrl.profileChange);
+// router.post("/profileImageChange", profileUpload.single("file"), adProfileCtrl.profileImageChange);
 
 module.exports = router;
