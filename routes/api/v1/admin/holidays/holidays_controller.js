@@ -46,13 +46,17 @@ exports.getHolidayList = async (req, res) => {
                         { $limit: limit },
                         { $replaceRoot: { newRoot: "$company_holiday" } }, // 결과를 company_holiday 객체로 교체
                     ],
-                    totalCount: [{ $count: "count" }],
+                    totalCount: [
+                        { $unwind: "$company_holiday" },
+                        { $match: { "company_holiday.ch_name": new RegExp(nameFormControl, "i") } },
+                        { $count: "count" },
+                    ],
                 },
             },
         ]);
 
         const results = findHoliday[0].paginatedResults;
-        const totalCount = findHoliday[0].totalCount[0] ? findHoliday[0].totalCount[0].count : 0;
+        const totalCount = findHoliday[0].totalCount.length > 0 ? findHoliday[0].totalCount[0].count : 0;
 
         return res.status(200).send({
             message: "Success find company holiday",
