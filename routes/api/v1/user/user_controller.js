@@ -5,6 +5,16 @@ const { promisify } = require("util");
 const unlinkAsync = promisify(fs.unlink);
 const sharp = require("sharp");
 const { default: mongoose } = require("mongoose");
+const { S3Client } = require("@aws-sdk/client-s3");
+const { PutObjectCommand } = require("@aws-sdk/client-s3");
+const s3Client = new S3Client({
+	region: process.env.AWS_REGION,
+	credentials: {
+		accessKeyId: process.env.AWS_ACCESS_KEY,
+		secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+	},
+});
+
 // const s3 = global.AWS_S3.s3;
 // const bucket = global.AWS_S3.bucket;
 
@@ -191,6 +201,7 @@ exports.profileChange = async (req, res) => {
   router.get('/profileChange', userController.profileChange) 
 --------------------------------------------------`);
 	const data = req.body;
+
 	// console.log(data);
 	let updateData;
 	try {
@@ -250,7 +261,6 @@ exports.profileImageChange = async (req, res) => {
 --------------------------------------------------`);
 
 	const data = req.files[0];
-	// console.log(data);
 
 	try {
 		const previousProfileImage = await member.findOne({
@@ -260,52 +270,93 @@ exports.profileImageChange = async (req, res) => {
 
 		// 이미지 리사이즈 작업 -> 원본을 리사이즈한 뒤에 원본을 제거
 		await sharp(data.path).resize(300, 300).toFile(resizePath);
+
 		await unlinkAsync(data.path);
 		// console.log(previousProfileImage)
 
 		const resizeImgName = `profile-img/${Date.now()}.${data.originalname}`;
-		var params = {
-			Bucket: bucket,
+		// var params = {
+		//   'Bucket': bucket,
+		//   'Key': resizeImgName,
+		//   'ACL': 'public-read',
+		//   'Body': fs.createReadStream('./uploads/profile_img/' + data.filename),
+		//   'ContentType': 'image/png'
+		// }
+
+		// 리사이즈된 이미지를 S3에 업로드
+
+		console.log(resizePath);
+		const uploadParams = {
+			Bucket: process.env.AWS_S3_BUCKET,
 			Key: resizeImgName,
+			Body: fs.createReadStream(resizePath),
 			ACL: "public-read",
-			Body: fs.createReadStream("./uploads/profile_img/" + data.filename),
 			ContentType: "image/png",
 		};
 
+		const new_data = await s3Client.send(new PutObjectCommand(uploadParams));
+		console.log(new_data);
+		// 로컬에 저장된 리사이즈 파일 제거
+		await unlinkAsync(resizePath);
+		const location = `${process.env.AWS_LOCATION}${resizeImgName}`;
+		// const updatedUserProfile = await member.findByIdAndUpdate(req.decoded._id,
+		//   {
+		//     profile_img_key: data.key,
+		//     profile_img: decodeURI(data.Location)
+		//   },
+		//   {
+		//     fields: { password: 0 },
+		//     new: true
+		//   }
+		// );
+
+		const changeProfileImage = await member.findOneAndUpdate(
+			{
+				_id: req.decoded._id,
+			},
+			{
+				profile_img_key: resizeImgName,
+				profile_img: location,
+			},
+			{
+				fields: { password: 0 },
+				new: true,
+			}
+		);
+
 		// https://www.w3schools.com/jsref/jsref_decodeuri.asp
 		// s3로부터 받은 Location이 깨졌을 경우 해결
-		await s3.upload(params, async function (err, data) {
-			// console.log(data);
-			const changeProfileImage = await member.findOneAndUpdate(
-				{
-					_id: req.decoded._id,
-				},
-				{
-					profile_img_key: data.key,
-					profile_img: decodeURI(data.Location),
-				},
-				{
-					fields: { password: 0 },
-					new: true,
-				}
-			);
-			// 로컬에 저장된 리사이즈 파일 제거
-			await unlinkAsync(resizePath);
-			// S3에 저장된 프로필 수정 전 리사이즈 파일 삭제
-			if (previousProfileImage.profile_img_key != "") {
-				const params = {
-					Bucket: bucket,
-					Key: previousProfileImage.profile_img_key,
-				};
-				s3.deleteObject(params, function (err, data) {
-					if (err) console.log(err, err.stack);
-					else console.log("previous S3 pofile image delete Success");
-				});
-			}
-			return res.send({
-				message: "profile image change",
-				user: changeProfileImage,
-			});
+		// await s3.upload(params, async function (err, data) {
+		//   // console.log(data);
+		//   const changeProfileImage = await member.findOneAndUpdate(
+		//     {
+		//       _id: req.decoded._id
+		//     },
+		//     {
+		//       profile_img_key: data.key,
+		//       profile_img: decodeURI(data.Location)
+		//     },
+		//     {
+		//       fields: { password: 0 },
+		//       new: true
+		//     }
+		//   )
+		//   // 로컬에 저장된 리사이즈 파일 제거
+		//   await unlinkAsync(resizePath);
+		//   // S3에 저장된 프로필 수정 전 리사이즈 파일 삭제
+		//   if (previousProfileImage.profile_img_key != '') {
+		//     const params = {
+		//       Bucket: bucket,
+		//       Key: previousProfileImage.profile_img_key
+		//     };
+		//     s3.deleteObject(params, function (err, data) {
+		//       if (err) console.log(err, err.stack);
+		//       else console.log('previous S3 pofile image delete Success');
+		//     })
+		//   }
+		return res.send({
+			message: "profile image change",
+			user: changeProfileImage,
 		});
 	} catch (err) {
 		console.log(err);

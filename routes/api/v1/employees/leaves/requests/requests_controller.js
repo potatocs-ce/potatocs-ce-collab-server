@@ -1,8 +1,5 @@
-const { ObjectId } = require('bson');
-const LeaveRequestHistory = require('../../../../../models/leave_request_history_schema');
-const LeaveRequest = require('../../../../../models/leave_request_schema');
-const moment = require("moment");
 const { default: mongoose } = require('mongoose');
+const moment = require("moment");
 
 exports.getLeaveRequest = async (req, res) => {
   console.log(`
@@ -12,7 +9,18 @@ exports.getLeaveRequest = async (req, res) => {
   router.get('/pending-leave-request', approvalMngmtCtrl.getLeaveRequest);
 --------------------------------------------------`);
   const dbModels = global.DB_MODELS;
+  const {
+    active = 'createdAt',
+    direction = 'asc',
+    pageIndex = '0',
+    pageSize = '10'
+  } = req.query;
 
+  const limit = parseInt(pageSize, 10);
+  const skip = parseInt(pageIndex, 10) * limit;
+  const sortCriteria = {
+    [active]: direction === 'desc' ? -1 : 1,
+  };
   try {
 
     const pendingLeaveReqList = await dbModels.LeaveRequest.aggregate([
@@ -54,7 +62,10 @@ exports.getLeaveRequest = async (req, res) => {
         $match: {
           retired: false
         }
-      }
+      },
+      { $sort: sortCriteria },
+      { $skip: skip },
+      { $limit: limit }
     ]);
 
 
@@ -74,6 +85,8 @@ exports.getLeaveRequest = async (req, res) => {
   }
 
 }
+
+
 
 exports.approvedLeaveRequest = async (req, res) => {
   console.log(`
@@ -194,13 +207,15 @@ exports.approvedLeaveRequest = async (req, res) => {
   }
 };
 
-// 신청한 휴가 delete
-exports.deleteLeaveRequest = async (req, res) => {
+
+
+// 신청한 휴가 거절
+exports.rejectLeaveRequest = async (req, res) => {
   console.log(`
 --------------------------------------------------
   User : ${req.decoded._id}
   API  : Delete Leave Request Pending List
-  router.put('/delete-leave-request', approvalMngmtCtrl.deleteLeaveRequest);
+  router.put('/employees/leaves/requests', approvalMngmtCtrl.rejectLeaveRequest);
   
 --------------------------------------------------`);
 
@@ -294,7 +309,7 @@ exports.deleteLeaveRequest = async (req, res) => {
 
 
 
-    const leaveRequest = await LeaveRequest.findOneAndUpdate(criteria, updateData);
+    const leaveRequest = await dbModels.LeaveRequest.findOneAndUpdate(criteria, updateData);
     // // console.log(leaveRequest);
 
     // // 일단 보류 LeaveRequestHistory 
@@ -344,79 +359,55 @@ exports.deleteLeaveRequest = async (req, res) => {
 
 };
 
-// 승인된 휴가 취소
-exports.cancelEmployeeApproveLeave = async (req, res) => {
+// pending 상태의 자기가 신청한 휴가 취소
+exports.cancelMyRequestLeave = async (req, res) => {
   console.log(`
---------------------------------------------------
-  User : ${req.decoded._id}
-  API  : Cancel Employee Approve Leave
-  router.put('/cancel-Employee-Approve-Leave', approvalMngmtCtrl.cancelEmployeeApproveLeave); // M approve 된 휴가 취소
-  
+--------------------------------------------------  
+  API  : Get My Reqeust List Search
+  User: ${req.decoded._id}
+  router.delete('/delete-request-leave', leaveMngmtCtrl.deleteRequestLeave); // 신청한 휴가 취소
 --------------------------------------------------`);
+
 
   const data = req.body;
   // console.log(data);
-  const dbModels = global.DB_MODELS;
 
+  // console.log(match_criteria);
+
+  const dbModels = global.DB_MODELS;
   try {
     ////////////////////
     // rollover 처리
     // leave type 이 annual_leave 일때만 rollover
     // 휴가 신청자 계약일 받아오고
     // console.log(data.requestor);
-    const userYear = await dbModels.Manager.aggregate([
+    const userYear = await dbModels.Member.findOne(
       {
-        $match: {
-          _id: ObjectId(req.body.requestor),
-        }
-      },
-      {
-        $lookup: {
-          from: 'members',
-          localField: 'myId',
-          foreignField: '_id',
-          as: 'requesterInfo'
-        },
-      },
-      {
-        $unwind: {
-          path: '$requesterInfo',
-          preserveNullAndEmptyArrays: true
-        }
-      },
-      {
-        $project: {
-          retired: '$requesterInfo.retired',
-          name: '$requesterInfo.name',
-          email: '$requesterInfo.email',
-          requesterInfoId: '$requesterInfo._id',
-          emp_start_date: '$requesterInfo.emp_start_date'
-        }
-      },
-    ]);
-
-
-    // console.log(userYear[0]);
+        _id: data.requestor
+      }
+    )
+    // console.log('userYear');
+    // console.log(userYear);
 
     // 년차 뽑아옴
     const date = new Date();
     const today = moment(new Date());
-    const empStartDate = moment(userYear[0].emp_start_date);
+    const empStartDate = moment(userYear.emp_start_date);
     const careerYear = (today.diff(empStartDate, 'years')) + 1;
     // console.log(careerYear);
 
 
 
     // rollover 값을 우선 찾는다..
+    // console.log(data);
     const rolloverTotal = await dbModels.PersonalLeaveStandard.findOne(
       {
-        member_id: userYear[0].requesterInfoId
+        member_id: data.requestor
       }
     )
 
-    // console.log(rolloverTotal)
 
-    await dbModels.LeaveRequest.findOneAndUpdate(
+    const leaveRequest = await dbModels.LeaveRequest.findOneAndUpdate(
       {
         _id: data._id
       },
@@ -424,11 +415,12 @@ exports.cancelEmployeeApproveLeave = async (req, res) => {
         status: 'Cancel'
       }
     )
+    // console.log(leaveRequest)
     // rollover 변수에 duration 을 뺀 값을 저장
 
-    // // console.log(rolloverTotal);
-    // // console.log(rolloverTotal.leave_standard[careerYear]);
-    // // console.log(rolloverTotal.leave_standard[careerYear]['rollover'] != undefined);
+    // console.log(rolloverTotal);
+    // console.log(rolloverTotal.leave_standard[careerYear]);
+    // console.log(rolloverTotal.leave_standard[careerYear]['rollover'] != undefined);
 
     if (rolloverTotal.leave_standard[careerYear]['rollover'] != undefined) {
       if (req.body.leaveType == 'annual_leave') {
@@ -440,7 +432,7 @@ exports.cancelEmployeeApproveLeave = async (req, res) => {
         // 여기서 한번에 다 하고 싶었으나 안됨..
         const rolloverCal = await dbModels.PersonalLeaveStandard.findOneAndUpdate(
           {
-            member_id: userYear[0].requesterInfoId,
+            member_id: data.requestor,
             'leave_standard.year': careerYear + 1
           },
           {
@@ -449,8 +441,26 @@ exports.cancelEmployeeApproveLeave = async (req, res) => {
             }
           }, { new: true }
         )
-        console.log(rolloverCal.leave_standard[careerYear + 1]);
+        // console.log(rolloverCal.leave_standard[careerYear + 1]);
       }
+    }
+
+    if (data.leaveType == 'replacement_leave') {
+      const rdTaken = await dbModels.RdRequest.findOne(
+        {
+          _id: leaveRequest.rdRequest
+        }
+      )
+      // console.log(rdTaken);
+      const taken = rdTaken.taken - data.leaveDuration
+      const rdRequest = await dbModels.RdRequest.findOneAndUpdate(
+        {
+          _id: leaveRequest.rdRequest
+        },
+        {
+          taken: taken
+        }
+      )
     }
 
 
@@ -461,214 +471,6 @@ exports.cancelEmployeeApproveLeave = async (req, res) => {
 
   } catch (error) {
     console.log(error)
-    return res.status(500).send({
-      message: 'DB Error'
-    });
-  }
-};
-
-exports.getConfirmRdRequest = async (req, res) => {
-  console.log(`
---------------------------------------------------  
-  API  : Get Confirm RD Request List
-  User: ${req.decoded._id}
-  router.get('/getConfirmRdRequest', approvalMngmtCtrl.getConfirmRdRequest) 
---------------------------------------------------`);
-
-  const dbModels = global.DB_MODELS;
-  const {
-    active = 'createdAt',
-    direction = 'asc',
-    pageIndex = '0',
-    pageSize = '10'
-  } = req.query;
-
-  const limit = parseInt(pageSize, 10);
-  const skip = parseInt(pageIndex, 10) * limit;
-  const sortCriteria = {
-    [active]: direction === 'desc' ? -1 : 1,
-  };
-  try {
-
-    const rdConfirmRequest = await dbModels.RdRequest.aggregate([
-      {
-        $match: {
-          approver: new mongoose.Types.ObjectId(req.decoded._id),
-          status: 'pending'
-        }
-      },
-      {
-        $lookup: {
-          from: 'members',
-          localField: 'requestor',
-          foreignField: '_id',
-          as: 'requesterInfo'
-        },
-      },
-      {
-        $unwind: {
-          path: '$requesterInfo',
-          preserveNullAndEmptyArrays: true
-        }
-      },
-      {
-        $project: {
-          requestorName: '$requesterInfo.name',
-          requestor: 1,
-          leaveType: 1,
-          leaveDuration: 1,
-          leave_start_date: 1,
-          leave_end_date: 1,
-          leave_reason: 1,
-          status: 1,
-          createdAt: 1,
-        }
-      },
-      { $sort: sortCriteria },
-      { $skip: skip },
-      { $limit: limit }
-    ]);
-
-    return res.status(200).send({
-      message: 'rdConfirmRequest',
-      rdConfirmRequest,
-      total_count: rdConfirmRequest?.length
-    });
-  } catch (err) {
-    console.log(err)
-    return res.status(500).send({
-      message: 'DB Error'
-    });
-  }
-};
-
-exports.rejectReplacementRequest = async (req, res) => {
-  console.log(`
---------------------------------------------------  
-  API  : Reject Replacement Request ( not leave request )
-  User: ${req.decoded._id}
-  router.put('/rejectReplacementRequest',approvalMngmtCtrl.rejectReplacementRequest);
---------------------------------------------------`);
-
-  const dbModels = global.DB_MODELS;
-  const data = req.body
-  console.log(data);
-  try {
-
-    await dbModels.RdRequest.findOneAndUpdate(
-      {
-        _id: data._id
-      },
-      {
-        rejectReason: data.rejectReason,
-        status: 'reject'
-      }
-    )
-
-    const notification = await dbModels.Notification(
-      {
-        sender: req.decoded._id,
-        receiver: data.requestor,
-        notiType: 'rd-request-reject',
-        isRead: false,
-        iconText: 'assignment_late',
-        notiLabel: 'A replacement day request rejected',
-        navigate: 'leave/rd-request-list'
-      }
-    )
-
-    await notification.save();
-    ///////////////////////
-
-    return res.status(200).send({
-      message: 'delete',
-    });
-  } catch (err) {
-    return res.status(500).send({
-      message: 'DB Error'
-    });
-  }
-};
-
-exports.approveReplacementRequest = async (req, res) => {
-  console.log(`
---------------------------------------------------  
-  API  : Approve Replacement Request ( not leave request )
-  User: ${req.decoded._id}
-  router.put('/approveReplacementRequest',approvalMngmtCtrl.approveReplacementRequest);
---------------------------------------------------`);
-
-  const dbModels = global.DB_MODELS;
-  const data = req.body;
-  console.log(data);
-  try {
-
-    await dbModels.RdRequest.findOneAndUpdate(
-      {
-        _id: data._id
-      },
-      {
-        status: 'approve'
-      }
-    )
-
-    // personalLeaveRequest 에 더해줘야함
-    // 원래 replacement 개수 찾기
-    const replacementTotal = await dbModels.PersonalLeaveStandard.findOne(
-      {
-        member_id: data.requestor
-      }
-    )
-    // 사원 계약일 찾기
-    const memberInfo = await dbModels.Member.findOne(
-      {
-        _id: data.requestor
-      },
-      {
-        emp_start_date: 1
-      }
-    )
-
-    // 년차 찾기
-    const today = moment(new Date());
-    const empStartDate = moment(memberInfo.emp_start_date);
-    const careerYear = (today.diff(empStartDate, 'years'));
-
-    // 위에서 찾은거에 새로 들어온거 더해주기
-    const replacementDay = replacementTotal.leave_standard[careerYear].replacement_leave + data.leaveDuration;
-
-    // 더해준거 반영
-    await dbModels.PersonalLeaveStandard.findOneAndUpdate(
-      {
-        member_id: data.requestor,
-        "leave_standard.year": careerYear + 1
-      },
-      {
-        $set: {
-          "leave_standard.$.replacement_leave": replacementDay,
-        },
-      }
-    )
-
-    const notification = await dbModels.Notification(
-      {
-        sender: req.decoded._id,
-        receiver: data.requestor,
-        notiType: 'rd-request-approve',
-        isRead: false,
-        iconText: 'assignment_turned_in',
-        notiLabel: 'A replacement day request approved',
-        navigate: 'leave/rd-request-list'
-      }
-    )
-
-    await notification.save();
-    ///////////////////////
-
-    return res.status(200).send({
-      message: 'approve',
-    });
-  } catch (err) {
     return res.status(500).send({
       message: 'DB Error'
     });

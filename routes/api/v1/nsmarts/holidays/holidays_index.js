@@ -1,32 +1,12 @@
-const router = require('express').Router();
-const multer = require('multer');
+const router = require("express").Router();
 
-/*-----------------------------------
+const holidays = require("./holidays_controller");
 
-  Contollers
-
------------------------------------*/
-const holidays = require('./holidays_controller');
-
-
-
-
-/*-----------------------------------
-
-  ** API **
-
------------------------------------*/
-
-/*-----------------------------------
-  COMPANY API
------------------------------------*/
-router.get('/', holidays.getHolidayList);
-router.post('/', holidays.addHoliday);
-router.delete('/:id', holidays.deleteHoliday);
-
-// router.get('/:id', countries.getCompanyInfo);
-// router.patch('/:id', countries.editCompany);
-
-
+// 휴일 목록 조회
+router.get("/", holidays.getHolidayList);
+// 휴일 등록
+router.post("/", holidays.addHoliday);
+// 휴일 삭제
+router.delete("/:id", holidays.deleteHoliday);
 
 module.exports = router;
