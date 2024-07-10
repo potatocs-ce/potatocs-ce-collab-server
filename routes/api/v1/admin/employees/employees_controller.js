@@ -357,7 +357,7 @@ exports.getEmployeeList = async (req, res) => {
 
         return res.status(200).send({
             message: "found",
-            myEmployeeList: results,
+            data: results,
             totalCount,
         });
     } catch (err) {
@@ -479,7 +479,7 @@ exports.getEmployeeLeaveStatus = async (req, res) => {
         const totalCount = myEmployeeList[0].totalCount[0] ? myEmployeeList[0].totalCount[0].count : 0;
 
         return res.send({
-            myEmployeeList: results,
+            data: results,
             totalCount,
         });
     } catch (err) {

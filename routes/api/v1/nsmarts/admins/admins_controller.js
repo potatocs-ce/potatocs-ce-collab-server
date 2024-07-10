@@ -37,7 +37,6 @@ exports.getAdminList = async (req, res) => {
         console.error("[ ERROR ]", error);
         res.status(500).json({
             message: "Error fetching admin list",
-            error: error.message, // 제공된 에러 메시지를 사용자에게 반환
         });
     }
 };

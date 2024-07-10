@@ -10,10 +10,9 @@ const nodemailer = require("nodemailer");
 exports.signUp = async (req, res) => {
     console.log(`
 --------------------------------------------------  
-  API  : Signup
-  router.post('signUp', adAuthcontroller.signUp) 
+  API  : Sign up
+  router.post('/signUp', adAuthcontroller.signUp) 
 --------------------------------------------------`);
-    // console.log(req.body);
 
     const criteria = {
         email: req.body.email,
@@ -30,7 +29,7 @@ exports.signUp = async (req, res) => {
 
         if (adminUser) {
             return res.status(409).send({
-                message: "duplicated",
+                message: "Duplicate admin",
             });
         }
 
@@ -41,12 +40,12 @@ exports.signUp = async (req, res) => {
         await newAdMenuSide.save(); // 회원가입 하면 menuside가 만들어짐
 
         res.status(201).send({
-            message: "created",
+            message: "Successfully sign up",
         });
     } catch (error) {
-        console.log(error);
-        return res.status(500).send({
-            error,
+        console.error("[ ERROR ]", error);
+        res.status(500).json({
+            message: "Error fetching sign up",
         });
     }
 };
@@ -57,43 +56,34 @@ exports.signUp = async (req, res) => {
 exports.signIn = async (req, res) => {
     console.log(`
 --------------------------------------------------  
-  API  : SignIn
-  router.post('signIn', adAuthcontroller.signIn) 
+  API  : Sign In
+  router.post('/signIn', adAuthcontroller.signIn) 
 --------------------------------------------------`);
-    // console.log(req.body);
 
     const criteria = {
         email: req.body.email,
     };
 
     try {
-        console.log("-------------------email----------------------");
-        const date = new Date();
-        console.log(date);
-        console.log(req.body.email);
-        console.log("----------------------------------------------");
-
         const adminUser = await admin.findOne(criteria);
 
         if (!adminUser) {
-            // console.log('No Matched Account');
             return res.status(404).send({
-                message: "not found",
+                message: "Admin not found",
             });
         }
 
         if (adminUser && adminUser.retired == true) {
             return res.status(400).send({
-                message: `retired`,
+                message: "Retired admin",
             });
         }
 
         const isMatched = await adminUser.comparePassword(req.body.password, adminUser.password);
 
         if (!isMatched) {
-            // console.log('Password Mismatch');
-            return res.status(404).send({
-                message: "mismatch",
+            return res.status(406).send({
+                message: "Incorrect password",
             });
         }
 
@@ -115,11 +105,14 @@ exports.signIn = async (req, res) => {
 			5. send token and profile info to client
 		--------------------------------------------*/
         res.send({
+            message: "Successfully sign in",
             token,
         });
     } catch (error) {
-        console.log(error);
-        return res.status(500).send("An error has occurred in the server");
+        console.error("[ ERROR ]", error);
+        res.status(500).json({
+            message: "Error fetching sign in",
+        });
     }
 };
 
@@ -133,17 +126,15 @@ exports.signIn = async (req, res) => {
 exports.getEcode = async (req, res) => {
     console.log(`
 --------------------------------------------------  
-  API  : getEcode
-  router.post('getEcode', adAuthcontroller.getEcode) 
+  API  : get Ecode
+  router.post('/getEcode', adAuthcontroller.getEcode) 
 --------------------------------------------------`);
 
     try {
-        // Check the email up in order to exist
         const criteria = {
             email: req.body.email,
         };
 
-        // Create a code
         const eCodeDate = new Date();
         const eCode = randomize("A0", 16);
 
@@ -435,7 +426,7 @@ exports.refreshToken = async (req, res) => {
     console.log(`
 --------------------------------------------------  
   API  : refreshToken
-  router.post('refreshToken', adAuthController.refreshToken) 
+  router.post('/refreshToken', adAuthController.refreshToken) 
 --------------------------------------------------`);
     const criteria = {
         email: req.body.email,
@@ -446,13 +437,13 @@ exports.refreshToken = async (req, res) => {
 
         if (!adminUser) {
             return res.status(404).send({
-                message: "not found",
+                message: "Admin not found",
             });
         }
 
         if (adminUser && adminUser.retired == true) {
             return res.status(400).send({
-                message: `retired`,
+                message: "Retired admin",
             });
         }
 
@@ -474,10 +465,13 @@ exports.refreshToken = async (req, res) => {
       5. send token and profile info to client
     --------------------------------------------*/
         res.send({
+            message: "Successfully refreshToken",
             token,
         });
     } catch (error) {
-        console.log(error);
-        return res.status(500).send("An error has occurred in the server");
+        console.error("[ ERROR ]", error);
+        res.status(500).json({
+            message: "Error fetching refreshToken",
+        });
     }
 };
