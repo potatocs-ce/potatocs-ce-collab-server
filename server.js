@@ -60,22 +60,23 @@ const mongApp = require("./database/mongoDB");
 /* -----------------------------------------
     AWS
 ----------------------------------------- */
+const AWS = require("aws-sdk");
 const fs = require("fs");
 
 /* -----------------------------------------
     S3 CONFIG
 ----------------------------------------- */
-// AWS.config.loadFromPath('./config/S3config.json');
-// const s3 = new AWS.S3({
-//   accessKeyId: process.env.AWS_ACCESS_KEY,
-//   secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-//   region: process.env.AWS_REGION
-// });
+// AWS.config.loadFromPath("./config/S3config.json");
+const s3 = new AWS.S3({
+	accessKeyId: process.env.AWS_ACCESS_KEY,
+	secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+	region: process.env.AWS_REGION,
+});
 
-// global.AWS_S3 = {
-//   s3,
-//   bucket: process.env.AWS_S3_BUCKET
-// };
+global.AWS_S3 = {
+	s3,
+	bucket: process.env.AWS_S3_BUCKET,
+};
 
 /* -----------------------------------------
     AWS SES CONFIG
