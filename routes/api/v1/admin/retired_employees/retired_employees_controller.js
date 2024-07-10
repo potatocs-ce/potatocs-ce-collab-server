@@ -93,7 +93,7 @@ exports.getRetiredEmployeeList = async (req, res) => {
 
         return res.status(200).send({
             message: "found",
-            myEmployeeList: results,
+            data: results,
             totalCount,
         });
     } catch (err) {
@@ -436,7 +436,7 @@ exports.getEmployeeList = async (req, res) => {
 
         return res.status(200).send({
             message: "found",
-            myEmployeeList: results,
+            data: results,
             totalCount,
         });
     } catch (err) {

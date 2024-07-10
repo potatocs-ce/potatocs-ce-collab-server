@@ -1,5 +1,4 @@
 const jwt = require("jsonwebtoken");
-// const adMenuSide = require('../../../../../models/ad_menu_side_schema');
 const randomize = require("randomatic");
 const nodemailer = require("nodemailer");
 const nsAdmin = require("../../../../../models/nsAdmin_schema");
@@ -13,7 +12,6 @@ exports.signUp = async (req, res) => {
   API  : Signup
   router.post('signUp', nsAuthcontroller.signUp) 
 --------------------------------------------------`);
-    console.log(req.body);
 
     const criteria = {
         email: req.body.email,
@@ -33,12 +31,6 @@ exports.signUp = async (req, res) => {
                 message: "duplicated",
             });
         }
-
-        const adminData = {
-            email: req.body.email,
-            password: req.body.password,
-            name: req.body.name,
-        };
 
         await new nsAdmin(adminData).save();
 
@@ -60,7 +52,6 @@ exports.signIn = async (req, res) => {
   API  : SignIn
   router.post('signIn', nsAuthcontroller.signIn) 
 --------------------------------------------------`);
-    // console.log(req.body);
 
     const criteria = {
         email: req.body.email,
@@ -70,7 +61,6 @@ exports.signIn = async (req, res) => {
         const nsAdminUser = await nsAdmin.findOne(criteria);
 
         if (!nsAdminUser) {
-            // console.log('No Matched Account');
             return res.status(404).send({
                 message: "not found",
             });
@@ -85,7 +75,6 @@ exports.signIn = async (req, res) => {
         const isMatched = await nsAdminUser.comparePassword(req.body.password, nsAdminUser.password);
 
         if (!isMatched) {
-            // console.log('Password Mismatch');
             return res.status(404).send({
                 message: "mismatch",
             });
