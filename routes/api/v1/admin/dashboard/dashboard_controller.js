@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-// 휴일 목록
+// 대쉬보드
 exports.getDashboard = async (req, res) => {
     console.log(`
 --------------------------------------------------
@@ -63,16 +63,16 @@ exports.getDashboard = async (req, res) => {
         const countHoliday = findHoliday[0].totalCount[0] ? findHoliday[0].totalCount[0].count : 0;
 
         return res.send({
-            message: "getAdminMain",
+            message: "Successfully dashboard",
             countCompanyEmployee,
             countCompanyRetiredEmployee,
             countEmploymentCountractRequest,
             countHoliday,
         });
     } catch (err) {
-        console.log(err);
-        return res.status(500).send({
-            message: "An error has occurred",
+        console.error("[ ERROR ]", error);
+        res.status(500).json({
+            message: "Error fetching dashboard",
         });
     }
 };
