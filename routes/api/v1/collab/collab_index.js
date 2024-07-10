@@ -1,8 +1,15 @@
 const router = require("express").Router();
 const multer = require("multer");
 const multerS3 = require("multer-s3");
-const s3 = global.AWS_S3.s3;
-const bucket = global.AWS_S3.bucket;
+const { S3Client } = require("@aws-sdk/client-s3");
+
+const s3Client = new S3Client({
+	region: process.env.AWS_REGION,
+	credentials: {
+		accessKeyId: process.env.AWS_ACCESS_KEY,
+		secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+	},
+});
 /*-----------------------------------
   Contollers
 -----------------------------------*/
@@ -63,18 +70,32 @@ router.put("/space/doc/docCheckDone", docController.docCheckDone);
 // });
 // const upload = multer({ storage });
 // Multer Mime Type Validation
+// const upload = multer({
+// 	storage: multerS3({
+// 		s3,
+// 		bucket,
+// 		acl: "public-read",
+// 		contentType: multerS3.AUTO_CONTENT_TYPE,
+// 		key: (req, file, cb) => {
+// 			if (req.files && req.files.length > 0) {
+// 				cb(null, `upload-file/${Date.now()}.${file.originalname}`);
+// 			} else {
+// 				// ������ ���� �ؽ�Ʈ�� ���� ���� ��� �Ѿ���ϴ���?? todo!!
+// 			}
+// 		},
+// 	}),
+// });
+
 const upload = multer({
 	storage: multerS3({
-		s3,
-		bucket,
-		acl: "public-read",
-		contentType: multerS3.AUTO_CONTENT_TYPE,
-		key: (req, file, cb) => {
-			if (req.files && req.files.length > 0) {
-				cb(null, `upload-file/${Date.now()}.${file.originalname}`);
-			} else {
-				// ������ ���� �ؽ�Ʈ�� ���� ���� ��� �Ѿ���ϴ���?? todo!!
-			}
+		s3: s3Client,
+		bucket: process.env.AWS_S3_BUCKET,
+		metadata: function (req, file, cb) {
+			cb(null, { fieldName: file.fieldName });
+		},
+		key: function (req, file, cb) {
+			file.originalname = Buffer.from(file.originalname, "latin1").toString("utf8");
+			cb(null, `upload-file/${Date.now().toString()}.${file.originalname}`);
 		},
 	}),
 });
@@ -128,22 +149,22 @@ router.get("/main/getMainInfo", mainController.getMainInfo); // 현재 안쓰이
 // 	}
 // });
 // const upload = multer({ storage });
-const storage = multer({
-	storage: multerS3({
-		s3,
-		bucket,
-		acl: "public-read",
-		contentType: multerS3.AUTO_CONTENT_TYPE,
-		key: (req, file, cb) => {
-			if (req.files && req.files.length > 0) {
-				cb(null, `gstd-file/${Date.now()}.${file.originalname}`);
-			} else {
-				// ������ ���� �ؽ�Ʈ�� ���� ���� ��� �Ѿ���ϴ���?? todo!!
-			}
-		},
-	}),
-});
-router.post("/space/doc/saveGstdPath", storage.any(), wbController.saveGstdPath);
+// const storage = multer({
+// 	storage: multerS3({
+// 		s3,
+// 		bucket,
+// 		acl: "public-read",
+// 		contentType: multerS3.AUTO_CONTENT_TYPE,
+// 		key: (req, file, cb) => {
+// 			if (req.files && req.files.length > 0) {
+// 				cb(null, `gstd-file/${Date.now()}.${file.originalname}`);
+// 			} else {
+// 				// ������ ���� �ؽ�Ʈ�� ���� ���� ��� �Ѿ���ϴ���?? todo!!
+// 			}
+// 		},
+// 	}),
+// });
+router.post("/space/doc/saveGstdPath", upload.any(), wbController.saveGstdPath);
 router.post("/space/doc/saveRecording", wbController.saveRecording);
 router.post("/space/doc/getWhiteBoardRecList", wbController.getWhiteBoardRecList);
 router.post("/space/doc/getRecording", wbController.getRecording);
