@@ -3,7 +3,15 @@ const mongoose = require("mongoose");
 var fs = require("fs");
 var path = require("path");
 const { promisify } = require("util");
+const { GetObjectCommand, S3Client, DeleteObjectCommand } = require("@aws-sdk/client-s3");
 const unlinkAsync = promisify(fs.unlink);
+const s3Client = new S3Client({
+	region: process.env.AWS_REGION,
+	credentials: {
+		accessKeyId: process.env.AWS_ACCESS_KEY,
+		secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+	},
+});
 // const s3 = global.AWS_S3.s3;
 // const bucket = global.AWS_S3.bucket;
 
@@ -982,20 +990,18 @@ exports.fileDownload = async (req, res) => {
 	try {
 		const donloadFile = await dbModels.UploadFile.findOne({
 			_id: data.fileId,
-		}).then((result) => {
-			const key = result.key;
-			console.log(key);
-			// res.attachment(key);
-			res.setHeader("Content-Disposition", "attachment");
-			var file = s3
-				.getObject({
-					Bucket: bucket,
-					Key: key,
-				})
-				.createReadStream()
-				.on("error", (error) => {});
-			file.pipe(res);
+		}).lean();
+
+		const key = donloadFile.key;
+		console.log(key);
+
+		const command = new GetObjectCommand({
+			Bucket: process.env.AWS_S3_BUCKET,
+			Key: key,
 		});
+		const response = await s3Client.send(command);
+		res.attachment(key);
+		response.Body.pipe(res);
 		// return res.status(200).send({
 		// 	message: 'download uploaded file',
 		// });
@@ -1020,14 +1026,12 @@ exports.deleteUploadFile = async (req, res) => {
 	const data = req.query;
 	try {
 		const result = await dbModels.UploadFile.findOne({ _id: data.fileId }, { _id: false, key: true });
-		const params = {
-			Bucket: bucket,
+
+		const command = new DeleteObjectCommand({
+			Bucket: process.env.AWS_S3_BUCKET,
 			Key: result.key,
-		};
-		s3.deleteObject(params, function (err, data) {
-			if (err) console.log(err, err.stack);
-			else console.log("s3 delete Success");
 		});
+		await s3Client.send(command);
 		const deleteUploadFile = await dbModels.UploadFile.findOneAndDelete({
 			_id: data.fileId,
 		});

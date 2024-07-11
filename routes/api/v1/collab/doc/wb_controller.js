@@ -1,7 +1,7 @@
 const { ObjectId } = require("bson");
 const path = require("path");
 const fs = require("fs");
-const { GetObjectCommand } = require("@aws-sdk/client-s3");
+const { GetObjectCommand, DeleteObjectCommand } = require("@aws-sdk/client-s3");
 const { s3Client } = require("../../../../../utils/s3Utils");
 // const s3 = global.AWS_S3.s3;
 // const bucket = global.AWS_S3.bucket;
@@ -107,14 +107,12 @@ exports.deleteRecording = async (req, res) => {
 
 		// await removeFile(recFilePath);
 
-		const params = {
-			Bucket: bucket,
+		const command = new DeleteObjectCommand({
+			Bucket: process.env.AWS_S3_BUCKET,
 			Key: req.query.gstd_key,
-		};
-		s3.deleteObject(params, function (err, data) {
-			if (err) console.log(err, err.stack);
-			else console.log("s3 delete Success");
 		});
+
+		await s3Client.send(command);
 
 		await dbModels.WhiteBoard.findOneAndDelete({ _id: req.query._id });
 
