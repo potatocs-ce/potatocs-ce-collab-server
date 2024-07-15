@@ -1,5 +1,6 @@
-const multer = require("multer");
-const multerS3 = require("multer-s3");
+const multer = require('multer');
+const multerS3 = require('multer-s3');
+const path = require('path');
 const { S3Client } = require("@aws-sdk/client-s3");
 
 const s3Client = new S3Client({
@@ -10,30 +11,56 @@ const s3Client = new S3Client({
     },
 });
 
-/**
- * profile 이미지는 서버 저장소에
- * 임시로 저장한다음 sharp 라이브러리를 통해
- * 이미지를 리사이징 후
- * 임시로 저장된 이미지파일 삭제
- * 리사이징된 이미지를 업로드한다.
- */
-const profileUpload = multer({
-    storage: multer.diskStorage({
-        destination(req, file, cb) {
-            cb(null, "uploads/profile_img/temp");
-        },
-        fileFilter: function (req, file, cb) {
-            const allowedMimes = ["image/jpeg", "image/png"];
-            if (allowedMimes.includes(file.mimetype)) {
-                cb(null, true);
-            } else {
-                cb(new Error("Invalid file type. Only JPEG and PNG are allowed."));
-            }
-        },
-        metadata: function (req, file, cb) {
-            cb(null, { fieldName: file.fieldname });
-        },
-    }),
+// 파일 확장자 검증 함수
+const fileFilter = (req, file, cb) => {
+    const uploadPath = file.fieldname;
+    const extname = path.extname(file.originalname).toLowerCase();
+
+    // 예시: 경로에 따른 허용 확장자 설정
+    const allowedExtensions = {
+        'upload-file': [], // 모든 확장자를 허용하기 위해 빈 배열,
+        'recording': [],
+        'profile_img': [],
+        'face_img': [],
+        'nsProfile_img': []
+    };
+
+    const allowedExts = allowedExtensions[uploadPath];
+
+    // 모든 확장자 허용
+    if (allowedExts && allowedExts.length === 0) {
+        cb(null, true);
+    } else if (allowedExts && allowedExts.includes(extname)) {
+        cb(null, true);
+    } else {
+        cb(new Error(`File type not allowed for the path: ${uploadPath}`), false);
+    }
+};
+
+const storage = multerS3({
+    s3: s3Client,
+    bucket: process.env.AWS_S3_BUCKET,
+    metadata: function (req, file, cb) {
+        cb(null, { fieldName: file.fieldname });
+    },
+    key: function (req, file, cb) {
+        file.originalname = Buffer.from(file.originalname, "latin1").toString("utf8");
+
+        // formdata에서 경로를 가져옴
+        // const uploadPath = req.body.uploadPath || 'upload-file';
+        // console.log('===============================================')
+        // console.log(file)
+        // console.log(req.body)
+        // console.log('===============================================')
+        const filePath = `${file.fieldname}/${Date.now().toString()}_${file.originalname}`;
+
+        cb(null, filePath);
+    },
+});
+
+const upload = multer({
+    storage: storage,
+    fileFilter: fileFilter
 });
 
 const nsProfileUpload = multer({
@@ -55,8 +82,11 @@ const nsProfileUpload = multer({
     }),
 });
 
+
+const uploadAny = upload.any();
+
 module.exports = {
-    profileUpload,
+    uploadAny,
+    // profileUpload,
     nsProfileUpload,
-    s3Client,
 };

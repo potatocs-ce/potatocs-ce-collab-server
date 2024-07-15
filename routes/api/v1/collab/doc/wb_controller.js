@@ -75,7 +75,7 @@ exports.getWhiteBoardRecList = async (req, res) => {
     try {
         const recList = await dbModels.WhiteBoard.find(req.body).populate("creator", "name");
 
-        console.log(recList);
+        // console.log(recList);
 
         if (!recList) {
             return res.status(500).send({
