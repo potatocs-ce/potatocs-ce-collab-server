@@ -46,12 +46,6 @@ const storage = multerS3({
     key: function (req, file, cb) {
         file.originalname = Buffer.from(file.originalname, "latin1").toString("utf8");
 
-        // formdata에서 경로를 가져옴
-        // const uploadPath = req.body.uploadPath || 'upload-file';
-        // console.log('===============================================')
-        // console.log(file)
-        // console.log(req.body)
-        // console.log('===============================================')
         const filePath = `${file.fieldname}/${Date.now().toString()}_${file.originalname}`;
 
         cb(null, filePath);
@@ -87,6 +81,5 @@ const uploadAny = upload.any();
 
 module.exports = {
     uploadAny,
-    // profileUpload,
     nsProfileUpload,
 };
