@@ -21,9 +21,9 @@ const fileFilter = (req, file, cb) => {
     const allowedExtensions = {
         'upload-file': [], // 모든 확장자를 허용하기 위해 빈 배열,
         'recording': [],
-        'profile_img': [],
+        'profile_img': ['.jpeg', '.jpg', '.png'],
         'face_img': [],
-        'nsProfile_img': []
+        'nsProfile_img': ['.jpeg', '.jpg', '.png']
     };
 
     const allowedExts = allowedExtensions[uploadPath];
