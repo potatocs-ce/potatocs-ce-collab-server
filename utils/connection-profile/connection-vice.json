@@ -1,0 +1,254 @@
+{
+  "name": "test-blockchain-network",
+  "version": "1.0.0",
+  "client": {
+    "tlsEnable": true,
+    "caCredential": {
+      "id": "admin",
+      "password": "adminpw"
+    },
+    "adminCredential": {
+      "id": "admin",
+      "password": "adminpw"
+    },
+    "enableAuthentication": true,
+    "organization": "ViceMSP",
+    "connection": {
+      "timeout": {
+        "peer": {
+          "endorser": "300"
+        },
+        "orderer": "300"
+      }
+    }
+  },
+  "channels": {
+    "vicechannel": {
+      "peers": {
+        "peer0.nsmarts.co.kr": {},
+        "peer1.nsmarts.co.kr": {},
+        "peer0.vice.com": {},
+        "peer1.vice.com": {}
+      },
+      "orderers": [
+        "orderer.nsmarts.co.kr",
+        "orderer2.nsmarts.co.kr",
+        "orderer3.vice.com",
+        "orderer4.vice.com"
+      ]
+    },
+    "vice-krchannel": {
+      "peers": {
+        "peer0.nsmarts.co.kr": {},
+        "peer1.nsmarts.co.kr": {},
+        "peer0.vice.com": {},
+        "peer1.vice.com": {},
+        "peer0.vice-kr.co.kr": {},
+        "peer1.vice-kr.co.kr": {}
+      },
+      "orderers": [
+        "orderer.nsmarts.co.kr",
+        "orderer2.nsmarts.co.kr",
+        "orderer3.vice.com",
+        "orderer4.vice.com",
+        "orderer5.vice-kr.co.kr"
+      ]
+    }
+  },
+  "organizations": {
+    "NsmartsMSP": {
+      "mspid": "NsmartsMSP",
+      "adminPrivateKey": {
+        "path": "../potatocs-bc/potatocs-network/organizations/peerOrganizations/nsmarts.co.kr/admin/msp/keystore/0c811d921c2aba4dcbc35216394157cea2428006986c988cdab159a5519f6e99_sk"
+      },
+      "peers": [
+        "peer0.nsmarts.co.kr",
+        "peer1.nsmarts.co.kr"
+      ],
+      "orderers": [
+        "orderer.nsmarts.co.kr",
+        "orderer2.nsmarts.co.kr"
+      ],
+      "signedCert": {
+        "path": "../potatocs-bc/potatocs-network/organizations/peerOrganizations/nsmarts.co.kr/admin/msp/signcerts/cert.pem"
+      },
+      "certificateAuthorities": [
+        "ca-nsmarts"
+      ]
+    },
+    "ViceMSP": {
+      "mspid": "ViceMSP",
+      "adminPrivateKey": {
+        "path": "../potatocs-bc/potatocs-network/organizations/peerOrganizations/vice.com/admin/msp/keystore/74000a23b72272f1904f52c250353b4814064c1c135f4fca566445a6729dd2af_sk"
+      },
+      "peers": [
+        "peer0.vice.com",
+        "peer1.vice.com"
+      ],
+      "orderers": [
+        "orderer3.vice.com",
+        "orderer4.vice.com"
+      ],
+      "signedCert": {
+        "path": "../potatocs-bc/potatocs-network/organizations/peerOrganizations/vice.com/admin/msp/signcerts/cert.pem"
+      },
+      "certificateAuthorities": [
+        "ca-vice"
+      ]
+    },
+    "ViceKRMSP": {
+      "mspid": "ViceKRMSP",
+      "adminPrivateKey": {
+        "path": "../potatocs-bc/potatocs-network/organizations/peerOrganizations/vice-kr.co.kr/admin/msp/keystore/0ff322470d07a29bea5f5fbb914423da9859d3c98f73c9ee8e1f083bd7b967cd_sk"
+      },
+      "peers": [
+        "peer0.vice-kr.co.kr",
+        "peer1.vice-kr.co.kr"
+      ],
+      "orderers": [
+        "orderer5.vice-kr.co.kr"
+      ],
+      "signedCert": {
+        "path": "../potatocs-bc/potatocs-network/organizations/peerOrganizations/vice-kr.co.kr/admin/msp/signcerts/cert.pem"
+      },
+      "certificateAuthorities": [
+        "ca-vice-kr"
+      ]
+    }
+  },
+  "peers": {
+    "peer0.nsmarts.co.kr": {
+      "tlsCACerts": {
+        "path": "../potatocs-bc/potatocs-network/organizations/peerOrganizations/nsmarts.co.kr/peers/peer0.nsmarts.co.kr/tls-msp/tlscacerts/tls-0-0-0-0-5054.pem"
+      },
+      "url": "grpcs://localhost:7051",
+      "grpcOptions": {
+        "ssl-target-name-override": "peer0.nsmarts.co.kr"
+      }
+    },
+    "peer1.nsmarts.co.kr": {
+      "tlsCACerts": {
+        "path": "../potatocs-bc/potatocs-network/organizations/peerOrganizations/nsmarts.co.kr/peers/peer1.nsmarts.co.kr/tls-msp/tlscacerts/tls-0-0-0-0-5054.pem"
+      },
+      "url": "grpcs://localhost:9051",
+      "grpcOptions": {
+        "ssl-target-name-override": "peer1.nsmarts.co.kr"
+      }
+    },
+    "peer0.vice.com": {
+      "tlsCACerts": {
+        "path": "../potatocs-bc/potatocs-network/organizations/peerOrganizations/vice.com/peers/peer0.vice.com/tls-msp/tlscacerts/tls-0-0-0-0-5054.pem"
+      },
+      "url": "grpcs://localhost:11051",
+      "grpcOptions": {
+        "ssl-target-name-override": "peer0.vice.com"
+      }
+    },
+    "peer1.vice.com": {
+      "tlsCACerts": {
+        "path": "../potatocs-bc/potatocs-network/organizations/peerOrganizations/vice.com/peers/peer1.vice.com/tls-msp/tlscacerts/tls-0-0-0-0-5054.pem"
+      },
+      "url": "grpcs://localhost:13051",
+      "grpcOptions": {
+        "ssl-target-name-override": "peer1.vice.com"
+      }
+    },
+    "peer0.vice-kr.co.kr": {
+      "tlsCACerts": {
+        "path": "../potatocs-bc/potatocs-network/organizations/peerOrganizations/vice-kr.co.kr/peers/peer0.vice-kr.co.kr/tls-msp/tlscacerts/tls-0-0-0-0-5054.pem"
+      },
+      "url": "grpcs://localhost:15051",
+      "grpcOptions": {
+        "ssl-target-name-override": "peer0.vice-kr.co.kr"
+      }
+    },
+    "peer1.vice-kr.co.kr": {
+      "tlsCACerts": {
+        "path": "../potatocs-bc/potatocs-network/organizations/peerOrganizations/vice-kr.co.kr/peers/peer1.vice-kr.co.kr/tls-msp/tlscacerts/tls-0-0-0-0-5054.pem"
+      },
+      "url": "grpcs://localhost:17051",
+      "grpcOptions": {
+        "ssl-target-name-override": "peer1.vice-kr.co.kr"
+      }
+    }
+  },
+  "orderers": {
+    "orderer.nsmarts.co.kr": {
+      "url": "grpcs://localhost:7050",
+      "tlsCACerts": {
+        "path": "../potatocs-bc/potatocs-network/organizations/peerOrganizations/nsmarts.co.kr/orderers/orderer.nsmarts.co.kr/tls-msp/tlscacerts/tls-0-0-0-0-5054.pem"
+      },
+      "grpcOptions": {
+        "ssl-target-name-override": "orderer.nsmarts.co.kr"
+      }
+    },
+    "orderer2.nsmarts.co.kr": {
+      "url": "grpcs://localhost:7052",
+      "tlsCACerts": {
+        "path": "../potatocs-bc/potatocs-network/organizations/peerOrganizations/nsmarts.co.kr/orderers/orderer2.nsmarts.co.kr/tls-msp/tlscacerts/tls-0-0-0-0-5054.pem"
+      },
+      "grpcOptions": {
+        "ssl-target-name-override": "orderer2.nsmarts.co.kr"
+      }
+    },
+    "orderer3.vice.com": {
+      "url": "grpcs://localhost:7056",
+      "tlsCACerts": {
+        "path": "../potatocs-bc/potatocs-network/organizations/peerOrganizations/vice.com/orderers/orderer3.vice.com/tls-msp/tlscacerts/tls-0-0-0-0-5054.pem"
+      },
+      "grpcOptions": {
+        "ssl-target-name-override": "orderer3.vice.com"
+      }
+    },
+    "orderer4.vice.com": {
+      "url": "grpcs://localhost:7058",
+      "tlsCACerts": {
+        "path": "../potatocs-bc/potatocs-network/organizations/peerOrganizations/vice.com/orderers/orderer4.vice.com/tls-msp/tlscacerts/tls-0-0-0-0-5054.pem"
+      },
+      "grpcOptions": {
+        "ssl-target-name-override": "orderer4.vice.com"
+      }
+    },
+    "orderer5.vice-kr.co.kr": {
+      "url": "grpcs://localhost:7060",
+      "tlsCACerts": {
+        "path": "../potatocs-bc/potatocs-network/organizations/peerOrganizations/vice-kr.co.kr/orderers/orderer5.vice-kr.co.kr/tls-msp/tlscacerts/tls-0-0-0-0-5054.pem"
+      },
+      "grpcOptions": {
+        "ssl-target-name-override": "orderer5.vice-kr.co.kr"
+      }
+    }
+  },
+  "certificateAuthorities": {
+    "ca-nsmarts": {
+      "url": "https://localhost:7054",
+      "caName": "ca-nsmarts",
+      "tlsCACerts": {
+        "path": "../potatocs-bc/potatocs-network/organizations/fabric-ca/nsmarts/tls-cert.pem"
+      },
+      "httpOptions": {
+        "verify": false
+      }
+    },
+    "ca-vice": {
+      "url": "https://localhost:9054",
+      "caName": "ca-vice",
+      "tlsCACerts": {
+        "path": "../potatocs-bc/potatocs-network/organizations/fabric-ca/vice/tls-cert.pem"
+      },
+      "httpOptions": {
+        "verify": false
+      }
+    },
+    "ca-vice-kr": {
+      "url": "https://localhost:10054",
+      "caName": "ca-vice-kr",
+      "tlsCACerts": {
+        "path": "../potatocs-bc/potatocs-network/organizations/fabric-ca/vice-kr/tls-cert.pem"
+      },
+      "httpOptions": {
+        "verify": false
+      }
+    }
+  }
+}
