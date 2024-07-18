@@ -1176,7 +1176,7 @@ exports.getRdList = async (req, res) => {
         const rdList = await dbModels.RdRequest.aggregate([
             {
                 $match: {
-                    requestor: ObjectId(req.decoded._id),
+                    requestor: new mongoose.Types.ObjectId(req.decoded._id),
                 },
             },
             {

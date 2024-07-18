@@ -1,5 +1,5 @@
 const { ObjectId } = require("bson");
-const mongoose = require("mongoose");
+const { default: mongoose } = require("mongoose");
 
 exports.addingCompany = async (req, res) => {
 	console.log(`
