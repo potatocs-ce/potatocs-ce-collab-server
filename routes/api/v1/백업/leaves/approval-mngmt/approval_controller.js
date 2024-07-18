@@ -2,7 +2,10 @@ const { ObjectId } = require("bson");
 const LeaveRequestHistory = require("../../../../../models/leave_request_history_schema");
 const LeaveRequest = require("../../../../../models/leave_request_schema");
 const moment = require("moment");
-const mongoose = require("mongoose");
+const { default: mongoose } = require("mongoose");
+const { MongoWallet } = require("../../../../../utils/mongo-wallet");
+const { Wallet, Gateway } = require("fabric-network");
+const { buildCCP } = require("../../../../../utils/ca-utils");
 
 exports.getLeaveRequest = async (req, res) => {
 	console.log(`
@@ -57,13 +60,15 @@ exports.getLeaveRequest = async (req, res) => {
 			},
 		]);
 
-		// console.log(pendingLeaveReqList);
+		console.log(pendingLeaveReqList);
 
 		return res.status(200).send({
 			message: "getPendingData",
 			pendingLeaveReqList,
+			total_count: pendingLeaveReqList.length,
 		});
 	} catch (err) {
+		console.log(err);
 		return res.status(500).send({
 			message: "DB Error",
 		});
@@ -196,9 +201,9 @@ exports.deleteLeaveRequest = async (req, res) => {
 --------------------------------------------------`);
 
 	const data = req.body;
-	const dbModels = global.DB_MODELS;
 	console.log(data);
-	console.log("-------------------------------------------------");
+	const dbModels = global.DB_MODELS;
+
 	try {
 		const criteria = {
 			_id: data._id,
@@ -216,6 +221,7 @@ exports.deleteLeaveRequest = async (req, res) => {
 			const userYear = await dbModels.Member.findOne({
 				_id: data.requestor,
 			});
+			console.log(userYear);
 
 			// 년차 뽑아옴
 			const date = new Date();
@@ -223,103 +229,6 @@ exports.deleteLeaveRequest = async (req, res) => {
 			const empStartDate = moment(userYear.emp_start_date);
 			const careerYear = today.diff(empStartDate, "years") + 1;
 			console.log(careerYear);
-
-			///////////////////////////////////////마이너스 연차 복구하는 부분 /////////////////////////////////////////////////
-			const criteria = {
-				_id: data.requestor,
-			};
-
-			const projection = "emp_start_date";
-
-			// 계약일 가져오기
-			const userContractInfo = await dbModels.Member.findOne(criteria, projection);
-			// console.log(userContractInfo)
-			if (userContractInfo.emp_start_date == null) {
-				return res.send({
-					message: "yet",
-				});
-			}
-
-			// 년차 일 가져오기
-			const startYear = moment(userContractInfo.emp_start_date.getTime())
-				.add(careerYear - 1, "y")
-				.format("YYYY-MM-DD");
-			// console.log(startYear);
-
-			const endYear = moment(userContractInfo.emp_start_date.getTime())
-				.add(careerYear, "y")
-				.subtract(1, "d")
-				.format("YYYY-MM-DD");
-			// console.log(endYear);
-
-			//내가 사용한 연차
-			const usedLeave = await dbModels.LeaveRequest.find({
-				requestor: data.requestor,
-				leave_start_date: { $gte: startYear, $lte: endYear },
-				status: {
-					$in: ["pending", "approve"],
-				},
-			});
-
-			//전체 연차
-			const totalLeave = await dbModels.PersonalLeaveStandard.findOne({ member_id: data.requestor });
-
-			//내 연차
-			const MyTotalLeave = totalLeave.leave_standard.find((item) => item.year == careerYear);
-			let NextYearTotalLeave = totalLeave.leave_standard.find((item) => item.year == careerYear + 1);
-			/////////////////////////////////////////////////
-			// 넥스트이어 연차가 없을 경우, 0으로 초기화해줌
-			if (!NextYearTotalLeave) {
-				NextYearTotalLeave = { annual_leave: 0 };
-			} else if (!NextYearTotalLeave.hasOwnProperty("annual_leave")) {
-				NextYearTotalLeave.annual_leave = 0;
-			}
-			////////////////////////////////////////////////
-			let used_annual_leave = 0;
-			for (let index = 0; index < usedLeave.length; index++) {
-				if (usedLeave[index].leaveType == "annual_leave") {
-					used_annual_leave += usedLeave[index].leaveDuration;
-				}
-			}
-
-			//내가 사용한 연차 + 내가 취소할 연차 + 내 연차
-			//그럼MyTotalLeave.annual_leave - used_annual_leave   하면 현재 내 연차 상태가 나오겠네
-			//그리고 MyTotalLeave.annual_leave - used_annual_leave + req.body.leaveDuration 하면 현재 내 연차가 어떻게 될지 나오겠네
-			console.log(
-				"used_annual_leave:",
-				used_annual_leave,
-				"req.body:",
-				req.body.leaveDuration,
-				"MyTotalLeave.annual_leave:",
-				MyTotalLeave.annual_leave
-			);
-
-			// 올해연차가 + 인상황에서 - 가 됐을때는  이렇게 계산해야되고
-			if (MyTotalLeave.annual_leave - used_annual_leave < 0) {
-				//지금 reject하려는 연차일수(Days)가 내년연차에서 -된 것보다 클때
-				if (MyTotalLeave.annual_leave - used_annual_leave + req.body.leaveDuration > 0) {
-					NextYearTotalLeave.annual_leave =
-						NextYearTotalLeave.annual_leave + (used_annual_leave - MyTotalLeave.annual_leave);
-				} else {
-					NextYearTotalLeave.annual_leave = NextYearTotalLeave.annual_leave + req.body.leaveDuration;
-				}
-			}
-			//저장할때 NextYearTotalLeave.annual_leave가 마이너스면 저장안하고 리턴
-			if (NextYearTotalLeave?.annual_leave < 0) {
-				console.log("왜 여기서 터지지???", NextYearTotalLeave?.annual_leave);
-				return res.status(500).send({
-					message: "no next annual leave",
-				});
-			}
-
-			await dbModels.PersonalLeaveStandard.updateOne(
-				{ member_id: data.requestor },
-				{ $set: { [`leave_standard.${careerYear}.annual_leave`]: NextYearTotalLeave?.annual_leave } }
-			).then((res) => {
-				console.log(res);
-			});
-
-			////////////////////////////////////////임호균 박재현 수정 완료 부분///////////////////
 
 			// rollover 값을 우선 찾는다..
 			const rolloverTotal = await dbModels.PersonalLeaveStandard.findOne({
@@ -330,10 +239,7 @@ exports.deleteLeaveRequest = async (req, res) => {
 			// console.log(rolloverTotal.leave_standard[careerYear]);
 			// console.log(rolloverTotal.leave_standard[careerYear]['rollover'] != undefined);
 
-			if (
-				rolloverTotal.leave_standard[careerYear] &&
-				rolloverTotal.leave_standard[careerYear]["rollover"] != undefined
-			) {
+			if (rolloverTotal.leave_standard[careerYear]["rollover"] != undefined) {
 				rollover = rolloverTotal.leave_standard[careerYear].rollover + req.body.leaveDuration;
 				// console.log(rollover);
 
@@ -351,6 +257,7 @@ exports.deleteLeaveRequest = async (req, res) => {
 					},
 					{ new: true }
 				);
+				console.log(rolloverCal);
 				console.log(rolloverCal.leave_standard[careerYear + 1]);
 			}
 		}
@@ -432,8 +339,7 @@ exports.cancelEmployeeApproveLeave = async (req, res) => {
 	const data = req.body;
 	// console.log(data);
 	const dbModels = global.DB_MODELS;
-	console.log("----------------------data---------------------------");
-	console.log(data);
+
 	try {
 		////////////////////
 		// rollover 처리
@@ -470,8 +376,8 @@ exports.cancelEmployeeApproveLeave = async (req, res) => {
 				},
 			},
 		]);
-		console.log("----------------------vv----------------------");
-		console.log(userYear);
+
+		// console.log(userYear[0]);
 
 		// 년차 뽑아옴
 		const date = new Date();
@@ -544,7 +450,13 @@ exports.getConfirmRdRequest = async (req, res) => {
 --------------------------------------------------`);
 
 	const dbModels = global.DB_MODELS;
+	const { active = "createdAt", direction = "asc", pageIndex = "0", pageSize = "10" } = req.query;
 
+	const limit = parseInt(pageSize, 10);
+	const skip = parseInt(pageIndex, 10) * limit;
+	const sortCriteria = {
+		[active]: direction === "desc" ? -1 : 1,
+	};
 	try {
 		const rdConfirmRequest = await dbModels.RdRequest.aggregate([
 			{
@@ -580,13 +492,18 @@ exports.getConfirmRdRequest = async (req, res) => {
 					createdAt: 1,
 				},
 			},
+			{ $sort: sortCriteria },
+			{ $skip: skip },
+			{ $limit: limit },
 		]);
 
 		return res.status(200).send({
 			message: "rdConfirmRequest",
 			rdConfirmRequest,
+			total_count: rdConfirmRequest?.length,
 		});
 	} catch (err) {
+		console.log(err);
 		return res.status(500).send({
 			message: "DB Error",
 		});
@@ -604,16 +521,116 @@ exports.rejectReplacementRequest = async (req, res) => {
 	const dbModels = global.DB_MODELS;
 	const data = req.body;
 	console.log(data);
+	const session = await dbModels.RdRequest.startSession();
+
 	try {
-		await dbModels.RdRequest.findOneAndUpdate(
+		await session.startTransaction();
+
+		const reRequest = await dbModels.RdRequest.findOneAndUpdate(
 			{
 				_id: data._id,
 			},
 			{
 				rejectReason: data.rejectReason,
 				status: "reject",
+			},
+			{
+				new: true,
 			}
 		);
+
+		/**-----------------------------------
+		 * blockchain 코드 시작 -------------------------------------------
+		 */
+		const foundMember = await dbModels.Member.findOne({
+			_id: data.requestor,
+		}).lean();
+
+		if (!foundMember) {
+			return res.status(400).json({
+				message: "Member was not found!",
+			});
+		}
+
+		const store = new MongoWallet();
+		const wallet = new Wallet(store);
+		const userIdentity = await wallet.get(data.requestor.toString());
+
+		const findMyManagerCriteria = {
+			myId: req.decoded._id,
+			accepted: true,
+		};
+
+		const getManagerData = await dbModels.Manager.findOne(findMyManagerCriteria).populate("myManager", "email");
+
+		const foundCompany = await dbModels.Company.findById(foundMember.company_id).lean();
+
+		console.log(foundCompany);
+
+		let selectedCompany = "";
+		let mspId = "";
+		let channelId = "";
+		switch (foundCompany.company_name) {
+			case "nsmartsolution":
+				selectedCompany = "nsmarts";
+				mspId = "NsmartsMSP";
+				channelId = "nsmartschannel";
+				break;
+			case "vice":
+				selectedCompany = "vice";
+				mspId = "ViceMSP";
+				channelId = "vicechannel";
+				break;
+			default:
+				selectedCompany = "vice-kr";
+				mspId = "ViceKRMSP";
+				channelId = "vice-krchannel";
+				break;
+		}
+		const ccp = buildCCP(selectedCompany);
+		const gateway = new Gateway();
+
+		await gateway.connect(ccp, {
+			wallet,
+			identity: userIdentity,
+			discovery: { enabled: false, asLocalhost: false },
+		});
+
+		// 네트워크 채널 가져오기
+		// 휴가는 전체 채널에 공유
+		// 계약서만 따로 따로
+		// vice-krchannel nsmarts, vice, vicekr 3조직 다있는 채널 사용.
+		const network = await gateway.getNetwork("vice-krchannel");
+
+		// 스마트 컨트랙트 가져오기
+		const contract = network.getContract("leave");
+
+		try {
+			const result = await contract.submitTransaction(
+				"CreateLeaveRequest", // 스마트 컨트랙트의 함수 이름
+				reRequest._id,
+				reRequest.requestor,
+				getManagerData.myManager,
+				reRequest.leaveType,
+				reRequest.leaveDay,
+				reRequest.leaveDuration,
+				reRequest.leave_start_date.toISOString(),
+				reRequest.leave_end_date.toISOString(),
+				reRequest.leave_reason,
+				reRequest.status,
+				""
+			);
+		} catch (bcError) {
+			console.error("Blockchain transaction failed:", bcError);
+			throw bcError;
+		}
+
+		await gateway.disconnect();
+		// 트랜잭션 커밋
+		await session.commitTransaction();
+		session.endSession();
+
+		// blockchain 코드 끝 ------------------------------------
 
 		const notification = await dbModels.Notification({
 			sender: req.decoded._id,
@@ -632,6 +649,9 @@ exports.rejectReplacementRequest = async (req, res) => {
 			message: "delete",
 		});
 	} catch (err) {
+		console.log(err);
+		await session.commitTransaction();
+		session.endSession();
 		return res.status(500).send({
 			message: "DB Error",
 		});
@@ -649,13 +669,21 @@ exports.approveReplacementRequest = async (req, res) => {
 	const dbModels = global.DB_MODELS;
 	const data = req.body;
 	console.log(data);
+	const session = await dbModels.RdRequest.startSession();
+	const session2 = await dbModels.PersonalLeaveStandard.startSession();
 	try {
-		await dbModels.RdRequest.findOneAndUpdate(
+		await session.startTransaction();
+		await session2.startTransaction();
+
+		const reRequest = await dbModels.RdRequest.findOneAndUpdate(
 			{
 				_id: data._id,
 			},
 			{
 				status: "approve",
+			},
+			{
+				new: true,
 			}
 		);
 
@@ -665,14 +693,9 @@ exports.approveReplacementRequest = async (req, res) => {
 			member_id: data.requestor,
 		});
 		// 사원 계약일 찾기
-		const memberInfo = await dbModels.Member.findOne(
-			{
-				_id: data.requestor,
-			},
-			{
-				emp_start_date: 1,
-			}
-		);
+		const memberInfo = await dbModels.Member.findOne({
+			_id: data.requestor,
+		});
 
 		// 년차 찾기
 		const today = moment(new Date());
@@ -695,6 +718,89 @@ exports.approveReplacementRequest = async (req, res) => {
 			}
 		);
 
+		/**-----------------------------------
+		 * blockchain 코드 시작 -------------------------------------------
+		 */
+		const store = new MongoWallet();
+		const wallet = new Wallet(store);
+		const userIdentity = await wallet.get(memberInfo._id.toString());
+
+		const findMyManagerCriteria = {
+			myId: req.decoded._id,
+			accepted: true,
+		};
+
+		const getManagerData = await dbModels.Manager.findOne(findMyManagerCriteria).populate("myManager", "email");
+
+		const foundCompany = await dbModels.Company.findById(memberInfo.company_id).lean();
+
+		console.log(foundCompany);
+
+		let selectedCompany = "";
+		let mspId = "";
+		let channelId = "";
+		switch (foundCompany.company_name) {
+			case "nsmartsolution":
+				selectedCompany = "nsmarts";
+				mspId = "NsmartsMSP";
+				channelId = "nsmartschannel";
+				break;
+			case "vice":
+				selectedCompany = "vice";
+				mspId = "ViceMSP";
+				channelId = "vicechannel";
+				break;
+			default:
+				selectedCompany = "vice-kr";
+				mspId = "ViceKRMSP";
+				channelId = "vice-krchannel";
+				break;
+		}
+		const ccp = buildCCP(selectedCompany);
+		const gateway = new Gateway();
+
+		await gateway.connect(ccp, {
+			wallet,
+			identity: userIdentity,
+			discovery: { enabled: false, asLocalhost: false },
+		});
+
+		// 네트워크 채널 가져오기
+		// 휴가는 전체 채널에 공유
+		// 계약서만 따로 따로
+		// vice-krchannel nsmarts, vice, vicekr 3조직 다있는 채널 사용.
+		const network = await gateway.getNetwork("vice-krchannel");
+
+		// 스마트 컨트랙트 가져오기
+		const contract = network.getContract("leave");
+
+		try {
+			const result = await contract.submitTransaction(
+				"CreateLeaveRequest", // 스마트 컨트랙트의 함수 이름
+				reRequest._id,
+				reRequest.requestor,
+				getManagerData.myManager,
+				reRequest.leaveType,
+				reRequest.leaveDay,
+				reRequest.leaveDuration,
+				reRequest.leave_start_date.toISOString(),
+				reRequest.leave_end_date.toISOString(),
+				reRequest.leave_reason,
+				reRequest.status,
+				""
+			);
+		} catch (bcError) {
+			console.error("Blockchain transaction failed:", bcError);
+			throw bcError;
+		}
+
+		await gateway.disconnect();
+		// 트랜잭션 커밋
+		await session.commitTransaction();
+		session.endSession();
+
+		// blockchain 코드 끝 ------------------------------------
+
 		const notification = await dbModels.Notification({
 			sender: req.decoded._id,
 			receiver: data.requestor,
@@ -708,10 +814,20 @@ exports.approveReplacementRequest = async (req, res) => {
 		await notification.save();
 		///////////////////////
 
+		await session2.commitTransaction();
+		session2.endSession();
+
 		return res.status(200).send({
 			message: "approve",
 		});
 	} catch (err) {
+		console.log(err);
+
+		await session.abortTransaction();
+		await session2.abortTransaction();
+		session.endSession();
+		session2.endSession();
+
 		return res.status(500).send({
 			message: "DB Error",
 		});

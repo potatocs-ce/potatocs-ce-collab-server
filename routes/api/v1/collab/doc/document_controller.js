@@ -1249,7 +1249,7 @@ exports.deleteChat = async (req, res) => {
 					_id: data.chatId,
 				},
 				{
-					chatMember: ObjectId(),
+					chatMember: new mongoose.Types.ObjectId(),
 					chatContent: "삭제된 메시지 입니다.",
 					createdAt: "",
 				}
@@ -1333,7 +1333,7 @@ exports.createMeeting = async (req, res) => {
 		// const spaceId = await dbModels.Document.aggregate([
 		// 	{
 		// 		$match: {
-		// 			_id: ObjectId(data.docId),
+		// 			_id: new mongoose.Types.ObjectId(data.docId),
 		// 		}
 		// 	},
 		// 	{
@@ -1634,7 +1634,7 @@ exports.scrumEditDocStatus = async (req, res) => {
 		const spaceDocs = await dbModels.Document.aggregate([
 			{
 				$match: {
-					spaceTime_id: ObjectId(editDocStatus.spaceTime_id),
+					spaceTime_id: new mongoose.Types.ObjectId(editDocStatus.spaceTime_id),
 				},
 			},
 			{

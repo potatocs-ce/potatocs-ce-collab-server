@@ -1,7 +1,7 @@
 const member = require("../../../../../models/member_schema");
 const manager = require("../../../../../models/manager_schema");
 const { ObjectId } = require("bson");
-const mongoose = require("mongoose");
+const { default: mongoose } = require("mongoose");
 
 exports.getPendingList = async (req, res) => {
 	console.log(`
@@ -49,6 +49,8 @@ exports.getPendingList = async (req, res) => {
 				},
 			},
 		]);
+
+		console.log(pendingList);
 
 		return res.status(200).send({
 			message: "found",
@@ -158,7 +160,13 @@ exports.myEmployeeList = async (req, res) => {
 --------------------------------------------------`);
 
 	const dbModels = global.DB_MODELS;
+	const { active = "createdAt", direction = "asc", pageIndex = "0", pageSize = "10" } = req.query;
 
+	const limit = parseInt(pageSize, 10);
+	const skip = parseInt(pageIndex, 10) * limit;
+	const sortCriteria = {
+		[active]: direction === "desc" ? -1 : 1,
+	};
 	try {
 		// 관리하고 있는 직원들 in manager
 		// myManager > 매니저 아이디, myId > 직원 아이디, accepted: true or false, 펜딩 or 수락
@@ -431,6 +439,9 @@ exports.myEmployeeList = async (req, res) => {
 					usedLeave: 1,
 				},
 			},
+			{ $sort: sortCriteria },
+			{ $skip: skip },
+			{ $limit: limit },
 		]);
 
 		// console.log(myEmployeeList)
