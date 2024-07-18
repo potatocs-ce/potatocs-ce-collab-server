@@ -447,6 +447,11 @@ exports.getEmployeeLeaveStatus = async (req, res) => {
                 },
             },
             {
+                $match: {
+                    "leave.leaveType": { $ne: null },
+                },
+            },
+            {
                 $addFields: {
                     leaveTypeStand: "all",
                     emailStand: "all",
@@ -477,6 +482,8 @@ exports.getEmployeeLeaveStatus = async (req, res) => {
 
         const results = myEmployeeList[0].paginatedResults;
         const totalCount = myEmployeeList[0].totalCount[0] ? myEmployeeList[0].totalCount[0].count : 0;
+
+        console.log(results);
 
         return res.send({
             data: results,
