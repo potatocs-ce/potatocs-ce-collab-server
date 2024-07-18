@@ -3,7 +3,6 @@ const { buildCCP, buildCAClient } = require("../../../../../utils/ca-utils");
 const { MongoWallet } = require("../../../../../utils/mongo-wallet");
 const { Wallet } = require("fabric-network");
 const FabricCAServices = require("fabric-ca-client");
-const mongoose = require("mongoose");
 
 // 고용 계약 목록
 exports.getEmploymentContract = async (req, res) => {

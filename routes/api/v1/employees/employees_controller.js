@@ -3,7 +3,6 @@ const { default: mongoose } = require("mongoose");
 const { buildCCP } = require("../../../../utils/ca-utils");
 const { Gateway, Wallet } = require("fabric-network");
 const { MongoWallet } = require("../../../../utils/mongo-wallet");
-const mongoose = require("mongoose");
 
 exports.myEmployeeList = async (req, res) => {
 	console.log(`

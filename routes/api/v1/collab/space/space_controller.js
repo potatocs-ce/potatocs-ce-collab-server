@@ -1,7 +1,6 @@
 const { ObjectId } = require("bson");
 const { db } = require("../../../../../models/meeting_schema");
 const { default: mongoose } = require("mongoose");
-const mongoose = require("mongoose");
 
 exports.getSpace = async (req, res) => {
 	console.log(`
