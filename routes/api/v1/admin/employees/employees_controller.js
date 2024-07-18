@@ -378,7 +378,36 @@ exports.getEmployeeLeaveStatus = async (req, res) => {
 --------------------------------------------------`);
     const dbModels = global.DB_MODELS;
 
-    const { emailFormControl, active = "createdAt", direction = "asc", pageIndex = "0", pageSize = "10" } = req.query;
+    const {
+        startDateFormControl,
+        endDateFormControl,
+        emailFormControl,
+        active = "createdAt",
+        direction = "asc",
+        pageIndex = "0",
+        pageSize = "10",
+    } = req.query;
+
+    // 시작 날짜에서 시간을 0시 0분 0초로
+    function setStartOfDay(date) {
+        return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    }
+
+    // 끝 날짜에서 시간을 23시 59분 59초로
+    function setEndOfDay(date) {
+        return new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59, 999);
+    }
+
+    // 날짜 필터
+    let dateMatch = {};
+    if (startDateFormControl && startDateFormControl !== "null") {
+        const startDate = setStartOfDay(new Date(startDateFormControl));
+        dateMatch["leave.leave_start_date"] = { $gte: startDate };
+    }
+    if (endDateFormControl && endDateFormControl !== "null") {
+        const endDate = setEndOfDay(new Date(endDateFormControl));
+        dateMatch["leave.leave_end_date"] = { $lte: endDate };
+    }
 
     const limit = parseInt(pageSize, 10);
     const skip = parseInt(pageIndex, 10) * limit;
@@ -457,6 +486,14 @@ exports.getEmployeeLeaveStatus = async (req, res) => {
                     emailStand: "all",
                 },
             },
+            // 날짜 필터
+            ...(Object.keys(dateMatch).length
+                ? [
+                      {
+                          $match: dateMatch,
+                      },
+                  ]
+                : []),
             {
                 $project: {
                     name: 1,
@@ -482,8 +519,6 @@ exports.getEmployeeLeaveStatus = async (req, res) => {
 
         const results = myEmployeeList[0].paginatedResults;
         const totalCount = myEmployeeList[0].totalCount[0] ? myEmployeeList[0].totalCount[0].count : 0;
-
-        console.log(results);
 
         return res.send({
             data: results,
