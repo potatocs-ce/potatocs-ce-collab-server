@@ -78,15 +78,23 @@ exports.cancelRequest = async (req, res) => {
 		};
 
 		const deleteManager = await dbModels.Manager.findOneAndDelete(criteria);
+		// 2024-07-19 park
+		// 이미 deleteManager.myManager가 다른 멤버의 매니저인 경우, isManager를 false로 바꾸면 안되기 때문에
+		// 다른 멤버의 매니저인지 확인
+		const isManager = await dbModels.Manager.findOne({ myManager: deleteManager.myManager });
+		console.log("-------------------park---------------------");
+		console.log(isManager);
 		// console.log(deleteManager);
-		await member.findOneAndUpdate(
-			{
-				_id: deleteManager.myManager,
-			},
-			{
-				isManager: false,
-			}
-		);
+		if (!isManager) {
+			await member.findOneAndUpdate(
+				{
+					_id: deleteManager.myManager,
+				},
+				{
+					isManager: false,
+				}
+			);
+		}
 		return res.status(200).send({
 			message: "canceled",
 		});

@@ -249,7 +249,6 @@ exports.acceptEmploymentContract = async (req, res) => {
 				mspId = "ViceKRMSP";
 				break;
 		}
-
 		let foundAdmin = {};
 		try {
 			foundAdmin = await findAdminIfNotAdmin(mspId, global.DB_MODELS);
