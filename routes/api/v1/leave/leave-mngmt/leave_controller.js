@@ -703,9 +703,10 @@ exports.getMyRequestListSearch = async (req, res) => {
                 $sort: { createdAt: -1 },
             },
         ]);
-        // console.log(LeaveRequestListSearch);
+        // console.log(LeaveRequestListSearch.length);
+        totalCount = LeaveRequestListSearch.length;
         // console.log('LeaveRequestListSearch')
-        return res.status(200).send(LeaveRequestListSearch);
+        return res.status(200).send({ LeaveRequestListSearch, totalCount });
     } catch (error) {
         return res.status(500).send({
             message: "DB Error",
