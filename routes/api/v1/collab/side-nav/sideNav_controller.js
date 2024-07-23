@@ -37,7 +37,7 @@ exports.createFolder = async (req, res) => {
 		////////////////
 		const menuside = await dbModels.MenuSide.updateOne(
 			{
-				member_id: ObjectId(req.decoded._id),
+				member_id: new mongoose.Types.ObjectId(req.decoded._id),
 			},
 			{
 				$addToSet: { folder_list: newFolder._id },
@@ -69,7 +69,7 @@ exports.updateFolder = async (req, res) => {
 		const folderNav = await dbModels.Folder.aggregate([
 			{
 				$match: {
-					member_id: ObjectId(req.decoded._id),
+					member_id: new mongoose.Types.ObjectId(req.decoded._id),
 				},
 			},
 		]);
@@ -173,7 +173,7 @@ exports.createSpace = async (req, res) => {
 		// 	const updateFolder = {
 		// 		children: [
 		// 			{
-		// 				_id: ObjectId(Space._id),
+		// 				_id: new mongoose.Types.ObjectId(Space._id),
 		// 			},
 		// 		],
 		// 	};
@@ -217,10 +217,10 @@ exports.deleteFolder = async (req, res) => {
 		});
 		const deleteFolderForMenuSide = await dbModels.MenuSide.updateOne(
 			{
-				member_id: ObjectId(req.decoded._id),
+				member_id: new mongoose.Types.ObjectId(req.decoded._id),
 			},
 			{
-				$pull: { folder_list: ObjectId(data.folderId) },
+				$pull: { folder_list: new mongoose.Types.ObjectId(data.folderId) },
 			}
 		);
 
@@ -449,10 +449,10 @@ exports.updateSpacePlace = async (req, res) => {
 		// 현재 폴더에 있는 space id 제거, 없으면 그냥 지나가지
 		const deleteFolderSpace = await dbModels.Folder.updateOne(
 			{
-				children: ObjectId(space_id),
+				children: new mongoose.Types.ObjectId(space_id),
 			},
 			{
-				$pull: { children: ObjectId(space_id) },
+				$pull: { children: new mongoose.Types.ObjectId(space_id) },
 			}
 		);
 
@@ -460,10 +460,10 @@ exports.updateSpacePlace = async (req, res) => {
 		if (folder_id == "thisplace") {
 			const addMenuSideSpaceList = await dbModels.MenuSide.updateOne(
 				{
-					member_id: ObjectId(req.decoded._id),
+					member_id: new mongoose.Types.ObjectId(req.decoded._id),
 				},
 				{
-					$addToSet: { space_list: ObjectId(space_id) },
+					$addToSet: { space_list: new mongoose.Types.ObjectId(space_id) },
 				}
 			);
 		}
@@ -471,18 +471,18 @@ exports.updateSpacePlace = async (req, res) => {
 		else {
 			const updateSpacePlace = await dbModels.Folder.updateOne(
 				{
-					_id: ObjectId(folder_id),
+					_id: new mongoose.Types.ObjectId(folder_id),
 				},
 				{
-					$addToSet: { children: ObjectId(space_id) },
+					$addToSet: { children: new mongoose.Types.ObjectId(space_id) },
 				}
 			);
 			const deleteMenuSideSpaceList = await dbModels.MenuSide.updateOne(
 				{
-					member_id: ObjectId(req.decoded._id),
+					member_id: new mongoose.Types.ObjectId(req.decoded._id),
 				},
 				{
-					$pull: { space_list: ObjectId(space_id) },
+					$pull: { space_list: new mongoose.Types.ObjectId(space_id) },
 				}
 			);
 		}

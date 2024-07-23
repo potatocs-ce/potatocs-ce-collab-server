@@ -1,7 +1,7 @@
-const multer = require('multer');
-const multerS3 = require('multer-s3');
-const path = require('path');
-const sharp = require('sharp');
+const multer = require("multer");
+const multerS3 = require("multer-s3");
+const path = require("path");
+const sharp = require("sharp");
 const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
 
 const s3Client = new S3Client({
@@ -59,13 +59,13 @@ const memoryStorage = multer.memoryStorage();
 
 const upload = multer({
     storage: storage,
-    fileFilter: fileFilter
+    fileFilter: fileFilter,
 });
 
 const uploadMemory = multer({
     storage: memoryStorage,
-    fileFilter: fileFilter
-})
+    fileFilter: fileFilter,
+});
 
 /**
 리사이즈 이미지
@@ -81,13 +81,12 @@ const resizeAndUploadImage = async (req, res, next) => {
         for (const file of req.files) {
             const uploadPath = file.fieldname;
 
-            const originalnameUtf8 = Buffer.from(file.originalname, 'latin1').toString('utf8');
+            const originalnameUtf8 = Buffer.from(file.originalname, "latin1").toString("utf8");
 
             // 파일이 이미지인지 확인
-            if (!file.mimetype.startsWith('image/')) {
-                throw new Error('Invalid file type. Only images are allowed for resizing.');
+            if (!file.mimetype.startsWith("image/")) {
+                throw new Error("Invalid file type. Only images are allowed for resizing.");
             }
-
 
             // 이미지 리사이즈
             const resizedImage = await sharp(file.buffer)
@@ -98,16 +97,18 @@ const resizeAndUploadImage = async (req, res, next) => {
             const filePath = `${uploadPath}/${Date.now().toString()}_${originalnameUtf8}`;
 
             // S3에 업로드
-            await s3Client.send(new PutObjectCommand({
-                ACL: 'public-read',
-                Bucket: process.env.AWS_S3_BUCKET,
-                Key: filePath,
-                Body: resizedImage,
-                ContentType: file.mimetype,
-                Metadata: {
-                    fieldName: file.fieldname
-                }
-            }));
+            await s3Client.send(
+                new PutObjectCommand({
+                    ACL: "public-read",
+                    Bucket: process.env.AWS_S3_BUCKET,
+                    Key: filePath,
+                    Body: resizedImage,
+                    ContentType: file.mimetype,
+                    Metadata: {
+                        fieldName: file.fieldname,
+                    },
+                })
+            );
 
             // 업로드된 파일 정보를 req 객체에 저장
             req.uploadedImage.push({
@@ -115,17 +116,15 @@ const resizeAndUploadImage = async (req, res, next) => {
                 originalname: file.originalname,
                 mimetype: file.mimetype,
                 location: `https://${process.env.AWS_S3_BUCKET}.s3.${process.env.AWS_REGION}.amazonaws.com/${filePath}`,
-                key: filePath
+                key: filePath,
             });
-
         }
         next();
     } catch (error) {
         console.error(error);
-        res.status(500).send('Error processing file.');
+        res.status(500).send("Error processing file.");
     }
 };
-
 
 const uploadAny = upload.any();
 const uploadImage = uploadMemory.any();
@@ -134,5 +133,5 @@ module.exports = {
     uploadAny,
     uploadImage,
     s3Client,
-    resizeAndUploadImage
+    resizeAndUploadImage,
 };

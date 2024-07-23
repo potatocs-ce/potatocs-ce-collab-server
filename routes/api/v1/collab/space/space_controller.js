@@ -287,7 +287,7 @@ exports.deleteSpaceMember = async (req, res) => {
 
 	const updateDeleteMember = await dbModels.Space.findOneAndUpdate(
 		{
-			_id: ObjectId(data.id),
+			_id: new mongoose.Types.ObjectId(data.id),
 		},
 		{
 			$pull: {
@@ -304,7 +304,7 @@ exports.deleteSpaceMember = async (req, res) => {
 	const getDocId = await dbModels.Document.aggregate([
 		{
 			$match: {
-				spaceTime_id: ObjectId(updateDeleteMember._id),
+				spaceTime_id: new mongoose.Types.ObjectId(updateDeleteMember._id),
 			},
 		},
 		{
@@ -356,7 +356,7 @@ exports.deleteSpaceMember = async (req, res) => {
 		},
 		{
 			$pull: {
-				space_list: ObjectId(data.id),
+				space_list: new mongoose.Types.ObjectId(data.id),
 			},
 		},
 		{
@@ -418,10 +418,10 @@ exports.quitSpaceAdmin = async (req, res) => {
 
 	const updateQuitAdmin = await dbModels.Space.updateOne(
 		{
-			_id: ObjectId(data.id),
+			_id: new mongoose.Types.ObjectId(data.id),
 		},
 		{
-			$pull: { admins: ObjectId(data.member_id) },
+			$pull: { admins: new mongoose.Types.ObjectId(data.member_id) },
 		}
 	);
 
@@ -448,7 +448,7 @@ exports.addSpaceAdmin = async (req, res) => {
 			_id: new mongoose.Types.ObjectId(data.id),
 		},
 		{
-			$addToSet: { admins: ObjectId(data.member_id) },
+			$addToSet: { admins: new mongoose.Types.ObjectId(data.member_id) },
 		}
 	);
 
@@ -869,7 +869,7 @@ exports.deleteSpaceLabel = async (req, res) => {
 			// },
 			{
 				$match: {
-					_id: ObjectId(data.spaceTime),
+					_id: new mongoose.Types.ObjectId(data.spaceTime),
 				},
 			},
 			{
@@ -927,7 +927,7 @@ exports.deleteSpaceLabel = async (req, res) => {
 		const spaceDocs = await dbModels.Document.aggregate([
 			{
 				$match: {
-					spaceTime_id: ObjectId(data.spaceTime),
+					spaceTime_id: new mongoose.Types.ObjectId(data.spaceTime),
 				},
 			},
 			{
@@ -1048,7 +1048,7 @@ exports.editSpaceLabel = async (req, res) => {
 			// },
 			{
 				$match: {
-					_id: ObjectId(data.spaceTime),
+					_id: new mongoose.Types.ObjectId(data.spaceTime),
 				},
 			},
 			{
@@ -1106,7 +1106,7 @@ exports.editSpaceLabel = async (req, res) => {
 		const spaceDocs = await dbModels.Document.aggregate([
 			{
 				$match: {
-					spaceTime_id: ObjectId(data.spaceTime),
+					spaceTime_id: new mongoose.Types.ObjectId(data.spaceTime),
 				},
 			},
 			{
