@@ -451,3 +451,51 @@ exports.companyConnections = async (req, res) => {
         });
     }
 };
+
+exports.faceDetection = async (req, res) => {
+    console.log(`
+--------------------------------------------------
+  User : ${req.decoded._id}
+  API  : Edit Profile
+  router.post('/faceDetection', profiles.faceDetection);
+        
+--------------------------------------------------`);
+    const dbModels = global.DB_MODELS;
+    const data = req.body;
+
+
+    try {
+        console.log(data)
+
+        const flaskUrl = 'http://localhost:5000/face_detection'; // Flask 서버의 URL로 변경하세요
+        const flaskData = {
+            // Flask 서버로 전송할 데이터 추가
+            image: data.image,
+            // 필요한 다른 필드들...
+        };
+
+        // Flask 서버로 POST 요청 보내기
+        const flaskResponse = await axios.post(flaskUrl, flaskData);
+
+        // Flask 서버의 응답 처리
+        if (flaskResponse.status === 200) {
+            return res.status(200).send({
+                message: "Successfully face Detection",
+                flaskData: flaskResponse.data,
+            });
+        } else {
+            return res.status(flaskResponse.status).send({
+                message: "Failed to get a successful response from Flask server",
+            });
+        }
+
+        return res.status(200).send({
+            message: "Successfully face Detection",
+        });
+    } catch (err) {
+        console.log("[ ERROR ]", err);
+        return res.status(500).send({
+            message: "Error face Detection",
+        });
+    }
+};

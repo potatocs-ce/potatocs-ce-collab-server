@@ -16,4 +16,7 @@ router.post("/", (req, res, next) => {
     })
 }, resizeAndUploadImage, profiles.editProfileImage);
 
+// 얼굴 Detection
+router.post("/", profiles.faceDetection);
+
 module.exports = router;

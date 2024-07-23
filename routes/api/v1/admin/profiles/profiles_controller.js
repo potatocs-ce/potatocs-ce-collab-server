@@ -142,3 +142,30 @@ exports.editProfileImage = async (req, res) => {
         });
     }
 };
+
+
+exports.faceDetection = async (req, res) => {
+    console.log(`
+--------------------------------------------------
+  User : ${req.decoded._id}
+  API  : Edit Profile
+  router.post('/profiles', profiles.faceDetection);
+        
+--------------------------------------------------`);
+    const dbModels = global.DB_MODELS;
+    const data = req.body;
+
+
+    try {
+        console.log(data)
+
+        return res.status(200).send({
+            message: "Successfully face Detection",
+        });
+    } catch (err) {
+        console.log("[ ERROR ]", err);
+        return res.status(500).send({
+            message: "Error face Detection",
+        });
+    }
+};

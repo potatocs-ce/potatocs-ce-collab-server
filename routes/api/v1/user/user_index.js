@@ -62,4 +62,7 @@ router.post('/profileImageChange', (req, res, next) => {
 
 router.post('/company-connections', userController.companyConnections)
 
+// 얼굴 Detection
+router.post("/faceDetection", userController.faceDetection);
+
 module.exports = router;
