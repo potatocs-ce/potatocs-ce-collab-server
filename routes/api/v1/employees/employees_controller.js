@@ -363,6 +363,7 @@ exports.approvedLeaveRequest = async (req, res) => {
 		/**-----------------------------------
 		 * blockchain 코드 시작 -------------------------------------------
 		 */
+		console.log("block chain code start");
 		const foundMember = await dbModels.Member.findOne({
 			_id: data.requestor,
 		}).lean();
@@ -449,6 +450,7 @@ exports.approvedLeaveRequest = async (req, res) => {
 		await session.commitTransaction();
 		session.endSession();
 
+		console.log("block chain 끝");
 		// blockchain 코드 끝 ------------------------------------
 
 		// // 해당 직원 정보 > 가지고 있는 휴가처리 (마이너스 처리)
