@@ -2,15 +2,11 @@ const member = require("../../../../models/member_schema");
 var fs = require("fs");
 var path = require("path");
 const { promisify } = require("util");
-// const unlinkAsync = promisify(fs.unlink);
-// const sharp = require("sharp");
 const { default: mongoose } = require("mongoose");
 const { s3Client } = require("../../../../utils/s3Utils");
+const { faceImageUpload } = require("../../../../utils/s3Utils");
 const { DeleteObjectCommand } = require("@aws-sdk/client-s3");
-
-
-// const s3 = global.AWS_S3.s3;
-// const bucket = global.AWS_S3.bucket;
+const axios = require('axios');
 
 exports.profile = async (req, res) => {
     console.log(`
@@ -465,20 +461,30 @@ exports.faceDetection = async (req, res) => {
 
 
     try {
-        console.log(data)
 
-        const flaskUrl = 'http://localhost:5000/face_detection'; // Flask 서버의 URL로 변경하세요
-        const flaskData = {
-            // Flask 서버로 전송할 데이터 추가
-            image: data.image,
-            // 필요한 다른 필드들...
-        };
+        const isExisted = await dbModels.PendingCompanyRequest.findOne({
+            member_id: req.decoded._id,
+        });
+
+
+        // console.log(data)
+
+        const flaskUrl = 'http://127.0.0.1:5000/detection'; // Flask 서버의 URL로 변경하세요
 
         // Flask 서버로 POST 요청 보내기
-        const flaskResponse = await axios.post(flaskUrl, flaskData);
+        const flaskResponse = await axios.post(flaskUrl, data, {
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
 
         // Flask 서버의 응답 처리
         if (flaskResponse.status === 200) {
+            // console.log(flaskResponse.data)
+            flaskResponse.data.filename = req.decoded._id + '_face'
+            const face = faceImageUpload(flaskResponse)
+            // console.log('face : ', face)
+
             return res.status(200).send({
                 message: "Successfully face Detection",
                 flaskData: flaskResponse.data,
@@ -489,9 +495,7 @@ exports.faceDetection = async (req, res) => {
             });
         }
 
-        return res.status(200).send({
-            message: "Successfully face Detection",
-        });
+
     } catch (err) {
         console.log("[ ERROR ]", err);
         return res.status(500).send({

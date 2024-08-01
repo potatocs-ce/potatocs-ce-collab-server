@@ -126,12 +126,37 @@ const resizeAndUploadImage = async (req, res, next) => {
     }
 };
 
+const faceImageUpload = async (req, res, next) => {
+    try {
+        console.log('req.data : ', req.data)
+
+        const buffer = Buffer.from(req.data.detections, 'base64');
+
+        await s3Client.send(
+            new PutObjectCommand({
+                ACL: "public-read",
+                Bucket: process.env.AWS_S3_BUCKET,
+                Key: 'face_img/' + req.data.filename,
+                Body: buffer,
+                ContentEncoding: 'base64', // required
+                ContentType: 'image/jpeg', // required
+            })
+        );
+
+        return '잘 받았다.'
+    } catch (error) {
+        console.error(error);
+        res.status(500).send("Error processing file.");
+    }
+};
+
 const uploadAny = upload.any();
 const uploadImage = uploadMemory.any();
 
 module.exports = {
     uploadAny,
     uploadImage,
+    faceImageUpload,
     s3Client,
     resizeAndUploadImage,
 };
