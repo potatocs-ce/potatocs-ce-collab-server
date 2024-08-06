@@ -799,8 +799,13 @@ exports.cancelMyRequestLeave = async (req, res) => {
 			throw error; // Re-throw the error after logging
 		}
 
-		const getManagerData = await dbModels.Manager.findOne(findMyManagerCriteria).populate("myManager", "email");
+		const findMyManagerCriteria = {
+			myId: req.decoded._id,
+			accepted: true,
+		};
 
+		const getManagerData = await dbModels.Manager.findOne(findMyManagerCriteria).populate("myManager", "email");
+		console.log("겟매니저데이터", getManagerData);
 		const foundCompany = await dbModels.Company.findById(userYear.company_id).lean();
 
 		console.log(foundCompany);
