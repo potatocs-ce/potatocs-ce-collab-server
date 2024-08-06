@@ -423,9 +423,11 @@ exports.approvedLeaveRequest = async (req, res) => {
 		const network = await gateway.getNetwork("vice-krchannel");
 
 		// 스마트 컨트랙트 가져오기
+		console.log("겟컨트랙트 전 ");
 		const contract = network.getContract("leave");
-
+		console.log("겟컨트랙트 후 ");
 		try {
+			console.log("여기까지왔나?");
 			const result = await contract.submitTransaction(
 				"CreateLeaveRequest", // 스마트 컨트랙트의 함수 이름
 				updatedRequest._id,

@@ -45,7 +45,7 @@
 		"NsmartsMSP": {
 			"mspid": "NsmartsMSP",
 			"adminPrivateKey": {
-				"path": "../potatocs-bc/potatocs-network/organizations/peerOrganizations/nsmarts.co.kr/admin/msp/keystore/a065f43809b5ee7052e2053b40c67c824fa1eb687b595c258e31d30cd8140a81_sk"
+				"path": "../potatocs-bc/potatocs-network/organizations/peerOrganizations/nsmarts.co.kr/admin/msp/keystore/676b7e2433452bc982abf66546933a0ab0540de548da2044f7cb6b72da761e34_sk"
 			},
 			"peers": ["peer0.nsmarts.co.kr", "peer1.nsmarts.co.kr"],
 			"orderers": ["orderer.nsmarts.co.kr", "orderer2.nsmarts.co.kr"],
@@ -57,7 +57,7 @@
 		"ViceMSP": {
 			"mspid": "ViceMSP",
 			"adminPrivateKey": {
-				"path": "../potatocs-bc/potatocs-network/organizations/peerOrganizations/vice.com/admin/msp/keystore/689ac0d1257827a66bcdde68e317d96b60ec067068597f2ea682f4b3d4d0f68f_sk"
+				"path": "../potatocs-bc/potatocs-network/organizations/peerOrganizations/vice.com/admin/msp/keystore/9f973b1dd1e27861bfe0721b4ef425e965c7bf7058e32290fcda43e235306752_sk"
 			},
 			"peers": ["peer0.vice.com", "peer1.vice.com"],
 			"orderers": ["orderer3.vice.com", "orderer4.vice.com"],
@@ -69,7 +69,7 @@
 		"ViceKRMSP": {
 			"mspid": "ViceKRMSP",
 			"adminPrivateKey": {
-				"path": "../potatocs-bc/potatocs-network/organizations/peerOrganizations/vice-kr.co.kr/admin/msp/keystore/515aff820eaa97d2a6906bf0f50d926ac29fca2cb63407a3a1ce73b14e937a1a_sk"
+				"path": "../potatocs-bc/potatocs-network/organizations/peerOrganizations/vice-kr.co.kr/admin/msp/keystore/6d67857132724876911ac49970dd1c95d263ac3b6c1d746d0d752958d7077f72_sk"
 			},
 			"peers": ["peer0.vice-kr.co.kr", "peer1.vice-kr.co.kr"],
 			"orderers": ["orderer5.vice-kr.co.kr"],

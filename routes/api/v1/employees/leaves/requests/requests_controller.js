@@ -86,13 +86,14 @@ exports.approvedLeaveRequest = async (req, res) => {
 --------------------------------------------------
   User : ${req.decoded._id}
   API  : Approved Leave Request Pending List
-  File : requests_controller
   router.put('/approved-leave-request', approvalMngmtCtrl.approvedLeaveRequest);
   query: ${JSON.stringify(req.body._id)} pending leave request document id
 --------------------------------------------------`);
 	const dbModels = global.DB_MODELS;
 	const data = req.body;
 	console.log(data);
+	const session = await dbModels.LeaveRequest.startSession();
+
 	try {
 		const criteria = {
 			_id: data._id,
@@ -103,6 +104,8 @@ exports.approvedLeaveRequest = async (req, res) => {
 		};
 
 		// 휴가 승인 업데이트
+		await session.startTransaction();
+
 		const updatedRequest = await dbModels.LeaveRequest.findOneAndUpdate(criteria, updateData);
 
 		//////////////// 일단 보류 LeaveRequestHistory
@@ -127,6 +130,102 @@ exports.approvedLeaveRequest = async (req, res) => {
 		if (!updatedRequest) {
 			return res.status(404).send("the update1 has failed");
 		}
+
+		console.log("block chain code start");
+		const foundMember = await dbModels.Member.findOne({
+			_id: data.requestor,
+		}).lean();
+
+		if (!foundMember) {
+			return res.status(400).json({
+				message: "Member was not found!",
+			});
+		}
+
+		const store = new MongoWallet();
+		const wallet = new Wallet(store);
+		const userIdentity = await wallet.get(data.requestor.toString());
+
+		const findMyManagerCriteria = {
+			myId: req.decoded._id,
+			accepted: true,
+		};
+
+		const getManagerData = await dbModels.Manager.findOne(findMyManagerCriteria).populate("myManager", "email");
+
+		const foundCompany = await dbModels.Company.findById(foundMember.company_id).lean();
+
+		let selectedCompany = "";
+		let mspId = "";
+		let channelId = "";
+		switch (foundCompany.company_name) {
+			case "nsmartsolution":
+				selectedCompany = "nsmarts";
+				mspId = "NsmartsMSP";
+				channelId = "nsmartschannel";
+				break;
+			case "vice":
+				selectedCompany = "vice";
+				mspId = "ViceMSP";
+				channelId = "vicechannel";
+				break;
+			default:
+				selectedCompany = "vice-kr";
+				mspId = "ViceKRMSP";
+				channelId = "vice-krchannel";
+				break;
+		}
+		const ccp = buildCCP(selectedCompany);
+		const gateway = new Gateway();
+
+		await gateway.connect(ccp, {
+			wallet,
+			identity: userIdentity,
+			discovery: { enabled: false, asLocalhost: false },
+		});
+
+		// 네트워크 채널 가져오기
+		const network = await gateway.getNetwork("vice-krchannel");
+		console.log("11111111111111111111111");
+		// 스마트 컨트랙트 가져오기
+		const contract = network.getContract("leave");
+		console.log("22222222222222222222222222222222");
+
+		try {
+			console.log("체인코드 초기화 시작");
+			// 체인코드 초기화
+			// await contract.submitTransaction("Init");
+			// console.log("체인코드 초기화 완료");
+
+			console.log("3333333333333333333333333333");
+			const result = await contract.submitTransaction(
+				"CreateLeaveRequest", // 스마트 컨트랙트의 함수 이름
+				updatedRequest._id,
+				updatedRequest.requestor,
+				getManagerData.myManager,
+				updatedRequest.leaveType,
+				updatedRequest.leaveDay,
+				updatedRequest.leaveDuration,
+				updatedRequest.leave_start_date.toISOString(),
+				updatedRequest.leave_end_date.toISOString(),
+				updatedRequest.leave_reason,
+				updatedRequest.status,
+				updatedRequest.year
+			);
+			console.log("Transaction has been submitted", result);
+		} catch (bcError) {
+			console.error("Blockchain transaction failed:", bcError);
+			throw bcError;
+		}
+
+		console.log("4444444444444444444444444444444");
+		await gateway.disconnect();
+		// 트랜잭션 커밋
+		await session.commitTransaction();
+		session.endSession();
+
+		console.log("block chain 끝");
+		// blockchain 코드 끝 ------------------------------------
 
 		// // 해당 직원 정보 > 가지고 있는 휴가처리 (마이너스 처리)
 		// const findRequestor = {
@@ -191,6 +290,9 @@ exports.approvedLeaveRequest = async (req, res) => {
 		});
 	} catch (err) {
 		console.log(err);
+		await session.abortTransaction();
+		session.endSession();
+
 		return res.status(500).send({
 			message: "DB Error",
 		});
