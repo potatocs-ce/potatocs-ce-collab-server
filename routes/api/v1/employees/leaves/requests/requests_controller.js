@@ -202,15 +202,12 @@ exports.approvedLeaveRequest = async (req, res) => {
 				"CreateLeaveRequest", // 스마트 컨트랙트의 함수 이름
 				updatedRequest._id,
 				updatedRequest.requestor,
-				getManagerData.myManager,
 				updatedRequest.leaveType,
 				updatedRequest.leaveDay,
 				updatedRequest.leaveDuration,
 				updatedRequest.leave_start_date.toISOString(),
 				updatedRequest.leave_end_date.toISOString(),
-				updatedRequest.leave_reason,
-				updatedRequest.status,
-				updatedRequest.year
+				updatedRequest.leave_reason
 			);
 			console.log("Transaction has been submitted", result);
 		} catch (bcError) {
