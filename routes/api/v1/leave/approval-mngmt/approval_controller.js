@@ -3,6 +3,9 @@ const LeaveRequestHistory = require("../../../../../models/leave_request_history
 const LeaveRequest = require("../../../../../models/leave_request_schema");
 const moment = require("moment");
 const mongoose = require("mongoose");
+const { Wallet, Gateway } = require("fabric-network");
+const { MongoWallet } = require("../../../../../utils/mongo-wallet");
+const { buildCCP } = require("../../../../../utils/ca-utils");
 
 exports.getLeaveRequest = async (req, res) => {
 	console.log(`
@@ -286,7 +289,7 @@ exports.approvedLeaveRequest = async (req, res) => {
 };
 
 // 신청한 휴가 delete
-exports.deleteLeaveRequest = async (req, res) => {
+exports.rejectLeaveRequest = async (req, res) => {
 	console.log(`
 --------------------------------------------------
   User : ${req.decoded._id}

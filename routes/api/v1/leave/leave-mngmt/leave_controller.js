@@ -606,11 +606,17 @@ exports.getMyRequestListSearch = async (req, res) => {
 --------------------------------------------------`);
 
 	const data = req.query;
-	// console.log(data);
+	console.log("뭐 넘기니", data);
 
 	const startDate = new Date(data.leave_start_date);
 	const endDate = new Date(data.leave_end_date);
 
+	const { active = "createdAt", direction = "asc", pageIndex = "0", pageSize = "10" } = req.query;
+	const limit = parseInt(pageSize, 10);
+	const skip = parseInt(pageIndex, 10) * limit;
+	const sortCriteria = {
+		[active]: direction === "desc" ? -1 : 1,
+	};
 	let match_criteria = {
 		requestor: new mongoose.Types.ObjectId(req.decoded._id),
 		leave_start_date: { $gte: startDate, $lte: endDate },
@@ -713,6 +719,9 @@ exports.getMyRequestListSearch = async (req, res) => {
 			{
 				$sort: { createdAt: -1 },
 			},
+			{ $sort: sortCriteria },
+			{ $skip: skip },
+			{ $limit: limit },
 		]);
 		// console.log(LeaveRequestListSearch.length);
 		totalCount = LeaveRequestListSearch.length;
