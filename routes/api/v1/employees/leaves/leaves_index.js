@@ -7,6 +7,5 @@ const status = require("./status/status_index");
 -----------------------------------*/
 
 router.use("/requests", requests);
-router.use("/status", status);
 
 module.exports = router;
