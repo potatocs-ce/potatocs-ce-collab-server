@@ -4,7 +4,7 @@ var path = require("path");
 const { promisify } = require("util");
 const { default: mongoose } = require("mongoose");
 const { s3Client } = require("../../../../utils/s3Utils");
-const { faceImageUpload } = require("../../../../utils/s3Utils");
+const { faceImageUpload, getImageBase64FromS3 } = require("../../../../utils/s3Utils");
 const { DeleteObjectCommand } = require("@aws-sdk/client-s3");
 const axios = require('axios');
 
@@ -452,7 +452,7 @@ exports.faceDetection = async (req, res) => {
     console.log(`
 --------------------------------------------------
   User : ${req.decoded._id}
-  API  : Edit Profile
+  API  : faceDetection
   router.post('/faceDetection', profiles.faceDetection);
         
 --------------------------------------------------`);
@@ -462,14 +462,7 @@ exports.faceDetection = async (req, res) => {
 
     try {
 
-        const isExisted = await dbModels.PendingCompanyRequest.findOne({
-            member_id: req.decoded._id,
-        });
-
-
-        // console.log(data)
-
-        const flaskUrl = 'http://127.0.0.1:5000/detection'; // Flask 서버의 URL로 변경하세요
+        const flaskUrl = 'http://127.0.0.1:5000/detection';
 
         // Flask 서버로 POST 요청 보내기
         const flaskResponse = await axios.post(flaskUrl, data, {
@@ -477,18 +470,110 @@ exports.faceDetection = async (req, res) => {
                 'Content-Type': 'application/json'
             }
         });
-
+        console.log(flaskResponse.data)
         // Flask 서버의 응답 처리
         if (flaskResponse.status === 200) {
-            // console.log(flaskResponse.data)
-            flaskResponse.data.filename = req.decoded._id + '_face'
-            const face = faceImageUpload(flaskResponse)
-            // console.log('face : ', face)
 
-            return res.status(200).send({
-                message: "Successfully face Detection",
-                flaskData: flaskResponse.data,
+            // 얼굴 인식이 안되었으면
+            if (!flaskResponse.data.status) {
+                console.log('인식 안된거 아니야?')
+                return res.status(200).send({
+                    message: "Not Detection"
+                })
+            }
+            // 인식이 되서 이미지 데이터가 왔으면
+            else {
+                console.log('인식 된거?')
+                // console.log(flaskResponse.data)
+
+                flaskResponse.data.filename = req.decoded._id + '_face'
+
+                const face = await faceImageUpload(flaskResponse)
+
+                const memberInfo = await dbModels.Member.findOneAndUpdate(
+                    {
+                        _id: req.decoded._id,
+                    },
+                    {
+                        face_img_key: face.Key,
+                        face_img: face.location,
+                    }
+                );
+
+                return res.status(200).send({
+                    message: "Successfully face Detection",
+                    flaskData: flaskResponse.data,
+                });
+            }
+        } else {
+            return res.status(flaskResponse.status).send({
+                message: "Failed to get a successful response from Flask server",
             });
+        }
+
+
+    } catch (err) {
+        console.log("[ ERROR ]", err);
+        return res.status(500).send({
+            message: "Error face Detection",
+        });
+    }
+};
+
+exports.faceRecognition = async (req, res) => {
+    console.log(`
+--------------------------------------------------
+  User : ${req.decoded._id}
+  API  : faceRecognition
+  router.post('/faceRecognition', profiles.faceRecognition);
+        
+--------------------------------------------------`);
+    const dbModels = global.DB_MODELS;
+    const data = req.body;
+
+    try {
+
+        const memberInfo = await dbModels.Member.findOne({
+            _id: req.decoded._id,
+        });
+        /*
+            여기서 얼굴 없으면 redirect 해버릴까???
+            고민중
+        */
+
+        console.log(memberInfo)
+
+        const face_img = await getImageBase64FromS3(memberInfo)
+
+        const flaskUrl = 'http://127.0.0.1:5000/recognition';
+
+        // Flask 서버로 POST 요청 보내기
+        const flaskResponse = await axios.post(flaskUrl, data, {
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        console.log(flaskResponse.data)
+        // Flask 서버의 응답 처리
+        if (flaskResponse.status === 200) {
+
+            // 얼굴 인식이 안되었으면
+            if (!flaskResponse.data.status) {
+                console.log('인식 안된거 아니야?')
+                return res.status(200).send({
+                    message: "Not recognition"
+                })
+            }
+            // 인식이 되서 이미지 데이터가 왔으면
+            else {
+                console.log('인식 된거?')
+                // console.log(flaskResponse.data)
+
+
+                return res.status(200).send({
+                    message: "Successfully face recognition",
+                });
+            }
         } else {
             return res.status(flaskResponse.status).send({
                 message: "Failed to get a successful response from Flask server",

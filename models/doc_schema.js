@@ -29,17 +29,10 @@ const docSchema = mongoose.Schema(
         endDate: {
             type: Date
         },
-
-
-
         done: {
             type: Boolean,
             default: false
         },
-
-
-
-
         color: {
             primary: {
                 type: String
@@ -48,13 +41,9 @@ const docSchema = mongoose.Schema(
                 type: String
             }
         },
+        labels: [],
 
-
-        labels: []
-    },
-
-    // 얼굴 인증
-    {
+        // 얼굴 인증 .. 이지만 space 생성으로 옮겨져서 사용되지 않을예정
         faceAuthentication: {
             type: Boolean,
             // default: false

@@ -126,6 +126,7 @@ const resizeAndUploadImage = async (req, res, next) => {
     }
 };
 
+// face Detection 업로드 하는 부분
 const faceImageUpload = async (req, res, next) => {
     try {
         console.log('req.data : ', req.data)
@@ -143,7 +144,28 @@ const faceImageUpload = async (req, res, next) => {
             })
         );
 
-        return '잘 받았다.'
+        return {
+            location: `https://${process.env.AWS_S3_BUCKET}.s3.${process.env.AWS_REGION}.amazonaws.com/${req.data.filename}`,
+            Key: 'face_img/' + req.data.filename,
+        }
+    } catch (error) {
+        console.error(error);
+        res.status(500).send("Error processing file.");
+    }
+};
+
+const getImageBase64FromS3 = async (req, res, next) => {
+    try {
+        console.log('req.data : ', req.data)
+
+        const params = {
+            Bucket: bucketName,
+            Key: objectKey,
+        };
+        const data = await s3.getObject(params).promise();
+
+        return data.Body.toString('base64');
+
     } catch (error) {
         console.error(error);
         res.status(500).send("Error processing file.");
@@ -153,10 +175,12 @@ const faceImageUpload = async (req, res, next) => {
 const uploadAny = upload.any();
 const uploadImage = uploadMemory.any();
 
+
 module.exports = {
     uploadAny,
     uploadImage,
     faceImageUpload,
     s3Client,
     resizeAndUploadImage,
+    getImageBase64FromS3
 };

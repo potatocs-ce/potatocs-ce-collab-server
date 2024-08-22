@@ -64,5 +64,7 @@ router.post('/company-connections', userController.companyConnections)
 
 // 얼굴 Detection
 router.post("/faceDetection", userController.faceDetection);
+router.post("/faceRecognition", userController.faceRecognition);
+
 
 module.exports = router;
