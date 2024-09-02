@@ -530,7 +530,7 @@ exports.faceRecognition = async (req, res) => {
 --------------------------------------------------`);
     const dbModels = global.DB_MODELS;
     const data = req.body;
-
+    // console.log('data : ', data)
     try {
 
         const memberInfo = await dbModels.Member.findOne({
@@ -541,14 +541,23 @@ exports.faceRecognition = async (req, res) => {
             고민중
         */
 
-        console.log(memberInfo)
+        // console.log(memberInfo)
 
-        const face_img = await getImageBase64FromS3(memberInfo)
+        const face_img = await getImageBase64FromS3({
+            // bucketName: 'face_img/',
+            objectKey: memberInfo.face_img_key
+        })
+
+        // console.log('face_img : ', face_img)
 
         const flaskUrl = 'http://127.0.0.1:5000/recognition';
 
+        const flaskSendData = {
+            profile_img: face_img,      // s3에 저장되 있던 사진
+            frame_img: req.body.frame,  // client 에서 보낸 사진
+        }
         // Flask 서버로 POST 요청 보내기
-        const flaskResponse = await axios.post(flaskUrl, data, {
+        const flaskResponse = await axios.post(flaskUrl, flaskSendData, {
             headers: {
                 'Content-Type': 'application/json'
             }
@@ -571,7 +580,7 @@ exports.faceRecognition = async (req, res) => {
 
 
                 return res.status(200).send({
-                    message: "Successfully face recognition",
+                    message: "recognition",
                 });
             }
         } else {

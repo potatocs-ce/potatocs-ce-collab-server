@@ -2,7 +2,7 @@ const multer = require("multer");
 const multerS3 = require("multer-s3");
 const path = require("path");
 const sharp = require("sharp");
-const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
+const { S3Client, PutObjectCommand, GetObjectCommand } = require("@aws-sdk/client-s3");
 
 const s3Client = new S3Client({
     region: process.env.AWS_REGION,
@@ -156,15 +156,31 @@ const faceImageUpload = async (req, res, next) => {
 
 const getImageBase64FromS3 = async (req, res, next) => {
     try {
-        console.log('req.data : ', req.data)
+        // console.log('req.data : ', req)
 
         const params = {
-            Bucket: bucketName,
-            Key: objectKey,
+            Bucket: process.env.AWS_S3_BUCKET,
+            Key: req.objectKey,
         };
-        const data = await s3.getObject(params).promise();
+        const data = await s3Client.send(new GetObjectCommand(params));
+        // console.log('data.Body.toString(\'base64\')', data.Body.toString('base64'));
 
-        return data.Body.toString('base64');
+        // 스트림을 버퍼로 변환하는 유틸리티 함수
+        const streamToBuffer = (stream) =>
+            new Promise((resolve, reject) => {
+                const chunks = [];
+                stream.on("data", (chunk) => chunks.push(chunk));
+                stream.on("end", () => resolve(Buffer.concat(chunks)));
+                stream.on("error", reject);
+            });
+
+        // S3에서 가져온 스트림을 버퍼로 변환 후 Base64로 인코딩
+        const buffer = await streamToBuffer(data.Body);
+        const base64Image = buffer.toString('base64');
+
+        // console.log('Base64 Image Data:', base64Image);
+
+        return base64Image;
 
     } catch (error) {
         console.error(error);
