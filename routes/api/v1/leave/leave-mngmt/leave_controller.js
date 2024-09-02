@@ -2,6 +2,9 @@ const { ObjectId } = require("bson");
 const moment = require("moment");
 const { string } = require("sharp/lib/is");
 const mongoose = require("mongoose");
+const { MongoWallet } = require("../../../../../utils/mongo-wallet");
+const { Wallet, Gateway } = require("fabric-network");
+const { buildCAClient, enrollAdminMongo, buildCCP } = require("../../../../../utils/ca-utils");
 
 const nodemailer = require("nodemailer");
 
@@ -507,6 +510,14 @@ exports.getMyRequestList = async (req, res) => {
 --------------------------------------------------`);
 
 	const dbModels = global.DB_MODELS;
+
+	const { active = "createdAt", direction = "asc", pageIndex = "0", pageSize = "10" } = req.query;
+
+	const limit = parseInt(pageSize, 10);
+	const skip = parseInt(pageIndex, 10) * limit;
+	const sortCriteria = {
+		[active]: direction === "desc" ? -1 : 1,
+	};
 	try {
 		// 3개월 이전만 match하기 위한 date
 		// date = new Date();
@@ -514,10 +525,11 @@ exports.getMyRequestList = async (req, res) => {
 
 		// 신청일 기준 3개월 이전
 		const compareThreeMonth = moment().subtract(2, "months").startOf("month").format("YYYY-MM-DD");
+
 		const leaveRequestList = await dbModels.LeaveRequest.aggregate([
 			{
 				$match: {
-					requestor: new mongoose.Types.ObjectId(req.decoded._id),
+					requestor: new ObjectId(req.decoded._id),
 					leave_start_date: { $gte: new Date(compareThreeMonth) },
 					status: "approve",
 				},
@@ -562,11 +574,21 @@ exports.getMyRequestList = async (req, res) => {
 					createdAt: -1,
 				},
 			},
+			{
+				$facet: {
+					paginatedResults: [{ $sort: sortCriteria }, { $skip: skip }, { $limit: limit }],
+					totalCount: [{ $count: "count" }],
+				},
+			},
 		]);
-		// console.log(LeaveRequestList);
+		console.log(leaveRequestList);
+
+		const results = leaveRequestList[0].paginatedResults;
+		const totalCount = leaveRequestList[0].totalCount[0] ? leaveRequestList[0].totalCount[0].count : 0;
 
 		return res.status(200).send({
-			leaveRequestList,
+			leaveRequestList: results,
+			totalCount,
 		});
 	} catch (err) {
 		return res.status(500).send({
@@ -610,7 +632,7 @@ exports.getMyRequestListSearch = async (req, res) => {
 		const LeaveRequestListSearch = await dbModels.LeaveRequest.aggregate([
 			{
 				// $match: {
-				// 	requestor: new mongoose.Types.ObjectId(req.decoded._id),
+				// 	requestor: ObjectId(req.decoded._id),
 				// }
 				$match: match_criteria,
 			},
@@ -692,9 +714,10 @@ exports.getMyRequestListSearch = async (req, res) => {
 				$sort: { createdAt: -1 },
 			},
 		]);
-		// console.log(LeaveRequestListSearch);
+		// console.log(LeaveRequestListSearch.length);
+		totalCount = LeaveRequestListSearch.length;
 		// console.log('LeaveRequestListSearch')
-		return res.status(200).send(LeaveRequestListSearch);
+		return res.status(200).send({ LeaveRequestListSearch, totalCount });
 	} catch (error) {
 		return res.status(500).send({
 			message: "DB Error",
@@ -758,6 +781,100 @@ exports.cancelMyRequestLeave = async (req, res) => {
 				status: "Cancel",
 			}
 		);
+		/**-----------------------------------
+		 * blockchain 코드 시작 -------------------------------------------
+		 */
+		console.log("----------------------블록체인----------------------");
+		const store = new MongoWallet();
+		const wallet = new Wallet(store);
+		let userIdentity;
+
+		try {
+			userIdentity = await wallet.get(userYear._id.toString());
+			if (!userIdentity) {
+				throw new Error(`An identity for the user ${userYear._id.toString()} does not exist in the wallet`);
+			}
+		} catch (error) {
+			console.error("Failed to retrieve user identity from wallet:", error);
+			throw error; // Re-throw the error after logging
+		}
+
+		const findMyManagerCriteria = {
+			myId: req.decoded._id,
+			accepted: true,
+		};
+
+		const getManagerData = await dbModels.Manager.findOne(findMyManagerCriteria).populate("myManager", "email");
+		console.log("겟매니저데이터", getManagerData);
+		const foundCompany = await dbModels.Company.findById(userYear.company_id).lean();
+
+		console.log(foundCompany);
+
+		let selectedCompany = "";
+		let mspId = "";
+		let channelId = "";
+		switch (foundCompany.company_name) {
+			case "nsmartsolution":
+				selectedCompany = "nsmarts";
+				mspId = "NsmartsMSP";
+				channelId = "nsmartschannel";
+				break;
+			case "vice":
+				selectedCompany = "vice";
+				mspId = "ViceMSP";
+				channelId = "vicechannel";
+				break;
+			default:
+				selectedCompany = "vice-kr";
+				mspId = "ViceKRMSP";
+				channelId = "vice-krchannel";
+				break;
+		}
+		const ccp = buildCCP(selectedCompany);
+		const gateway = new Gateway();
+
+		await gateway.connect(ccp, {
+			wallet,
+			identity: userIdentity,
+			discovery: { enabled: false, asLocalhost: false },
+		});
+
+		// 네트워크 채널 가져오기
+		// 휴가는 전체 채널에 공유
+		// 계약서만 따로 따로
+		// vice-krchannel nsmarts, vice, vicekr 3조직 다있는 채널 사용.
+		const network = await gateway.getNetwork("vice-krchannel");
+
+		// 스마트 컨트랙트 가져오기
+		const contract = network.getContract("leave");
+
+		try {
+			const result = await contract.submitTransaction(
+				"CreateLeaveRequest", // 스마트 컨트랙트의 함수 이름
+				leaveRequest._id,
+				leaveRequest.requestor,
+				getManagerData.myManager,
+				leaveRequest.leaveType,
+				leaveRequest.leaveDay,
+				leaveRequest.leaveDuration,
+				leaveRequest.leave_start_date.toISOString(),
+				leaveRequest.leave_end_date.toISOString(),
+				leaveRequest.leave_reason,
+				leaveRequest.status,
+				leaveRequest.year
+			);
+		} catch (bcError) {
+			console.error("Blockchain transaction failed:", bcError);
+			throw bcError;
+		}
+
+		await gateway.disconnect();
+		// 트랜잭션 커밋
+		await session.commitTransaction();
+		session.endSession();
+
+		// blockchain 코드 끝 ------------------------------------
+
 		// console.log(leaveRequest)
 		// rollover 변수에 duration 을 뺀 값을 저장
 

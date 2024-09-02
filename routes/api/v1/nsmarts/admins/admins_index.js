@@ -6,7 +6,7 @@ const admins = require("./admins_controller");
 router.get("/", admins.getAdminList);
 // 어드민과 회사 연결
 router.patch("/connectAdminCompany", admins.connectAdminCompany);
-// 어드민과 회사 연결해제
+// 어드민과 회사 연결해제.
 router.patch("/disconnectAdminCompany", admins.disconnectAdminCompany);
 
 module.exports = router;

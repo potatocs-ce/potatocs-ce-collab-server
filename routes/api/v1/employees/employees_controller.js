@@ -363,6 +363,7 @@ exports.approvedLeaveRequest = async (req, res) => {
 		/**-----------------------------------
 		 * blockchain 코드 시작 -------------------------------------------
 		 */
+		console.log("block chain code start");
 		const foundMember = await dbModels.Member.findOne({
 			_id: data.requestor,
 		}).lean();
@@ -422,9 +423,11 @@ exports.approvedLeaveRequest = async (req, res) => {
 		const network = await gateway.getNetwork("vice-krchannel");
 
 		// 스마트 컨트랙트 가져오기
+		console.log("겟컨트랙트 전 ");
 		const contract = network.getContract("leave");
-
+		console.log("겟컨트랙트 후 ");
 		try {
+			console.log("여기까지왔나?");
 			const result = await contract.submitTransaction(
 				"CreateLeaveRequest", // 스마트 컨트랙트의 함수 이름
 				updatedRequest._id,
@@ -449,6 +452,7 @@ exports.approvedLeaveRequest = async (req, res) => {
 		await session.commitTransaction();
 		session.endSession();
 
+		console.log("block chain 끝");
 		// blockchain 코드 끝 ------------------------------------
 
 		// // 해당 직원 정보 > 가지고 있는 휴가처리 (마이너스 처리)

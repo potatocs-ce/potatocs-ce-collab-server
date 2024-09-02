@@ -75,6 +75,7 @@ exports.approvedLeaveRequest = async (req, res) => {
 --------------------------------------------------
   User : ${req.decoded._id}
   API  : Approved Leave Request Pending List
+  File : approval_controller
   router.put('/approved-leave-request', approvalMngmtCtrl.approvedLeaveRequest);
   query: ${JSON.stringify(req.body._id)} pending leave request document id
 --------------------------------------------------`);
@@ -582,9 +583,12 @@ exports.getConfirmRdRequest = async (req, res) => {
 			},
 		]);
 
+		totalCount = rdConfirmRequest.length;
+
 		return res.status(200).send({
 			message: "rdConfirmRequest",
 			rdConfirmRequest,
+			totalCount,
 		});
 	} catch (err) {
 		return res.status(500).send({

@@ -249,7 +249,6 @@ exports.acceptEmploymentContract = async (req, res) => {
 				mspId = "ViceKRMSP";
 				break;
 		}
-
 		let foundAdmin = {};
 		try {
 			foundAdmin = await findAdminIfNotAdmin(mspId, global.DB_MODELS);
@@ -257,6 +256,7 @@ exports.acceptEmploymentContract = async (req, res) => {
 			return res.status(409).json({ message: "어드민이 없습니다." });
 		}
 
+		console.log("-------------블록체인 시작--------------");
 		const ccp = buildCCP(selectedCompany);
 		const caClient = buildCAClient(FabricCAServices, ccp, `ca-${selectedCompany}`);
 
@@ -301,6 +301,7 @@ exports.acceptEmploymentContract = async (req, res) => {
 		};
 		const putData = await wallet.put(updatedRequest.member_id, data);
 
+		console.log("------------------블록체인 끝-------------------------")
 		return res.status(200).send({
 			message: "approved",
 			pendingRequestData,
