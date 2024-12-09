@@ -1,31 +1,12 @@
-const router = require('express').Router();
-const multer = require('multer');
+const router = require("express").Router();
 
-/*-----------------------------------
+const countries = require("./countries_controller");
 
-  Contollers
-
------------------------------------*/
-const countries = require('./countries_controller');
-
-
-
-
-/*-----------------------------------
-
-  ** API **
-
------------------------------------*/
-
-/*-----------------------------------
-  COMPANY API
------------------------------------*/
-router.get('/', countries.getCountryList);
-router.post('/', countries.addCountry);
-// router.get('/:id', countries.getCompanyInfo);
-// router.patch('/:id', countries.editCompany);
-router.delete('/:id', countries.deleteCountry);
-
-
+// 국가 목록 조회
+router.get("/", countries.getCountryList);
+// 국가 등록
+router.post("/", countries.addCountry);
+// 국가 삭제
+router.delete("/:id", countries.deleteCountry);
 
 module.exports = router;

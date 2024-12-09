@@ -49,6 +49,8 @@ exports.signUp = async (req, res) => {
 		await newMember.save();
 		await newMenuSide.save();	// 회원가입 하면 menuside가 만들어짐
 
+
+        
 		res.status(201).send({
 			message: 'created'
 		});
