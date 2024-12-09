@@ -1,167 +1,154 @@
-const jwt = require('jsonwebtoken');
-const admin = require('../../../../../models/admin_schema');
-const adMenuSide = require('../../../../../models/ad_menu_side_schema');
-const randomize = require('randomatic');
+const jwt = require("jsonwebtoken");
+const admin = require("../../../../../models/admin_schema");
+const adMenuSide = require("../../../../../models/ad_menu_side_schema");
+const randomize = require("randomatic");
 const nodemailer = require("nodemailer");
 
-
 /*-------------------------------------------------
-    Sign Up
+	Sign Up
 -------------------------------------------------*/
 exports.signUp = async (req, res) => {
     console.log(`
 --------------------------------------------------  
-  API  : Signup
-  router.post('signUp', adAuthcontroller.signUp) 
+  API  : Sign up
+  router.post('/signUp', adAuthcontroller.signUp) 
 --------------------------------------------------`);
-    // console.log(req.body);
 
     const criteria = {
-        email: req.body.email
+        email: req.body.email,
     };
-    const projection = '_id';
+    const projection = "_id";
     const adminData = {
         email: req.body.email,
         password: req.body.password,
         name: req.body.name,
-    }
+    };
 
     try {
         const adminUser = await admin.findOne(criteria, projection).lean();
 
         if (adminUser) {
             return res.status(409).send({
-                message: 'duplicated'
-            })
+                message: "Duplicate admin",
+            });
         }
 
         const newAdmin = admin(adminData);
-        const newAdMenuSide = adMenuSide({ admin_id: newAdmin._id });	// 회원가입 하면 menuside가 만들어짐
+        const newAdMenuSide = adMenuSide({ admin_id: newAdmin._id }); // 회원가입 하면 menuside가 만들어짐
 
         await newAdmin.save();
-        await newAdMenuSide.save();	// 회원가입 하면 menuside가 만들어짐
+        await newAdMenuSide.save(); // 회원가입 하면 menuside가 만들어짐
 
         res.status(201).send({
-            message: 'created'
+            message: "Successfully sign up",
         });
     } catch (error) {
-        console.log(error);
-        return res.status(500).send({
-            error
+        console.error("[ ERROR ]", error);
+        res.status(500).json({
+            message: "Error fetching sign up",
         });
     }
-
 };
 
 /*-------------------------------------------------
-    Sign In
+	Sign In
 -------------------------------------------------*/
 exports.signIn = async (req, res) => {
     console.log(`
 --------------------------------------------------  
-  API  : SignIn
-  router.post('signIn', adAuthcontroller.signIn) 
+  API  : Sign In
+  router.post('/signIn', adAuthcontroller.signIn) 
 --------------------------------------------------`);
-    // console.log(req.body);
 
     const criteria = {
-        email: req.body.email
-    }
+        email: req.body.email,
+    };
 
     try {
-        console.log('-------------------email----------------------')
-        const date = new Date();
-        console.log(date)
-        console.log(req.body.email)
-        console.log('----------------------------------------------')
-
         const adminUser = await admin.findOne(criteria);
 
         if (!adminUser) {
-            // console.log('No Matched Account');
             return res.status(404).send({
-                message: 'not found'
+                message: "Admin not found",
             });
         }
 
         if (adminUser && adminUser.retired == true) {
             return res.status(400).send({
-                message: `retired`
+                message: "Retired admin",
             });
         }
 
         const isMatched = await adminUser.comparePassword(req.body.password, adminUser.password);
 
         if (!isMatched) {
-            // console.log('Password Mismatch');
-            return res.status(404).send({
-                message: 'mismatch'
+            return res.status(406).send({
+                message: "Incorrect password",
             });
         }
 
         const payload = {
             _id: adminUser._id,
             name: adminUser.name,
-            isAdmin: adminUser.isAdmin
+            email: adminUser.email,
+            isAdmin: adminUser.isAdmin,
+            profile_img: adminUser.profile_img,
         };
 
         const jwtOption = {
-            expiresIn: '1d'
+            expiresIn: "1d",
         };
 
         const token = jwt.sign(payload, process.env.JWT_SECRET, jwtOption);
 
-
         /*------------------------------------------
-            5. send token and profile info to client
-        --------------------------------------------*/
+			5. send token and profile info to client
+		--------------------------------------------*/
         res.send({
-            token
+            message: "Successfully sign in",
+            token,
         });
-
-
     } catch (error) {
-        console.log(error);
-        return res.status(500).send('An error has occurred in the server');
+        console.error("[ ERROR ]", error);
+        res.status(500).json({
+            message: "Error fetching sign in",
+        });
     }
 };
 
 // https://www.npmjs.com/package/randomatic
 // randomize('A0', 16) will generate a 16-character, alpha-numeric randomized string
 /*-------------------------------------------------
-    Find Password
-    Create a verification code
-    Send an email to the user
+	Find Password
+	Create a verification code
+	Send an email to the user
 -------------------------------------------------*/
 exports.getEcode = async (req, res) => {
     console.log(`
 --------------------------------------------------  
-  API  : getEcode
-  router.post('getEcode', adAuthcontroller.getEcode) 
+  API  : get Ecode
+  router.post('/getEcode', adAuthcontroller.getEcode) 
 --------------------------------------------------`);
 
     try {
-
-        // Check the email up in order to exist
         const criteria = {
-            email: req.body.email
-        }
+            email: req.body.email,
+        };
 
-        // Create a code
         const eCodeDate = new Date();
-        const eCode = randomize('A0', 16);
+        const eCode = randomize("A0", 16);
 
         const passwordReset = {
             pw_reset_code: eCode,
-            pw_reset_date: eCodeDate
-        }
+            pw_reset_date: eCodeDate,
+        };
 
         const user = await admin.findOneAndUpdate(criteria, passwordReset);
 
         if (!user) {
-            console.log('NO RESULT');
+            console.log("NO RESULT");
             return res.status(404).send({
-                message: 'not found'
+                message: "not found",
             });
         }
 
@@ -230,7 +217,6 @@ exports.getEcode = async (req, res) => {
         var tag1 = "key1=value1";
 
         async function main() {
-
             // Create the SMTP transport.
             let transporter = nodemailer.createTransport({
                 host: smtpEndpoint,
@@ -238,8 +224,8 @@ exports.getEcode = async (req, res) => {
                 secure: false, // true for 465, false for other ports
                 auth: {
                     user: smtpUsername,
-                    pass: smtpPassword
-                }
+                    pass: smtpPassword,
+                },
             });
 
             // Specify the fields in the email.
@@ -253,14 +239,14 @@ exports.getEcode = async (req, res) => {
                 html: body_html,
                 // Custom headers for configuration set and message tags.
                 headers: {
-                    'X-SES-CONFIGURATION-SET': configurationSet,
-                    'X-SES-MESSAGE-TAGS': tag0,
-                    'X-SES-MESSAGE-TAGS': tag1
-                }
+                    "X-SES-CONFIGURATION-SET": configurationSet,
+                    "X-SES-MESSAGE-TAGS": tag0,
+                    "X-SES-MESSAGE-TAGS": tag1,
+                },
             };
 
             // Send the email.
-            let info = await transporter.sendMail(mailOptions)
+            let info = await transporter.sendMail(mailOptions);
 
             console.log("Message sent! Message ID: ", info.messageId);
         }
@@ -268,21 +254,18 @@ exports.getEcode = async (req, res) => {
         main().catch(console.error);
         // --------------------------- AWS_SES
 
-
         return res.send({
-            message: 'created'
-        })
-
+            message: "created",
+        });
     } catch (err) {
-        return res.ststus(500).send('Server Error');
+        return res.ststus(500).send("Server Error");
     }
-
 };
 
 /*-------------------------------------------------
-    Find Password 
-    Create a temp pwd and update. 
-    Then, send an email to the user
+	Find Password 
+	Create a temp pwd and update. 
+	Then, send an email to the user
 -------------------------------------------------*/
 exports.getTempPw = async (req, res) => {
     console.log(`
@@ -292,39 +275,39 @@ exports.getTempPw = async (req, res) => {
 --------------------------------------------------`);
 
     console.log(req.body);
-    const tempPw = randomize('aA0', 12);
+    const tempPw = randomize("aA0", 12);
 
     try {
         const emailMatch = {
-            email: req.body.email
-        }
+            email: req.body.email,
+        };
 
         const projection = {
             pw_reset_code: 1,
-            pw_reset_date: 1
-        }
+            pw_reset_date: 1,
+        };
 
         const user = await admin.findOne(emailMatch, projection).lean();
 
         if (user.pw_reset_code !== req.body.eCode) {
-            console.log('NOT MATCHED');
+            console.log("NOT MATCHED");
             return res.status(404).send({
-                message: 'not match'
+                message: "not match",
             });
         }
 
         const updatePw = {
-            password: tempPw
-        }
+            password: tempPw,
+        };
 
         const getTempPw = await admin.findOneAndUpdate(emailMatch, updatePw);
 
         if (!getTempPw) {
-            console.log('NO RESULT');
+            console.log("NO RESULT");
             return res.status(404).send({
-                message: 'pwd err'
+                message: "pwd err",
             });
-        };
+        }
 
         // --------------------------- AWS_SES
 
@@ -391,7 +374,6 @@ exports.getTempPw = async (req, res) => {
         var tag1 = "key1=value1";
 
         async function main() {
-
             // Create the SMTP transport.
             let transporter = nodemailer.createTransport({
                 host: smtpEndpoint,
@@ -399,8 +381,8 @@ exports.getTempPw = async (req, res) => {
                 secure: false, // true for 465, false for other ports
                 auth: {
                     user: smtpUsername,
-                    pass: smtpPassword
-                }
+                    pass: smtpPassword,
+                },
             });
 
             // Specify the fields in the email.
@@ -414,14 +396,14 @@ exports.getTempPw = async (req, res) => {
                 html: body_html,
                 // Custom headers for configuration set and message tags.
                 headers: {
-                    'X-SES-CONFIGURATION-SET': configurationSet,
-                    'X-SES-MESSAGE-TAGS': tag0,
-                    'X-SES-MESSAGE-TAGS': tag1
-                }
+                    "X-SES-CONFIGURATION-SET": configurationSet,
+                    "X-SES-MESSAGE-TAGS": tag0,
+                    "X-SES-MESSAGE-TAGS": tag1,
+                },
             };
 
             // Send the email.
-            let info = await transporter.sendMail(mailOptions)
+            let info = await transporter.sendMail(mailOptions);
 
             console.log("Message sent! Message ID: ", info.messageId);
         }
@@ -430,9 +412,66 @@ exports.getTempPw = async (req, res) => {
         // --------------------------- AWS_SES
 
         return res.send({
-            message: 'sentPw'
-        })
+            message: "sentPw",
+        });
     } catch (err) {
-        return res.ststus(500).send('Server Error');
+        return res.ststus(500).send("Server Error");
+    }
+};
+
+/*-------------------------------------------------
+  refreshToken
+-------------------------------------------------*/
+exports.refreshToken = async (req, res) => {
+    console.log(`
+--------------------------------------------------  
+  API  : refreshToken
+  router.post('/refreshToken', adAuthController.refreshToken) 
+--------------------------------------------------`);
+    const criteria = {
+        email: req.body.email,
+    };
+
+    try {
+        const adminUser = await admin.findOne(criteria);
+
+        if (!adminUser) {
+            return res.status(404).send({
+                message: "Admin not found",
+            });
+        }
+
+        if (adminUser && adminUser.retired == true) {
+            return res.status(400).send({
+                message: "Retired admin",
+            });
+        }
+
+        const payload = {
+            _id: adminUser._id,
+            name: adminUser.name,
+            email: adminUser.email,
+            isAdmin: adminUser.isAdmin,
+            profile_img: adminUser.profile_img,
+        };
+
+        const jwtOption = {
+            expiresIn: "1d",
+        };
+
+        const token = jwt.sign(payload, process.env.JWT_SECRET, jwtOption);
+
+        /*------------------------------------------
+      5. send token and profile info to client
+    --------------------------------------------*/
+        res.send({
+            message: "Successfully refreshToken",
+            token,
+        });
+    } catch (error) {
+        console.error("[ ERROR ]", error);
+        res.status(500).json({
+            message: "Error fetching refreshToken",
+        });
     }
 };

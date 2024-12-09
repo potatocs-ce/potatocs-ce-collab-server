@@ -1,52 +1,65 @@
-const router = require('express').Router();
-const multer = require('multer');
-const multerS3 = require('multer-s3');
-const s3 = global.AWS_S3.s3;
-const bucket = global.AWS_S3.bucket;
+const router = require("express").Router();
+// const multer = require("multer");
+// const multerS3 = require("multer-s3");
+const { S3Client } = require("@aws-sdk/client-s3");
+
+const { uploadSingle, uploadArray, uploadAny } = require('../../../../utils/s3Utils'); // 'upload.js' 파일에서 upload 모듈 가져오기
+
+
+
+// const s3Client = new S3Client({
+//     region: process.env.AWS_REGION,
+//     credentials: {
+//         accessKeyId: process.env.AWS_ACCESS_KEY,
+//         secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+//     },
+// });
 /*-----------------------------------
-	Contollers
+  Contollers
 -----------------------------------*/
-const sideNavContoller = require('./side-nav/sideNav_controller');
-const spaceController = require('./space/space_controller');
-const docController = require('./doc/document_controller');
-const wbController = require('./doc/wb_controller');
-const mainController = require('./main/main_controller');
+const sideNavContoller = require("./side-nav/sideNav_controller");
+const spaceController = require("./space/space_controller");
+const docController = require("./doc/document_controller");
+const wbController = require("./doc/wb_controller");
+const mainController = require("./main/main_controller");
 
 // Folder and Space Create
-router.post('/create-folder', sideNavContoller.createFolder);
-router.post('/create-space', sideNavContoller.createSpace);
-router.delete('/deleteSpace', sideNavContoller.deleteSpace);	//
-router.delete('/deleteFolder', sideNavContoller.deleteFolder);	//
-router.get('/update-side-menu', sideNavContoller.updateSideMenu);
-router.put('/update-space-place', sideNavContoller.updateSpacePlace);
+router.post("/create-folder", sideNavContoller.createFolder);
+router.post("/create-space", sideNavContoller.createSpace);
+// 2024-06-19
+//  spaceController로 옮김
+// router.delete("/deleteSpace", sideNavController.deleteSpace); //
+router.delete("/deleteFolder", sideNavContoller.deleteFolder); //
+router.get("/update-side-menu", sideNavContoller.updateSideMenu);
+router.put("/update-space-place", sideNavContoller.updateSpacePlace);
 
 // in Space
-router.get('/space/:spaceTime', spaceController.getSpace);
-router.put('/change-space-name', spaceController.changeSpaceName);
-router.put('/change-space-brief', spaceController.changeSpaceBrief);
-router.put('/delete-space-member', spaceController.deleteSpaceMember);
-router.put('/quit-space-admin', spaceController.quitSpaceAdmin);
-router.put('/add-space-member', spaceController.addSpaceAdmin);
-
+router.get("/space/:spaceTime", spaceController.getSpace);
+router.put("/space/change-space-name", spaceController.changeSpaceName);
+router.put("/change-space-brief", spaceController.changeSpaceBrief);
+router.put("/delete-space-member", spaceController.deleteSpaceMember);
+router.put("/quit-space-admin", spaceController.quitSpaceAdmin);
+router.put("/add-space-member", spaceController.addSpaceAdmin);
+router.delete("/space/deleteSpace", spaceController.deleteSpace); //
 //hokyun - 2022-08-16
-router.put('/add-space-label', spaceController.addSpaceLabel);
-router.put('/delete-space-label', spaceController.deleteSpaceLabel);
-router.put('/edit-space-label', spaceController.editSpaceLabel);
+router.put("/add-space-label", spaceController.addSpaceLabel);
+router.put("/delete-space-label", spaceController.deleteSpaceLabel);
+router.put("/edit-space-label", spaceController.editSpaceLabel);
 
 // router.get('/getAllMember', spaceController.getAllMember);
-router.get('/searchSpaceMember', spaceController.searchSpaceMember);
-router.put('/inviteSpaceMember', spaceController.inviteSpaceMember);
+router.get("/searchSpaceMember", spaceController.searchSpaceMember);
+router.put("/inviteSpaceMember", spaceController.inviteSpaceMember);
 
 // a document in Space
-router.post('/space/doc/create', docController.createDoc);
-router.get('/space/doc/getDocInfo', docController.getDocInfo);
-router.put('/space/doc/update', docController.updateDoc);
-router.delete('/space/doc/deleteDoc', docController.deleteDoc);
-router.post('/space/doc/editDoc', docController.editDoc);
-router.post('/space/doc/editDocDescription', docController.editDocDescription);
-router.put('/space/doc/docEntryUpdate', docController.docEntryUpdate);
-router.put('/space/doc/docLabelsUpdate', docController.docLabelsUpdate);
-router.put('/space/doc/docCheckDone', docController.docCheckDone);
+router.post("/space/doc/create", docController.createDoc);
+router.get("/space/doc/getDocInfo", docController.getDocInfo);
+router.put("/space/doc/update", docController.updateDoc);
+router.delete("/space/doc/deleteDoc", docController.deleteDoc);
+router.post("/space/doc/editDoc", docController.editDoc);
+router.post("/space/doc/editDocDescription", docController.editDocDescription);
+router.put("/space/doc/docEntryUpdate", docController.docEntryUpdate);
+router.put("/space/doc/docLabelsUpdate", docController.docLabelsUpdate);
+router.put("/space/doc/docCheckDone", docController.docCheckDone);
 
 // const storage = multer.diskStorage({
 // 	destination(req, file, cb) {
@@ -61,53 +74,73 @@ router.put('/space/doc/docCheckDone', docController.docCheckDone);
 // });
 // const upload = multer({ storage });
 // Multer Mime Type Validation
-const upload = multer({
-    storage: multerS3({
-		s3,
-		bucket,
-		acl: 'public-read',
-		contentType: multerS3.AUTO_CONTENT_TYPE,
-		key: (req, file, cb) => {
-			if (req.files && req.files.length > 0) {
-				cb(null, `upload-file/${Date.now()}.${file.originalname}`);
-			} else {
-				// ������ ���� �ؽ�Ʈ�� ���� ���� ��� �Ѿ���ϴ���?? todo!!
-			}
-		}
+// const upload = multer({
+// 	storage: multerS3({
+// 		s3,
+// 		bucket,
+// 		acl: "public-read",
+// 		contentType: multerS3.AUTO_CONTENT_TYPE,
+// 		key: (req, file, cb) => {
+// 			if (req.files && req.files.length > 0) {
+// 				cb(null, `upload-file/${Date.now()}.${file.originalname}`);
+// 			} else {
+// 				// ������ ���� �ؽ�Ʈ�� ���� ���� ��� �Ѿ���ϴ���?? todo!!
+// 			}
+// 		},
+// 	}),
+// });
+
+// const upload = multer({
+//     storage: multerS3({
+//         s3: s3Client,
+//         bucket: process.env.AWS_S3_BUCKET,
+//         metadata: function (req, file, cb) {
+//             cb(null, { fieldName: file.fieldName });
+//         },
+//         key: function (req, file, cb) {
+//             file.originalname = Buffer.from(file.originalname, "latin1").toString("utf8");
+//             cb(null, `upload-file/${Date.now().toString()}.${file.originalname}`);
+//         },
+//     }),
+// });
+
+router.post("/space/doc/fileUpload", (req, res, next) => {
+    uploadAny(req, res, function (err) {
+        if (err) {
+            return res.status(400).json({ error: err.message })
+        }
+        next()
     })
-});
+}, docController.fileUpload);
 
-router.post('/space/doc/fileUpload',upload.any(), docController.fileUpload);
-router.get('/space/doc/fileDownload', docController.fileDownload);
-router.get('/space/doc/getUploadFileList', docController.getUploadFileList);
 
-router.delete('/space/doc/deleteUploadFile', docController.deleteUploadFile);
+router.get("/space/doc/fileDownload", docController.fileDownload);
+router.get("/space/doc/getUploadFileList", docController.getUploadFileList);
 
+router.delete("/space/doc/deleteUploadFile", docController.deleteUploadFile);
 
 // a chat in document
-router.post('/space/doc/createChat', docController.createChat);
-router.get('/space/doc/getChatInDoc', docController.getChatInDoc);
-router.delete('/space/doc/deleteChat', docController.deleteChat);
-
+router.post("/space/doc/createChat", docController.createChat);
+router.get("/space/doc/getChatInDoc", docController.getChatInDoc);
+router.delete("/space/doc/deleteChat", docController.deleteChat);
 
 // a meeting in document
-router.post('/space/doc/createMeeting', docController.createMeeting);
-router.get('/space/doc/getMeetingList', docController.getMeetingList);
-router.delete('/space/doc/deleteMeeting', docController.deleteMeeting);
-router.post('/space/doc/openMeeting', docController.openMeeting);
-router.post('/space/doc/closeMeeting', docController.closeMeeting);
+router.post("/space/doc/createMeeting", docController.createMeeting);
+router.get("/space/doc/getMeetingList", docController.getMeetingList);
+router.delete("/space/doc/deleteMeeting", docController.deleteMeeting);
+router.post("/space/doc/openMeeting", docController.openMeeting);
+router.post("/space/doc/closeMeeting", docController.closeMeeting);
 
 // scrumBoard
-router.put('/space/doc/scrumEditDocStatus', docController.scrumEditDocStatus);
-router.put('/space/doc/scrumEditStatusSequence', docController.scrumEditStatusSequence);
-router.put('/space/doc/scrumAddDocStatus', docController.scrumAddDocStatus);
-router.put('/space/doc/scrumDeleteDocStatus', docController.scrumDeleteDocStatus);
-router.put('/space/doc/statusNameChange', docController.statusNameChange);
-router.put('/space/doc/titleChange', docController.titleChange);
-
+router.put("/space/doc/scrumEditDocStatus", docController.scrumEditDocStatus);
+router.put("/space/doc/scrumEditStatusSequence", docController.scrumEditStatusSequence);
+router.put("/space/doc/scrumAddDocStatus", docController.scrumAddDocStatus);
+router.put("/space/doc/scrumDeleteDocStatus", docController.scrumDeleteDocStatus);
+router.put("/space/doc/statusNameChange", docController.statusNameChange);
+router.put("/space/doc/titleChange", docController.titleChange);
 
 // main
-router.get('/main/getMainInfo', mainController.getMainInfo); // 현재 안쓰이고 있음.. 22.04.08
+router.get("/main/getMainInfo", mainController.getMainInfo); // 현재 안쓰이고 있음.. 22.04.08
 // white board in document
 
 /** 답변 파일(이미지) */
@@ -129,27 +162,34 @@ router.get('/main/getMainInfo', mainController.getMainInfo); // 현재 안쓰이
 // 	}
 // });
 // const upload = multer({ storage });
-const storage = multer({
-    storage: multerS3({
-		s3,
-		bucket,
-		acl: 'public-read',
-		contentType: multerS3.AUTO_CONTENT_TYPE,
-		key: (req, file, cb) => {
-			if (req.files && req.files.length > 0) {
-				cb(null, `gstd-file/${Date.now()}.${file.originalname}`);
-			} else {
-				// ������ ���� �ؽ�Ʈ�� ���� ���� ��� �Ѿ���ϴ���?? todo!!
-			}
-		}
+// const storage = multer({
+// 	storage: multerS3({
+// 		s3,
+// 		bucket,
+// 		acl: "public-read",
+// 		contentType: multerS3.AUTO_CONTENT_TYPE,
+// 		key: (req, file, cb) => {
+// 			if (req.files && req.files.length > 0) {
+// 				cb(null, `gstd-file/${Date.now()}.${file.originalname}`);
+// 			} else {
+// 				// ������ ���� �ؽ�Ʈ�� ���� ���� ��� �Ѿ���ϴ���?? todo!!
+// 			}
+// 		},
+// 	}),
+// });
+router.post("/space/doc/saveGstdPath", (req, res, next) => {
+    uploadAny(req, res, function (err) {
+        if (err) {
+            console.log('err :  ', err)
+            return res.status(400).json({ error: err.message })
+        }
+        next()
     })
-});
-router.post('/space/doc/saveGstdPath', storage.any(), wbController.saveGstdPath);
-router.post('/space/doc/saveRecording', wbController.saveRecording);
-router.post('/space/doc/getWhiteBoardRecList', wbController.getWhiteBoardRecList);
-router.post('/space/doc/getRecording', wbController.getRecording);
-router.get('/space/doc/downloadRecording', wbController.downloadRecording);
-router.delete('/space/doc/deleteRecording', wbController.deleteRecording);
-
+}, wbController.saveGstdPath);
+router.post("/space/doc/saveRecording", wbController.saveRecording);
+router.post("/space/doc/getWhiteBoardRecList", wbController.getWhiteBoardRecList);
+router.post("/space/doc/getRecording", wbController.getRecording);
+router.get("/space/doc/downloadRecording", wbController.downloadRecording);
+router.delete("/space/doc/deleteRecording", wbController.deleteRecording);
 
 module.exports = router;

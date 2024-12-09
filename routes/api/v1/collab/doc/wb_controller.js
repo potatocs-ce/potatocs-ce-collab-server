@@ -1,8 +1,10 @@
-const { ObjectId } = require('bson');
-const path = require('path');
-const fs = require('fs');
-const s3 = global.AWS_S3.s3;
-const bucket = global.AWS_S3.bucket;
+const { ObjectId } = require("bson");
+const path = require("path");
+const fs = require("fs");
+const { GetObjectCommand, DeleteObjectCommand } = require("@aws-sdk/client-s3");
+const { s3Client } = require("../../../../../utils/s3Utils");
+// const s3 = global.AWS_S3.s3;
+// const bucket = global.AWS_S3.bucket;
 
 exports.saveGstdPath = async (req, res) => {
     console.log(`
@@ -19,12 +21,12 @@ exports.saveGstdPath = async (req, res) => {
         // }
         console.log(req.files[0]);
 
-        return res.status(500).send({
-            gstd_key: req.files[0].key
+        return res.status(200).send({
+            gstd_key: req.files[0].key,
         });
     } catch (err) {
-        console.log('An error uploading a recording file: ', err);
-        return res.status(500).send('Internal Error');
+        console.log("An error uploading a recording file: ", err);
+        return res.status(500).send("Internal Error");
     }
 };
 
@@ -38,13 +40,12 @@ exports.saveRecording = async (req, res) => {
     const dbModels = global.DB_MODELS;
     // console.log(req.body);
     try {
-
         const criteria = {
             docId: req.body.docId,
             recordingTitle: req.body.recordingTitle,
             gstd_key: req.body.gstd_key,
-            creator: req.decoded._id
-        }
+            creator: req.decoded._id,
+        };
 
         console.log(criteria);
 
@@ -53,12 +54,11 @@ exports.saveRecording = async (req, res) => {
         await whiteBoard.save();
 
         return res.send({
-            message: 'saved'
+            message: "saved",
         });
-
     } catch (err) {
-        console.log('An error uploading a recording file: ', err);
-        return res.status(500).send('Internal Error');
+        console.log("An error uploading a recording file: ", err);
+        return res.status(500).send("Internal Error");
     }
 };
 
@@ -73,27 +73,25 @@ exports.getWhiteBoardRecList = async (req, res) => {
     const dbModels = global.DB_MODELS;
 
     try {
+        const recList = await dbModels.WhiteBoard.find(req.body).populate("creator", "name");
 
-        const recList = await dbModels.WhiteBoard.find(req.body).populate('creator', 'name');
-
-        console.log(recList);
+        // console.log(recList);
 
         if (!recList) {
             return res.status(500).send({
-                message: 'non'
+                message: "non",
             });
         }
 
         return res.send({
-            message: 'loaded',
-            recList
+            message: "loaded",
+            recList,
         });
-
     } catch (err) {
-        console.log('getWhiteBoardRecList error');
-        return res.status(500).send('Internal Error');
+        console.log("getWhiteBoardRecList error");
+        return res.status(500).send("Internal Error");
     }
-}
+};
 
 exports.deleteRecording = async (req, res) => {
     console.log(`
@@ -105,35 +103,31 @@ exports.deleteRecording = async (req, res) => {
     const dbModels = global.DB_MODELS;
     // console.log(req.query);
     try {
-
         // const recFilePath = path.join(req.app.locals.whiteBoardFolderPath, req.query.fileName);
 
         // await removeFile(recFilePath);
 
-        const params = {
-            Bucket: bucket,
-            Key: req.query.gstd_key
-        };
-        s3.deleteObject(params, function (err, data) {
-            if (err) console.log(err, err.stack);
-            else console.log('s3 delete Success');
-        })
+        const command = new DeleteObjectCommand({
+            Bucket: process.env.AWS_S3_BUCKET,
+            Key: req.query.gstd_key,
+        });
+
+        await s3Client.send(command);
 
         await dbModels.WhiteBoard.findOneAndDelete({ _id: req.query._id });
 
         return res.send({
-            message: 'deleted'
+            message: "deleted",
         });
-
     } catch (err) {
-        console.log('', err);
-        return res.status(500).send('An Error at deleteRecording');
+        console.log("", err);
+        return res.status(500).send("An Error at deleteRecording");
     }
-}
+};
 
 function removeFile(fullPath) {
     // console.log(fullPath);
-    fs.unlink(fullPath, err => {
+    fs.unlink(fullPath, (err) => {
         if (err) {
             console.error(err);
         }
@@ -148,29 +142,20 @@ exports.getRecording = async (req, res) => {
   user : ${req.decoded._id}
 --------------------------------------------------`);
     const dbModels = global.DB_MODELS;
-    console.log('req.body', req.body);
+    console.log("req.body", req.body);
     try {
-
-        const data = await s3.getObject(
-            {
-                Bucket: bucket,
-                Key: req.body.gstd_key,
-                //ResponseContentType: 'application/json'
-            }).promise();
-
-        const parsedData = JSON.parse(data.Body);
-
-        return res.send({
-            message: 'loaded',
-            parsedData
+        const command = new GetObjectCommand({
+            Bucket: process.env.AWS_S3_BUCKET,
+            Key: req.body.gstd_key,
         });
-
+        const response = await s3Client.send(command);
+        res.attachment(req.body.gstd_key);
+        response.Body.pipe(res);
     } catch (err) {
-        console.log('', err);
-        return res.status(500).send('An Error at getRecording');
+        console.log("", err);
+        return res.status(500).send("An Error at getRecording");
     }
-}
-
+};
 
 exports.downloadRecording = async (req, res) => {
     console.log(`
@@ -180,35 +165,37 @@ exports.downloadRecording = async (req, res) => {
   user : ${req.decoded._id}
 --------------------------------------------------`);
     const dbModels = global.DB_MODELS;
-    const data = req.query
+    const data = req.query;
     // console.log(data);
     try {
-        const donloadFile = await dbModels.WhiteBoard.findOne(
-            {
-                _id: data._id
-            }
-        ).then((result) => {
-            const key = result.gstd_key;
-            // console.log(key)
-            // res.attachment(key);
-            res.setHeader('Content-Disposition', 'attachment');
-            var file = s3.getObject({
-                Bucket: bucket,
-                Key: key
-            }).createReadStream()
-                .on("error", error => {
-                });
-            file.pipe(res);
-        })
-        // return res.status(200).send({
-        // 	message: 'download uploaded file',
-        // });
+        const donloadFile = await dbModels.WhiteBoard.findOne({
+            _id: data._id,
+        }).lean();
+        const key = donloadFile.gstd_key;
+        // console.log(key)
+        res.attachment(key);
+        res.setHeader("Content-Disposition", "attachment");
+        // var file = s3.getObject({
+        //   Bucket: bucket,
+        //   Key: key
+        // }).createReadStream()
+        //   .on("error", error => {
+        //   });
+        // file.pipe(res);
+        const command = new GetObjectCommand({
+            Bucket: process.env.AWS_S3_BUCKET,
+            Key: key,
+        });
 
+        const response = await s3Client.send(command);
+        res.attachment(key);
+
+        response.Body.pipe(res);
     } catch (err) {
-        console.log(err)
-        console.log('[ ERROR ]', err);
+        console.log(err);
+        console.log("[ ERROR ]", err);
         return res.status(500).send({
-            message: 'download upload file Error'
-        })
+            message: "download upload file Error",
+        });
     }
-}
+};

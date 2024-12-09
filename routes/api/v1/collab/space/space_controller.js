@@ -1,8 +1,8 @@
-const { ObjectId } = require('bson');
-const { db } = require('../../../../../models/meeting_schema');
+const { ObjectId } = require("bson");
+const { db } = require("../../../../../models/meeting_schema");
+const { default: mongoose } = require("mongoose");
 
 exports.getSpace = async (req, res) => {
-
 	console.log(`
 --------------------------------------------------
   User : ${req.decoded._id}
@@ -13,7 +13,6 @@ exports.getSpace = async (req, res) => {
 	const dbModels = global.DB_MODELS;
 
 	try {
-
 		// console.log(spaceNav);
 		// https://crmrelease.tistory.com/131 파이프라인
 		const spaceMembers = await dbModels.Space.aggregate([
@@ -26,33 +25,29 @@ exports.getSpace = async (req, res) => {
 			// },
 			{
 				$match: {
-					_id: ObjectId(req.params.spaceTime)
-				}
+					_id: new mongoose.Types.ObjectId(req.params.spaceTime),
+				},
 			},
 			{
 				$addFields: {
 					isAdmin: {
-						$cond: [
-							{ $in: [ObjectId(req.decoded._id), '$admins'] },
-							true,
-							false,
-						]
+						$cond: [{ $in: [new mongoose.Types.ObjectId(req.decoded._id), "$admins"] }, true, false],
 					},
-				}
+				},
 			},
 			{
 				$lookup: {
-					from: 'members',
+					from: "members",
 					let: {
-						memberArray: '$members'
+						memberArray: "$members",
 					},
 					pipeline: [
 						{
 							$match: {
 								$expr: {
-									$in: ['$_id', '$$memberArray']
-								}
-							}
+									$in: ["$_id", "$$memberArray"],
+								},
+							},
 						},
 						{
 							$project: {
@@ -60,66 +55,64 @@ exports.getSpace = async (req, res) => {
 								name: 1,
 								profile_img: 1,
 								retired: 1,
-							}
+							},
 						},
 						{
 							$match: {
 								retired: false,
-							}
+							},
 						},
 					],
-					as: 'memberObjects'
-				}
+					as: "memberObjects",
+				},
 			},
 			{
 				$project: {
 					displayName: 1,
 					displayBrief: 1,
-					spaceTime: '$_id',
+					spaceTime: "$_id",
 					isAdmin: 1,
 					memberObjects: 1,
 					admins: 1,
 					docStatus: 1,
-					labels: 1
-				}
+					labels: 1,
+				},
 			},
-
 		]);
 
 		// list of docs START
 		const criteria = {
-			spaceTime_id: req.params.spaceTime
-		}
+			spaceTime_id: req.params.spaceTime,
+		};
 
 		const spaceDocs = await dbModels.Document.aggregate([
 			{
 				$match: {
-					spaceTime_id: ObjectId(req.params.spaceTime)
-				}
+					spaceTime_id: new mongoose.Types.ObjectId(req.params.spaceTime),
+				},
 			},
 			{
 				$lookup: {
-					from: 'members',
+					from: "members",
 					let: {
-						creator_id: '$creator'
+						creator_id: "$creator",
 					},
 					pipeline: [
 						{
 							$match: {
 								$expr: {
-									$in: ['$_id', '$$creator_id']
-								}
-							}
+									$in: ["$_id", "$$creator_id"],
+								},
+							},
 						},
 						{
 							$project: {
-								name: 1
-							}
-						}
+								name: 1,
+							},
+						},
 					],
-					as: 'creator'
+					as: "creator",
 				},
-
 			},
 			// {
 			// 	$unwind: {
@@ -133,16 +126,16 @@ exports.getSpace = async (req, res) => {
 					docContent: 1,
 					spaceTime_id: 1,
 					status: 1,
-					creator: '$creator.name',
-					creator_id: '$creator._id',
+					creator: "$creator.name",
+					creator_id: "$creator._id",
 					createdAt: 1,
 					startDate: 1,
 					endDate: 1,
 					done: 1,
 					color: 1,
-					labels: 1
-				}
-			}
+					labels: 1,
+				},
+			},
 		]);
 
 		// console.log('spaceMember')
@@ -150,36 +143,29 @@ exports.getSpace = async (req, res) => {
 
 		// scrumBoard//////////////////
 
-		const scrumBoard = await dbModels.ScrumBoard.findOne(
-			{
-				space_id: req.params.spaceTime
-			}
-		)
+		const scrumBoard = await dbModels.ScrumBoard.findOne({
+			space_id: req.params.spaceTime,
+		});
 
 		// scrumBoard//////////////////
-
+		console.log(spaceMembers, spaceDocs, scrumBoard);
 		// console.log('spaceDocs')
 		// console.log("야라호",spaceDocs);
 		return res.status(200).send({
-			message: 'getSpace',
+			message: "getSpace",
 			spaceMembers,
 			spaceDocs,
 			scrumBoard,
-		})
-
-
+		});
 	} catch (err) {
-
-		console.log('[ ERROR ]', err);
+		console.log("[ ERROR ]", err);
 		res.status(500).send({
-			message: 'loadUpateMenu Error'
-		})
+			message: "loadUpateMenu Error",
+		});
 	}
-
-}
+};
 
 exports.getDocs = async (req, res) => {
-
 	console.log(`
 --------------------------------------------------
   User : ${req.decoded._id}
@@ -190,7 +176,6 @@ exports.getDocs = async (req, res) => {
 	const dbModels = global.DB_MODELS;
 
 	try {
-
 		// const criteria = {
 		// 	spaceTime_id: req.params.spaceTime
 		// }
@@ -200,22 +185,17 @@ exports.getDocs = async (req, res) => {
 		// console.log(spaceDocs);
 
 		return res.status(200).send({
-			message: 'getDocs',
-
-		})
-
-
+			message: "getDocs",
+		});
 	} catch (err) {
-
-		console.log('[ ERROR ]', err);
+		console.log("[ ERROR ]", err);
 		res.status(500).send({
-			message: 'Loadings Docs Error'
-		})
+			message: "Loadings Docs Error",
+		});
 	}
-}
+};
 
 exports.changeSpaceName = async (req, res) => {
-
 	console.log(`
 --------------------------------------------------
   User : ${req.decoded._id}
@@ -228,18 +208,18 @@ exports.changeSpaceName = async (req, res) => {
 	// console.log(data);
 
 	const criteria = {
-		_id: data.id
-	}
+		_id: data.id,
+	};
 
 	const updateData = {
-		displayName: data.displayName
-	}
+		displayName: data.displayName,
+	};
 
 	// 휴가 승인 업데이트
 	try {
 		const updatedDisplayName = await dbModels.Space.findOneAndUpdate(criteria, updateData);
 		if (!updatedDisplayName) {
-			return res.status(404).send('the update1 has failed');
+			return res.status(404).send("the update1 has failed");
 		}
 
 		// console.log(updatedDisplayName);
@@ -247,16 +227,14 @@ exports.changeSpaceName = async (req, res) => {
 		return res.status(200).send({
 			message: "connect changeSpaceName",
 		});
-
 	} catch (error) {
 		return res.status(500).send({
-			message: 'DB Error'
+			message: "DB Error",
 		});
 	}
-}
+};
 
 exports.changeSpaceBrief = async (req, res) => {
-
 	console.log(`
 --------------------------------------------------
   User : ${req.decoded._id}
@@ -269,18 +247,18 @@ exports.changeSpaceBrief = async (req, res) => {
 	console.log(data);
 
 	const criteria = {
-		_id: data.id
-	}
+		_id: data.id,
+	};
 
 	const updateData = {
-		displayBrief: data.displayBrief
-	}
+		displayBrief: data.displayBrief,
+	};
 
 	// 휴가 승인 업데이트
 	try {
 		const updatedDisplayName = await dbModels.Space.findOneAndUpdate(criteria, updateData);
 		if (!updatedDisplayName) {
-			return res.status(404).send('the update1 has failed');
+			return res.status(404).send("the update1 has failed");
 		}
 
 		// console.log(updatedDisplayName);
@@ -288,16 +266,14 @@ exports.changeSpaceBrief = async (req, res) => {
 		return res.status(200).send({
 			message: "connect changeSpaceName",
 		});
-
 	} catch (error) {
 		return res.status(500).send({
-			message: 'DB Error'
+			message: "DB Error",
 		});
 	}
-}
+};
 
 exports.deleteSpaceMember = async (req, res) => {
-
 	console.log(`
 --------------------------------------------------
   User : ${req.decoded._id}
@@ -311,37 +287,36 @@ exports.deleteSpaceMember = async (req, res) => {
 
 	const updateDeleteMember = await dbModels.Space.findOneAndUpdate(
 		{
-			_id: ObjectId(data.id)
+			_id: new mongoose.Types.ObjectId(data.id),
 		},
 		{
 			$pull: {
 				members: data.member_id,
-				admins: data.member_id
+				admins: data.member_id,
 			},
-
 		},
 		{
-			new: true
+			new: true,
 		}
-	)
-	console.log('updateDeleteMember', updateDeleteMember);
+	);
+	console.log("updateDeleteMember", updateDeleteMember);
 
 	const getDocId = await dbModels.Document.aggregate([
 		{
 			$match: {
-				spaceTime_id: ObjectId(updateDeleteMember._id)
-			}
+				spaceTime_id: new mongoose.Types.ObjectId(updateDeleteMember._id),
+			},
 		},
 		{
 			$project: {
 				_id: 1,
-			}
-		}
+			},
+		},
 	]);
 
-	console.log('getDocId', getDocId);
+	console.log("getDocId", getDocId);
 
-	// // meeting이 doc 안에 있었을때 
+	// // meeting이 doc 안에 있었을때
 	// for (let index = 0; index < getDocId.length; index++) {
 	// 	const element = getDocId[index]._id;
 	// 	console.log(element)
@@ -350,10 +325,10 @@ exports.deleteSpaceMember = async (req, res) => {
 	// 			docId: element
 	// 		},
 	// 		{
-	// 			$pull: { 
+	// 			$pull: {
 	// 				// currentMembers 도 반영해준다.
 	// 				currentMembers: {
-	// 					member_id : data.member_id						
+	// 					member_id : data.member_id
 	// 				},
 	// 				enlistedMembers: data.member_id,
 	// 			}
@@ -362,59 +337,52 @@ exports.deleteSpaceMember = async (req, res) => {
 	// }
 	const enlistMeeting = await dbModels.Meeting.updateMany(
 		{
-			spaceId: data.id
+			spaceId: data.id,
 		},
 		{
 			$pull: {
 				// currentMembers 도 반영해준다.
 				currentMembers: {
-					member_id: data.member_id
+					member_id: data.member_id,
 				},
 				enlistedMembers: data.member_id,
-			}
+			},
 		}
-	)
-
+	);
 
 	const deleteMemberMenuside = await dbModels.MenuSide.findOneAndUpdate(
 		{
-			member_id: data.member_id
+			member_id: data.member_id,
 		},
 		{
 			$pull: {
-				space_list: ObjectId(data.id)
-			}
+				space_list: new mongoose.Types.ObjectId(data.id),
+			},
 		},
 		{
-			new: true
+			new: true,
 		}
-	)
+	);
 	console.log(deleteMemberMenuside);
 
-
 	//// notification ////
-	const notification = await dbModels.Notification(
-		{
-			sender: req.decoded._id,
-			receiver: data.member_id,
-			notiType: 'space-exported',
-			isRead: false,
-			iconText: 'group_remove',
-			notiLabel: 'You were taken out of space.',
-			navigate: 'main'
-		}
-	)
+	const notification = await dbModels.Notification({
+		sender: req.decoded._id,
+		receiver: data.member_id,
+		notiType: "space-exported",
+		isRead: false,
+		iconText: "group_remove",
+		notiLabel: "You were taken out of space.",
+		navigate: "main",
+	});
 
 	await notification.save();
 	///////////////////////
 
-
 	//////  mySpaceHistory  ////////
-	const memberName = await dbModels.Member.findOne(
-		{
-			_id: data.member_id,
-		}
-	)
+	const memberName = await dbModels.Member.findOne({
+		_id: data.member_id,
+	});
 	// console.log(inviteSpaceMember);
 	// console.log(memberName);
 	// const mySpaceHistory = await dbModels.MySpaceHistory(
@@ -431,13 +399,11 @@ exports.deleteSpaceMember = async (req, res) => {
 	//////////////////////////////////////
 
 	return res.status(200).send({
-		message: 'deleteSpaceMember'
+		message: "deleteSpaceMember",
 	});
-
-}
+};
 
 exports.quitSpaceAdmin = async (req, res) => {
-
 	console.log(`
 --------------------------------------------------
   User : ${req.decoded._id}
@@ -446,26 +412,25 @@ exports.quitSpaceAdmin = async (req, res) => {
 --------------------------------------------------`);
 
 	const dbModels = global.DB_MODELS;
-	const data = req.body
+	const data = req.body;
 	// console.log(data.id);
 	// console.log(data.member_id);
 
 	const updateQuitAdmin = await dbModels.Space.updateOne(
 		{
-			_id: ObjectId(data.id)
+			_id: new mongoose.Types.ObjectId(data.id),
 		},
 		{
-			$pull: { admins: ObjectId(data.member_id) }
+			$pull: { admins: new mongoose.Types.ObjectId(data.member_id) },
 		}
-	)
+	);
 
 	return res.status(200).send({
-		message: 'quitSpaceAdmin'
+		message: "quitSpaceAdmin",
 	});
-}
+};
 
 exports.addSpaceAdmin = async (req, res) => {
-
 	console.log(`
 --------------------------------------------------
   User : ${req.decoded._id}
@@ -474,30 +439,126 @@ exports.addSpaceAdmin = async (req, res) => {
 --------------------------------------------------`);
 
 	const dbModels = global.DB_MODELS;
-	const data = req.body
+	const data = req.body;
 	// console.log(data);
 	// console.log(data.id);
 
 	const updateGetAdmin = await dbModels.Space.updateOne(
 		{
-			_id: ObjectId(data.id)
+			_id: new mongoose.Types.ObjectId(data.id),
 		},
 		{
-			$addToSet: { admins: ObjectId(data.member_id) }
+			$addToSet: { admins: new mongoose.Types.ObjectId(data.member_id) },
 		}
-	)
+	);
 
 	// console.log(updateGetAdmin);
 
 	return res.status(200).send({
-		message: 'getSpaceAdmin'
+		message: "getSpaceAdmin",
 	});
-}
+};
 
+exports.deleteSpace = async (req, res) => {
+	console.log(`
+--------------------------------------------------
+  User : ${req.decoded._id}
+  API  : delete my space
+  router.delete('/delete-space', sideNavContoller.deleteSpace);
+--------------------------------------------------`);
+	const dbModels = global.DB_MODELS;
+	const data = req.query;
+	console.log("여기?");
+	console.log(data);
+	try {
+		const spaceInMember = await dbModels.Space.findOne({
+			_id: data.spaceTime,
+		});
+		// console.log('spaceInMember');
+		// console.log(spaceInMember);
+		// spaceTime으로 space 안에 있는 문서들 가져오기
+		const spaceInDoc = await dbModels.Document.find({
+			spaceTime_id: data.spaceTime,
+		});
+		// console.log('spaceInDoc');
+		// console.log(spaceInDoc);
 
+		// 문서와 문서 안에 있는 파일 삭제
+		for (let i = 0; i < spaceInDoc.length; i++) {
+			const element = spaceInDoc[i]._id;
+			// console.log('element');
+			// console.log(element);
+			// 문서 안에 있는 파일을 가져오기 위한 문서 아이디
+			const docInUploadFile = await dbModels.UploadFile.find({
+				doc_id: element,
+			});
+
+			// console.log('docInUploadFile');
+			// console.log(docInUploadFile);
+			// 업로드된 파일 삭제하고 디비에서도 삭제
+			for (let j = 0; j < docInUploadFile.length; j++) {
+				const element = docInUploadFile[j].filename;
+				// await unlinkAsync('uploads/upload_file/' + element);
+				await dbModels.UploadFile.deleteOne({
+					filename: element,
+				});
+			}
+			// 채팅 제거
+			const deleteChat = await dbModels.Chat.deleteMany({
+				docId: element,
+			});
+
+			// // 미팅 제거
+			// const deleteMeeting = await dbModels.Meeting.deleteMany(
+			// 	{
+			// 		docId : element
+			// 	}
+			// )
+
+			// 파일들 다 삭제 되면 문서 삭제
+			await dbModels.Document.deleteOne({
+				_id: element,
+			});
+		}
+
+		const deleteMeeting = await dbModels.Meeting.deleteMany({
+			spaceId: data.spaceTime,
+		});
+
+		// 문서도 다 삭제 되면 스페이스 삭제
+		await dbModels.Space.deleteOne({
+			_id: data.spaceTime,
+		});
+
+		await dbModels.ScrumBoard.deleteOne({
+			space_id: data.spaceTime,
+		});
+
+		for (let index = 0; index < spaceInMember.members.length; index++) {
+			const element = spaceInMember.members[index];
+			// console.log(element);
+			await dbModels.MenuSide.updateOne(
+				{
+					member_id: element,
+				},
+				{
+					$pull: { space_list: spaceInMember._id },
+				}
+			);
+		}
+
+		return res.status(200).send({
+			message: "delete space and doc, upload file",
+		});
+	} catch (err) {
+		console.log("[ ERROR ]", err);
+		res.status(500).send({
+			message: "delete space Error",
+		});
+	}
+};
 
 exports.searchSpaceMember = async (req, res) => {
-
 	console.log(`
 --------------------------------------------------
   User : ${req.decoded._id}
@@ -510,39 +571,34 @@ exports.searchSpaceMember = async (req, res) => {
 	// console.log(data);
 
 	try {
-		const searchSpaceMember = await dbModels.Member.findOne(
-			{
-				email: data.email
-			},
-		)
+		const searchSpaceMember = await dbModels.Member.findOne({
+			email: data.email,
+		});
 		// console.log(searchSpaceMember);
 
 		if (searchSpaceMember == null) {
 			return res.status(200).send({
-				message: 'dont find this member'
-			})
-		}
-		else if (searchSpaceMember.retired == true) {
+				message: "dont find this member",
+			});
+		} else if (searchSpaceMember.retired == true) {
 			return res.status(200).send({
-				message: 'retired spaceMember',
+				message: "retired spaceMember",
 			});
 		}
 
 		return res.status(200).send({
-			message: 'searchSpaceMember',
-			searchSpaceMember
+			message: "searchSpaceMember",
+			searchSpaceMember,
 		});
-	}
-	catch (err) {
+	} catch (err) {
 		console.log(err);
 		return res.status(500).send({
-			message: 'searchSpaceMember Error'
+			message: "searchSpaceMember Error",
 		});
 	}
-}
+};
 
 exports.inviteSpaceMember = async (req, res) => {
-
 	console.log(`
 --------------------------------------------------
   User : ${req.decoded._id}
@@ -554,101 +610,99 @@ exports.inviteSpaceMember = async (req, res) => {
 	const data = req.body;
 	console.log(data);
 
-
 	try {
 		const confirmMember = await dbModels.Space.aggregate([
 			{
 				$match: {
-					members: ObjectId(data.member_id),
-					_id: ObjectId(data.spaceTime)
-				}
+					members: new mongoose.Types.ObjectId(data.member_id),
+					_id: new mongoose.Types.ObjectId(data.spaceTime),
+				},
 			},
 			{
 				$lookup: {
-					from: 'members',
-					localField: 'members',
-					foreignField: '_id',
-					as: 'spaceMember'
+					from: "members",
+					localField: "members",
+					foreignField: "_id",
+					as: "spaceMember",
 				},
 			},
 			{
 				$unwind: {
-					path: '$spaceMember',
-					preserveNullAndEmptyArrays: true
-				}
+					path: "$spaceMember",
+					preserveNullAndEmptyArrays: true,
+				},
 			},
 			{
 				$project: {
-					id: '$spaceMember._id',
-					name: '$spaceMember.name',
-					email: '$spaceMember.email',
-					retired: '$spaceMember.retired'
-				}
+					id: "$spaceMember._id",
+					name: "$spaceMember.name",
+					email: "$spaceMember.email",
+					retired: "$spaceMember.retired",
+				},
 			},
 			{
 				$match: {
-					id: ObjectId(data.member_id)
-				}
+					id: new mongoose.Types.ObjectId(data.member_id),
+				},
 			},
 		]);
-		console.log('myEmployeeList----------------------------')
+		console.log("myEmployeeList----------------------------");
 		console.log(confirmMember);
-		console.log('-----------------------------------------')
-
+		console.log("-----------------------------------------");
 
 		if (confirmMember.length != 0 && confirmMember[0].retired == true) {
 			return res.status(500).send({
-				message: 'This member already retired.'
-			})
+				message: "This member already retired.",
+			});
 		} else if (confirmMember.length != 0) {
 			return res.status(500).send({
-				message: 'This member already participated.'
-			})
+				message: "This member already participated.",
+			});
 		}
 
 		// 멤버가 아니니까 addToSet 으로 스페이스에 추가
 		const inviteSpaceMember = await dbModels.Space.findOneAndUpdate(
 			{
-				_id: data.spaceTime
+				_id: data.spaceTime,
 			},
 			{
-				$addToSet: { members: data.member_id }
+				$addToSet: { members: data.member_id },
 			},
 			{
-				new: true
+				new: true,
 			}
-		)
+		);
 		// console.log('invite space member',inviteSpaceMember);
 
 		const inviteMemberMenuside = await dbModels.MenuSide.updateOne(
 			{
-				member_id: data.member_id
+				member_id: data.member_id,
 			},
 			{
-				$addToSet: { space_list: inviteSpaceMember._id }
-			},
-		)
+				$addToSet: { space_list: inviteSpaceMember._id },
+			}
+		);
 
 		// console.log('data.spaceTime', data.spaceTime);
 
 		const getDocId = await dbModels.Document.aggregate([
 			{
 				$match: {
-					spaceTime_id: ObjectId(data.spaceTime)
-				}
+					spaceTime_id: new mongoose.Types.ObjectId(data.spaceTime),
+				},
 			},
 			{
 				$project: {
 					_id: 1,
-				}
-			}
+				},
+			},
 		]);
 
 		let currentMember = {
 			member_id: data.member_id,
-			role: 'Presenter',
-			online: false
-		}
+			role: "Presenter",
+			online: false,
+		};
 
 		// console.log(getDocId.length);
 
@@ -672,15 +726,15 @@ exports.inviteSpaceMember = async (req, res) => {
 
 		const enlistMeeting = await dbModels.Meeting.updateMany(
 			{
-				spaceId: data.spaceTime
+				spaceId: data.spaceTime,
 			},
 			{
 				$push: {
 					enlistedMembers: data.member_id,
-					currentMembers: currentMember // currentMembers 도 반영해준다.
-				}
+					currentMembers: currentMember, // currentMembers 도 반영해준다.
+				},
 			}
-		)
+		);
 
 		//////  mySpaceHistory  ////////
 		// const memberName = await dbModels.Member.findOne(
@@ -704,32 +758,29 @@ exports.inviteSpaceMember = async (req, res) => {
 		//////////////////////////////////////
 
 		//// notification ////
-		const notification = await dbModels.Notification(
-			{
-				sender: req.decoded._id,
-				receiver: data.member_id,
-				notiType: 'space-invite',
-				isRead: false,
-				iconText: 'group_add',
-				notiLabel: 'You have been invited to a new space.',
-				navigate: 'collab/space/' + data.spaceTime
-			}
-		)
+		const notification = await dbModels.Notification({
+			sender: req.decoded._id,
+			receiver: data.member_id,
+			notiType: "space-invite",
+			isRead: false,
+			iconText: "group_add",
+			notiLabel: "You have been invited to a new space.",
+			navigate: "collab/space/" + data.spaceTime,
+		});
 
 		await notification.save();
 		///////////////////////
 
 		return res.status(200).send({
-			message: 'inviteSpaceMember',
+			message: "inviteSpaceMember",
 		});
-	}
-	catch (err) {
+	} catch (err) {
 		console.log(err);
 		return res.status(500).send({
-			message: 'inviteSpaceMember Error'
+			message: "inviteSpaceMember Error",
 		});
 	}
-}
+};
 
 //hokyun - 2022-08-16
 exports.addSpaceLabel = async (req, res) => {
@@ -746,30 +797,31 @@ exports.addSpaceLabel = async (req, res) => {
 	try {
 		const confirmMember = await dbModels.Space.findOneAndUpdate(
 			{
-				_id: data.spaceTime
+				_id: data.spaceTime,
 			},
 			{
-				$addToSet: { labels: { color: data.color, title: data.title } }
-			}, {
-			new: true
-		}
-		)
+				$addToSet: { labels: { color: data.color, title: data.title } },
+			},
+			{
+				new: true,
+			}
+		);
 		if (confirmMember) {
 			return res.status(200).send({
-				message: 'success',
-				spaceTime: confirmMember.spaceTime
-			})
+				message: "success",
+				spaceTime: confirmMember.spaceTime,
+			});
 		}
 		return res.status(404).send({
-			message: '서버 에러'
-		})
+			message: "서버 에러",
+		});
 	} catch (err) {
-		console.log(err)
+		console.log(err);
 		return res.status(500).send({
-			message: '에러 에러 에러'
-		})
+			message: "에러 에러 에러",
+		});
 	}
-}
+};
 
 //라벨 삭제
 exports.deleteSpaceLabel = async (req, res) => {
@@ -787,21 +839,25 @@ exports.deleteSpaceLabel = async (req, res) => {
 	try {
 		const deletedLabelSpace = await dbModels.Space.findOneAndUpdate(
 			{ _id: data.spaceTime },
-			{ $pull: { labels: { 'color': data.color, 'title': data.title } } }
-		)
-		const scrumBoard = await dbModels.ScrumBoard.findOne({ space_id: data.spaceTime })
+			{ $pull: { labels: { color: data.color, title: data.title } } }
+		);
+		const scrumBoard = await dbModels.ScrumBoard.findOne({ space_id: data.spaceTime });
 
 		for (let i = 0; i < scrumBoard.scrum.length; i++) {
 			const docs = scrumBoard.scrum[i].children;
 
 			for (let j = 0; j < docs.length; j++) {
-				docs[j].labels = docs[j].labels.filter(o => { return o.color !== data.color || o.title !== data.title })
+				docs[j].labels = docs[j].labels.filter((o) => {
+					return o.color !== data.color || o.title !== data.title;
+				});
 			}
 		}
 		await scrumBoard.save();
 
-		await dbModels.Document.updateMany({ spaceTime_id: data.spaceTime }, { $pull: { labels: { 'color': data.color, 'title': data.title } } })
-
+		await dbModels.Document.updateMany(
+			{ spaceTime_id: data.spaceTime },
+			{ $pull: { labels: { color: data.color, title: data.title } } }
+		);
 
 		const spaceMembers = await dbModels.Space.aggregate([
 			// {
@@ -813,33 +869,29 @@ exports.deleteSpaceLabel = async (req, res) => {
 			// },
 			{
 				$match: {
-					_id: ObjectId(data.spaceTime)
-				}
+					_id: new mongoose.Types.ObjectId(data.spaceTime),
+				},
 			},
 			{
 				$addFields: {
 					isAdmin: {
-						$cond: [
-							{ $in: [ObjectId(req.decoded._id), '$admins'] },
-							true,
-							false,
-						]
+						$cond: [{ $in: [ObjectId(req.decoded._id), "$admins"] }, true, false],
 					},
-				}
+				},
 			},
 			{
 				$lookup: {
-					from: 'members',
+					from: "members",
 					let: {
-						memberArray: '$members'
+						memberArray: "$members",
 					},
 					pipeline: [
 						{
 							$match: {
 								$expr: {
-									$in: ['$_id', '$$memberArray']
-								}
-							}
+									$in: ["$_id", "$$memberArray"],
+								},
+							},
 						},
 						{
 							$project: {
@@ -847,61 +899,59 @@ exports.deleteSpaceLabel = async (req, res) => {
 								name: 1,
 								profile_img: 1,
 								retired: 1,
-							}
+							},
 						},
 						{
 							$match: {
 								retired: false,
-							}
+							},
 						},
 					],
-					as: 'memberObjects'
-				}
+					as: "memberObjects",
+				},
 			},
 			{
 				$project: {
 					displayName: 1,
 					displayBrief: 1,
-					spaceTime: '$_id',
+					spaceTime: "$_id",
 					isAdmin: 1,
 					memberObjects: 1,
 					admins: 1,
 					docStatus: 1,
-					labels: 1
-				}
+					labels: 1,
+				},
 			},
-
 		]);
 
 		const spaceDocs = await dbModels.Document.aggregate([
 			{
 				$match: {
-					spaceTime_id: ObjectId(data.spaceTime)
-				}
+					spaceTime_id: new mongoose.Types.ObjectId(data.spaceTime),
+				},
 			},
 			{
 				$lookup: {
-					from: 'members',
+					from: "members",
 					let: {
-						creator_id: '$creator'
+						creator_id: "$creator",
 					},
 					pipeline: [
 						{
 							$match: {
 								$expr: {
-									$in: ['$_id', '$$creator_id']
-								}
-							}
+									$in: ["$_id", "$$creator_id"],
+								},
+							},
 						},
 						{
 							$project: {
-								name: 1
-							}
-						}
+								name: 1,
+							},
+						},
 					],
-					as: 'creator'
+					as: "creator",
 				},
-
 			},
 			// {
 			// 	$unwind: {
@@ -915,41 +965,38 @@ exports.deleteSpaceLabel = async (req, res) => {
 					docContent: 1,
 					spaceTime_id: 1,
 					status: 1,
-					creator: '$creator.name',
-					creator_id: '$creator._id',
+					creator: "$creator.name",
+					creator_id: "$creator._id",
 					createdAt: 1,
 					startDate: 1,
 					endDate: 1,
 					done: 1,
 					color: 1,
-					labels: 1
-				}
-			}
+					labels: 1,
+				},
+			},
 		]);
 
 		if (deletedLabelSpace) {
 			return res.status(200).send({
-				message: 'success',
+				message: "success",
 				spaceTime: data.spaceTime,
 				scrumBoard,
 				spaceMembers,
-				spaceDocs
-			})
+				spaceDocs,
+			});
 		}
 
-
-
 		return res.status(404).send({
-			message: 'server error',
-
-		})
+			message: "server error",
+		});
 	} catch (err) {
 		console.log(err);
 		return res.status(500).send({
-			message: '에러 에러 에러'
-		})
+			message: "에러 에러 에러",
+		});
 	}
-}
+};
 
 //라벨 수정
 exports.editSpaceLabel = async (req, res) => {
@@ -961,31 +1008,35 @@ exports.editSpaceLabel = async (req, res) => {
     --------------------------------------------------`);
 	const dbModels = global.DB_MODELS;
 	const data = req.body;
-	console.log(data)
+	console.log(data);
 
 	try {
 		const deletedLabelSpace = await dbModels.Space.findOneAndUpdate(
 			{ _id: data.spaceTime, "labels.color": data.color, "labels.title": data.title },
 			{ $set: { "labels.$.title": data.editTitle } },
-			false);
+			false
+		);
 
-		const scrumBoard = await dbModels.ScrumBoard.findOne({ space_id: data.spaceTime })
+		const scrumBoard = await dbModels.ScrumBoard.findOne({ space_id: data.spaceTime });
 
 		for (let i = 0; i < scrumBoard.scrum.length; i++) {
 			const docs = scrumBoard.scrum[i].children;
 
 			for (let j = 0; j < docs.length; j++) {
-				docs[j].labels = docs[j].labels.map(item => {
-					if (item.color === data.color && item.title === data.title) return { color: item.color, title: data.editTitle };
-					return item
-				})
+				docs[j].labels = docs[j].labels.map((item) => {
+					if (item.color === data.color && item.title === data.title)
+						return { color: item.color, title: data.editTitle };
+					return item;
+				});
 			}
 		}
 
 		await scrumBoard.save();
 
-		await dbModels.Document.updateMany({ spaceTime_id: data.spaceTime, "labels.color": data.color, "labels.title": data.title },
-			{ $set: { "labels.$.title": data.editTitle } })
+		await dbModels.Document.updateMany(
+			{ spaceTime_id: data.spaceTime, "labels.color": data.color, "labels.title": data.title },
+			{ $set: { "labels.$.title": data.editTitle } }
+		);
 
 		const spaceMembers = await dbModels.Space.aggregate([
 			// {
@@ -997,33 +1048,29 @@ exports.editSpaceLabel = async (req, res) => {
 			// },
 			{
 				$match: {
-					_id: ObjectId(data.spaceTime)
-				}
+					_id: new mongoose.Types.ObjectId(data.spaceTime),
+				},
 			},
 			{
 				$addFields: {
 					isAdmin: {
-						$cond: [
-							{ $in: [ObjectId(req.decoded._id), '$admins'] },
-							true,
-							false,
-						]
+						$cond: [{ $in: [ObjectId(req.decoded._id), "$admins"] }, true, false],
 					},
-				}
+				},
 			},
 			{
 				$lookup: {
-					from: 'members',
+					from: "members",
 					let: {
-						memberArray: '$members'
+						memberArray: "$members",
 					},
 					pipeline: [
 						{
 							$match: {
 								$expr: {
-									$in: ['$_id', '$$memberArray']
-								}
-							}
+									$in: ["$_id", "$$memberArray"],
+								},
+							},
 						},
 						{
 							$project: {
@@ -1031,61 +1078,59 @@ exports.editSpaceLabel = async (req, res) => {
 								name: 1,
 								profile_img: 1,
 								retired: 1,
-							}
+							},
 						},
 						{
 							$match: {
 								retired: false,
-							}
+							},
 						},
 					],
-					as: 'memberObjects'
-				}
+					as: "memberObjects",
+				},
 			},
 			{
 				$project: {
 					displayName: 1,
 					displayBrief: 1,
-					spaceTime: '$_id',
+					spaceTime: "$_id",
 					isAdmin: 1,
 					memberObjects: 1,
 					admins: 1,
 					docStatus: 1,
-					labels: 1
-				}
+					labels: 1,
+				},
 			},
-
 		]);
 
 		const spaceDocs = await dbModels.Document.aggregate([
 			{
 				$match: {
-					spaceTime_id: ObjectId(data.spaceTime)
-				}
+					spaceTime_id: new mongoose.Types.ObjectId(data.spaceTime),
+				},
 			},
 			{
 				$lookup: {
-					from: 'members',
+					from: "members",
 					let: {
-						creator_id: '$creator'
+						creator_id: "$creator",
 					},
 					pipeline: [
 						{
 							$match: {
 								$expr: {
-									$in: ['$_id', '$$creator_id']
-								}
-							}
+									$in: ["$_id", "$$creator_id"],
+								},
+							},
 						},
 						{
 							$project: {
-								name: 1
-							}
-						}
+								name: 1,
+							},
+						},
 					],
-					as: 'creator'
+					as: "creator",
 				},
-
 			},
 			// {
 			// 	$unwind: {
@@ -1099,44 +1144,38 @@ exports.editSpaceLabel = async (req, res) => {
 					docContent: 1,
 					spaceTime_id: 1,
 					status: 1,
-					creator: '$creator.name',
-					creator_id: '$creator._id',
+					creator: "$creator.name",
+					creator_id: "$creator._id",
 					createdAt: 1,
 					startDate: 1,
 					endDate: 1,
 					done: 1,
 					color: 1,
-					labels: 1
-				}
-			}
+					labels: 1,
+				},
+			},
 		]);
-
-
 
 		if (deletedLabelSpace) {
 			return res.status(200).send({
-				message: 'success',
+				message: "success",
 				spaceTime: data.spaceTime,
 				scrumBoard,
 				spaceMembers,
-				spaceDocs
-			})
+				spaceDocs,
+			});
 		}
 
-
-
 		return res.status(404).send({
-			message: 'server error',
-
-		})
-
+			message: "server error",
+		});
 	} catch (err) {
-		console.log(err)
+		console.log(err);
 		return res.status(500).send({
-			message: '에러 발생'
-		})
+			message: "에러 발생",
+		});
 	}
-}
+};
 
 ///////////
 // exports.getAllMember = async (req, res) => {
@@ -1173,4 +1212,3 @@ exports.editSpaceLabel = async (req, res) => {
 // 		});
 // 	}
 // }
-

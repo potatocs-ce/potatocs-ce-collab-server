@@ -1,13 +1,10 @@
-const jwt = require('jsonwebtoken');
-const nsAdmin = require('../../../../../models/nsAdmin_schema');
-// const adMenuSide = require('../../../../../models/ad_menu_side_schema');
-const randomize = require('randomatic');
+const jwt = require("jsonwebtoken");
+const randomize = require("randomatic");
 const nodemailer = require("nodemailer");
-
-
+const nsAdmin = require("../../../../../models/nsAdmin_schema");
 
 /*-------------------------------------------------
-	Sign Up
+  Sign Up
 -------------------------------------------------*/
 exports.signUp = async (req, res) => {
 	console.log(`
@@ -15,47 +12,39 @@ exports.signUp = async (req, res) => {
   API  : Signup
   router.post('signUp', nsAuthcontroller.signUp) 
 --------------------------------------------------`);
-	// console.log(req.body);
 
 	const criteria = {
-		email: req.body.email
+		email: req.body.email,
 	};
-	const projection = '_id';
+	const projection = "_id";
 	const adminData = {
 		email: req.body.email,
 		password: req.body.password,
 		name: req.body.name,
-	}
+	};
 
 	try {
-		const nsAdminUser = await nsAdmin.findOne(criteria, projection).lean();
+		const existingUser = await nsAdmin.findOne(criteria, projection).lean();
 
-		if (nsAdminUser) {
+		if (existingUser) {
 			return res.status(409).send({
-				message: 'duplicated'
-			})
+				message: "duplicated",
+			});
 		}
 
-		const newNsAdmin = nsAdmin(adminData);
-		// const newAdMenuSide = adMenuSide({admin_id: newAdmin._id});	// 회원가입 하면 menuside가 만들어짐
+		await new nsAdmin(adminData).save();
 
-		await newNsAdmin.save();
-		// await newAdMenuSide.save();	// 회원가입 하면 menuside가 만들어짐
-
-		res.status(201).send({
-			message: 'created'
+		return res.status(201).send({
+			message: "created",
 		});
 	} catch (error) {
-        console.log(error);
-		return res.status(500).send({
-            error
-		});
+		console.error("Signup error:", error);
+		return res.status(500).send({ error: "Internal Server Error" });
 	}
-
 };
 
 /*-------------------------------------------------
-	Sign In
+  Sign In
 -------------------------------------------------*/
 exports.signIn = async (req, res) => {
 	console.log(`
@@ -63,70 +52,66 @@ exports.signIn = async (req, res) => {
   API  : SignIn
   router.post('signIn', nsAuthcontroller.signIn) 
 --------------------------------------------------`);
-	// console.log(req.body);
 
 	const criteria = {
-		email: req.body.email
-	}
+		email: req.body.email,
+	};
 
 	try {
 		const nsAdminUser = await nsAdmin.findOne(criteria);
 
-		if(!nsAdminUser) {
-			// console.log('No Matched Account');
+		if (!nsAdminUser) {
 			return res.status(404).send({
-				message: 'not found'
+				message: "not found",
 			});
 		}
 
-		if(nsAdminUser && nsAdminUser.retired == true){
+		if (nsAdminUser && nsAdminUser.retired == true) {
 			return res.status(400).send({
-				message: `retired`
+				message: `retired`,
 			});
 		}
-		
+
 		const isMatched = await nsAdminUser.comparePassword(req.body.password, nsAdminUser.password);
 
-		if(!isMatched) {
-			// console.log('Password Mismatch');
-			return res.status(404).send({ 
-				message: 'mismatch'
+		if (!isMatched) {
+			return res.status(404).send({
+				message: "mismatch",
 			});
 		}
 
 		const payload = {
 			_id: nsAdminUser._id,
 			name: nsAdminUser.name,
-			isNsAdmin: nsAdminUser.isNsAdmin
+			email: nsAdminUser.email,
+			isNsAdmin: nsAdminUser.isNsAdmin,
+			profile_img: nsAdminUser.profile_img,
 		};
 
 		const jwtOption = {
-			expiresIn: '1d'
+			expiresIn: "1d",
 		};
 
 		const token = jwt.sign(payload, process.env.JWT_SECRET, jwtOption);
 
-
 		/*------------------------------------------
-			5. send token and profile info to client
-		--------------------------------------------*/
+      5. send token and profile info to client
+    --------------------------------------------*/
 		res.send({
-			token
+			token,
 		});
-
-
 	} catch (error) {
 		console.log(error);
-		return res.status(500).send('An error has occurred in the server');
+		return res.status(500).send("An error has occurred in the server");
 	}
 };
 
 // https://www.npmjs.com/package/randomatic
 // randomize('A0', 16) will generate a 16-character, alpha-numeric randomized string
 /*-------------------------------------------------
-	Find Password
-	Create a verification code
-	Send an email to the user
+  Find Password
+  Create a verification code
+  Send an email to the user
 -------------------------------------------------*/
 exports.getEcode = async (req, res) => {
 	console.log(`
@@ -136,32 +121,32 @@ exports.getEcode = async (req, res) => {
 --------------------------------------------------`);
 
 	try {
-
 		// Check the email up in order to exist
 		const criteria = {
-			email: req.body.email
-		}
+			email: req.body.email,
+		};
 
 		// Create a code
 		const eCodeDate = new Date();
-		const eCode = randomize('A0', 16);
+		const eCode = randomize("A0", 16);
 
 		const passwordReset = {
 			pw_reset_code: eCode,
-			pw_reset_date: eCodeDate
-		}
+			pw_reset_date: eCodeDate,
+		};
 
-		const user = await admin.findOneAndUpdate(criteria, passwordReset);
+		const user = await nsAdmin.findOneAndUpdate(criteria, passwordReset);
 
-		if(!user) {
-			console.log('NO RESULT');
-			return res.status(404).send({
-				message: 'not found'
-			});
-		}
+		// if (!user) {
+		//     console.log("req.body.email" + req.body.email);
+		//     console.log("NO RESULT");
+		//     return res.status(404).send({
+		//         message: "not found",
+		//     });
+		// }
 
 		// --------------------------- AWS_SES
-		
+
 		// If you're using Amazon SES in a region other than US West (Oregon),
 		// replace email-smtp.us-west-2.amazonaws.com with the Amazon SES SMTP
 		// endpoint in the appropriate AWS Region.
@@ -224,17 +209,16 @@ exports.getEcode = async (req, res) => {
 		var tag0 = "key0=value0";
 		var tag1 = "key1=value1";
 
-		async function main(){
-
+		async function main() {
 			// Create the SMTP transport.
 			let transporter = nodemailer.createTransport({
 				host: smtpEndpoint,
 				port: port,
 				secure: false, // true for 465, false for other ports
 				auth: {
-				user: smtpUsername,
-				pass: smtpPassword
-				}
+					user: smtpUsername,
+					pass: smtpPassword,
+				},
 			});
 
 			// Specify the fields in the email.
@@ -248,14 +232,14 @@ exports.getEcode = async (req, res) => {
 				html: body_html,
 				// Custom headers for configuration set and message tags.
 				headers: {
-				'X-SES-CONFIGURATION-SET': configurationSet,
-				'X-SES-MESSAGE-TAGS': tag0,
-				'X-SES-MESSAGE-TAGS': tag1
-				}
+					"X-SES-CONFIGURATION-SET": configurationSet,
+					"X-SES-MESSAGE-TAGS": tag0,
+					"X-SES-MESSAGE-TAGS": tag1,
+				},
 			};
 
 			// Send the email.
-			let info = await transporter.sendMail(mailOptions)
+			let info = await transporter.sendMail(mailOptions);
 
 			console.log("Message sent! Message ID: ", info.messageId);
 		}
@@ -263,66 +247,64 @@ exports.getEcode = async (req, res) => {
 		main().catch(console.error);
 		// --------------------------- AWS_SES
 
-
 		return res.send({
-			message: 'created'
-		})
-
+			message: "created",
+		});
 	} catch (err) {
-		return res.ststus(500).send('Server Error');
+		return res.ststus(500).send("Server Error");
 	}
-
 };
 
 /*-------------------------------------------------
-	Find Password 
-	Create a temp pwd and update. 
-	Then, send an email to the user
+  Find Password 
+  Create a temp pwd and update. 
+  Then, send an email to the user
 -------------------------------------------------*/
 exports.getTempPw = async (req, res) => {
 	console.log(`
 --------------------------------------------------  
   API  : getTempPw
-  router.put('getTempPw', adAuthcontroller.getEcode) 
+  router.put('getTempPw', adAuthcontroller.getEcode2) 
 --------------------------------------------------`);
 
 	console.log(req.body);
-	const tempPw = randomize('aA0', 12);
+	const tempPw = randomize("aA0", 12);
 
 	try {
 		const emailMatch = {
-			email: req.body.email
-		}
+			email: req.body.email,
+		};
 
 		const projection = {
 			pw_reset_code: 1,
-			pw_reset_date: 1
-		}
+			pw_reset_date: 1,
+		};
 
-		const user = await admin.findOne(emailMatch, projection).lean();
-		
-		if(user.pw_reset_code !== req.body.eCode) {
-			console.log('NOT MATCHED');
+		const user = await nsAdmin.findOne(emailMatch, projection).lean();
+
+		if (user.pw_reset_code !== req.body.eCode) {
+			console.log("NOT MATCHED");
 			return res.status(404).send({
-				message: 'not match'
+				message: "not match",
 			});
 		}
 
 		const updatePw = {
-			password: tempPw
-		}
-
-		const getTempPw = await admin.findOneAndUpdate(emailMatch, updatePw);
-
-		if(!getTempPw) {
-			console.log('NO RESULT');
-			return res.status(404).send({
-				message: 'pwd err'
-			});
+			password: tempPw,
 		};
 
+		const getTempPw = await nsAdmin.findOneAndUpdate(emailMatch, updatePw);
+
+		if (!getTempPw) {
+			console.log("req.body.email" + req.body.email);
+			console.log("NO RESULT");
+			return res.status(404).send({
+				message: "pwd err",
+			});
+		}
+
 		// --------------------------- AWS_SES
-		
+
 		// If you're using Amazon SES in a region other than US West (Oregon),
 		// replace email-smtp.us-west-2.amazonaws.com with the Amazon SES SMTP
 		// endpoint in the appropriate AWS Region.
@@ -385,17 +367,16 @@ exports.getTempPw = async (req, res) => {
 		var tag0 = "key0=value0";
 		var tag1 = "key1=value1";
 
-		async function main(){
-
+		async function main() {
 			// Create the SMTP transport.
 			let transporter = nodemailer.createTransport({
 				host: smtpEndpoint,
 				port: port,
 				secure: false, // true for 465, false for other ports
 				auth: {
-				user: smtpUsername,
-				pass: smtpPassword
-				}
+					user: smtpUsername,
+					pass: smtpPassword,
+				},
 			});
 
 			// Specify the fields in the email.
@@ -409,14 +390,14 @@ exports.getTempPw = async (req, res) => {
 				html: body_html,
 				// Custom headers for configuration set and message tags.
 				headers: {
-				'X-SES-CONFIGURATION-SET': configurationSet,
-				'X-SES-MESSAGE-TAGS': tag0,
-				'X-SES-MESSAGE-TAGS': tag1
-				}
+					"X-SES-CONFIGURATION-SET": configurationSet,
+					"X-SES-MESSAGE-TAGS": tag0,
+					"X-SES-MESSAGE-TAGS": tag1,
+				},
 			};
 
 			// Send the email.
-			let info = await transporter.sendMail(mailOptions)
+			let info = await transporter.sendMail(mailOptions);
 
 			console.log("Message sent! Message ID: ", info.messageId);
 		}
@@ -425,9 +406,63 @@ exports.getTempPw = async (req, res) => {
 		// --------------------------- AWS_SES
 
 		return res.send({
-			message: 'sentPw'
-		})	
+			message: "sentPw",
+		});
 	} catch (err) {
-		return res.ststus(500).send('Server Error');
+		return res.ststus(500).send("Server Error");
+	}
+};
+
+/*-------------------------------------------------
+  refreshToken
+-------------------------------------------------*/
+exports.refreshToken = async (req, res) => {
+	console.log(`
+--------------------------------------------------  
+  API  : refreshToken
+  router.post('refreshToken', nsAuthcontroller.refreshToken) 
+--------------------------------------------------`);
+	const criteria = {
+		email: req.body.email,
+	};
+
+	try {
+		const nsAdminUser = await nsAdmin.findOne(criteria);
+
+		if (!nsAdminUser) {
+			return res.status(404).send({
+				message: "not found",
+			});
+		}
+
+		if (nsAdminUser && nsAdminUser.retired == true) {
+			return res.status(400).send({
+				message: `retired`,
+			});
+		}
+
+		const payload = {
+			_id: nsAdminUser._id,
+			name: nsAdminUser.name,
+			email: nsAdminUser.email,
+			isNsAdmin: nsAdminUser.isNsAdmin,
+			profile_img: nsAdminUser.profile_img,
+		};
+
+		const jwtOption = {
+			expiresIn: "1d",
+		};
+
+		const token = jwt.sign(payload, process.env.JWT_SECRET, jwtOption);
+
+		/*------------------------------------------
+      5. send token and profile info to client
+    --------------------------------------------*/
+		res.send({
+			token,
+		});
+	} catch (error) {
+		console.log(error);
+		return res.status(500).send("An error has occurred in the server");
 	}
 };
