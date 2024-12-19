@@ -1,30 +1,28 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
 const pendingCompanyRequestHistorySchema = mongoose.Schema(
-	{
-		member_id: {
-			type: mongoose.Schema.Types.ObjectId,
-			ref: 'Member',
-		},
+    {
+        member_id: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Member",
+        },
         company_id: {
             type: mongoose.Schema.Types.ObjectId,
-			ref: 'Company',
+            ref: "Company",
         },
         approver_id: {
             type: mongoose.Schema.Types.ObjectId,
-			ref: 'Member',
+            ref: "Member",
         },
         status: {
             type: String,
-        }
-	},
-	{
-		timestamps: true
-	}
+        },
+    },
+    {
+        timestamps: true,
+    }
 );
 
-const PendingCompanyRequestHistory = mongoose.model('PendingCompanyRequestHistory', pendingCompanyRequestHistorySchema);
+const PendingCompanyRequestHistory = mongoose.model("PendingCompanyRequestHistory", pendingCompanyRequestHistorySchema);
 
 module.exports = PendingCompanyRequestHistory;
-
-
