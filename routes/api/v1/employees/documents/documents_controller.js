@@ -1,4 +1,3 @@
-const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const fs = require("fs"); // s3로 업로드 하기위해 동기처리
 const fsPromises = require("fs").promises;
@@ -6,169 +5,163 @@ const { unlink } = require("fs/promises");
 
 const { MongoWallet } = require("../../../../utils/mongo-wallet");
 const { Wallet, Gateway } = require("fabric-network");
-const { buildCAClient, enrollAdminMongo, buildCCP } = require("../../../../utils/ca-utils");
-const FabricCAServices = require("fabric-ca-client");
+const { buildCCP } = require("../../../../utils/ca-utils");
 const { default: mongoose } = require("mongoose");
-const { PutObjectCommand, GetObjectCommand, DeleteObjectCommand } = require("@aws-sdk/client-s3");
+const { PutObjectCommand } = require("@aws-sdk/client-s3");
 const { s3Client } = require("../../../../utils/s3Utils");
-const { X509, KJUR, KEYUTIL } = require("jsrsasign");
 const mongoose = require("mongoose");
 
 exports.uploadDocument = async (req, res) => {
-	console.log(`
+    console.log(`
     --------------------------------------------------
     User: ${req.decoded._id}  
     router.post('/documents', documentsController.uploadDocument);
     --------------------------------------------------`);
-	const dbModels = global.DB_MODELS;
-	const { title, receiverA, receiverB } = req.body;
-	const file = req.file;
-	console.log(file);
-	console.log(req.body);
-	const session = await dbModels.AdUploadDocument.startSession();
+    const dbModels = global.DB_MODELS;
+    const { title, receiverA, receiverB } = req.body;
+    const file = req.file;
 
-	try {
-		if (!file) {
-			return res.status(404).json({
-				message: "PDF was not uploaded!",
-			});
-		}
+    const session = await dbModels.AdUploadDocument.startSession();
 
-		const foundCompany = await dbModels.Company.findById(foundUser.company_id).lean();
+    try {
+        if (!file) {
+            return res.status(404).json({
+                message: "PDF was not uploaded!",
+            });
+        }
 
-		// 트랜잭션 시작
-		await session.startTransaction();
+        const foundCompany = await dbModels.Company.findById(foundUser.company_id).lean();
 
-		// 블록체인에 문서저장
-		const s3Key = `important-document${file.filename}`;
+        // 트랜잭션 시작
+        await session.startTransaction();
 
-		const uploadParams = {
-			Bucket: process.env.AWS_S3_BUCKET,
-			Key: s3Key,
-			Body: fs.createReadStream(file.path),
-			// ACL: 'public-read',
-			ContentType: req.file.mimetype,
-		};
+        // 블록체인에 문서저장
+        const s3Key = `important-document${file.filename}`;
 
-		console.log(uploadParams);
+        const uploadParams = {
+            Bucket: process.env.AWS_S3_BUCKET,
+            Key: s3Key,
+            Body: fs.createReadStream(file.path),
+            // ACL: 'public-read',
+            ContentType: req.file.mimetype,
+        };
 
-		if (process.env.NODE_ENV.trim() === "development") {
-			uploadParams.ACL = "public-read";
-		}
+        if (process.env.NODE_ENV.trim() === "development") {
+            uploadParams.ACL = "public-read";
+        }
 
-		await s3Client.send(new PutObjectCommand(uploadParams));
+        await s3Client.send(new PutObjectCommand(uploadParams));
 
-		const fileLoaded = await fsPromises.readFile(file.path);
-		const hashSum = crypto.createHash("sha256");
-		hashSum.update(fileLoaded);
-		const hex = hashSum.digest("hex");
+        const fileLoaded = await fsPromises.readFile(file.path);
+        const hashSum = crypto.createHash("sha256");
+        hashSum.update(fileLoaded);
+        const hex = hashSum.digest("hex");
 
-		// 로컬에 저장된 리사이즈 파일 제거
-		await unlink(file.path);
+        // 로컬에 저장된 리사이즈 파일 제거
+        await unlink(file.path);
 
-		const s3Location = `${process.env.AWS_LOCATION}${s3Key}`;
+        const s3Location = `${process.env.AWS_LOCATION}${s3Key}`;
 
-		const newAdUploadDocument = new dbModels.AdUploadDocument({
-			title: title,
-			company_id: new mongoose.Types.ObjectId(foundCompany._id),
-			writer: new mongoose.Types.ObjectId(req.decoded._id),
-			pdfHash: hex,
-			content: req.body.content,
-			originalname: file.originalname,
-			key: s3Key,
-			location: s3Location,
-		});
+        const newAdUploadDocument = new dbModels.AdUploadDocument({
+            title: title,
+            company_id: new mongoose.Types.ObjectId(foundCompany._id),
+            writer: new mongoose.Types.ObjectId(req.decoded._id),
+            pdfHash: hex,
+            content: req.body.content,
+            originalname: file.originalname,
+            key: s3Key,
+            location: s3Location,
+        });
 
-		// 새로운 주문 저장
-		await newAdUploadDocument.save({ session });
+        // 새로운 주문 저장
+        await newAdUploadDocument.save({ session });
 
-		const foundUser = await dbModels.Admin.findOne({
-			_id: new mongoose.Types.ObjectId(req.decoded._id),
-		});
-		/**
-		 * blockchain 코드 시작 -------------------------------------------
-		 */
-		const store = new MongoWallet();
-		const wallet = new Wallet(store);
-		const userIdentity = await wallet.get(req.decoded._id.toString());
+        const foundUser = await dbModels.Admin.findOne({
+            _id: new mongoose.Types.ObjectId(req.decoded._id),
+        });
+        /**
+         * blockchain 코드 시작 -------------------------------------------
+         */
+        const store = new MongoWallet();
+        const wallet = new Wallet(store);
+        const userIdentity = await wallet.get(req.decoded._id.toString());
 
-		let selectedCompany = "";
-		let mspId = "";
-		let channelId = "";
-		switch (foundCompany.company_name) {
-			case "nsmartsolution":
-				selectedCompany = "nsmarts";
-				mspId = "NsmartsMSP";
-				channelId = "nsmartschannel";
-				break;
-			case "vice":
-				selectedCompany = "vice";
-				mspId = "ViceMSP";
-				channelId = "vicechannel";
-				break;
-			default:
-				selectedCompany = "vice-kr";
-				mspId = "ViceKRMSP";
-				channelId = "vice-krchannel";
-				break;
-		}
+        let selectedCompany = "";
+        let mspId = "";
+        let channelId = "";
+        switch (foundCompany.company_name) {
+            case "nsmartsolution":
+                selectedCompany = "nsmarts";
+                mspId = "NsmartsMSP";
+                channelId = "nsmartschannel";
+                break;
+            case "vice":
+                selectedCompany = "vice";
+                mspId = "ViceMSP";
+                channelId = "vicechannel";
+                break;
+            default:
+                selectedCompany = "vice-kr";
+                mspId = "ViceKRMSP";
+                channelId = "vice-krchannel";
+                break;
+        }
 
-		const ccp = buildCCP(selectedCompany);
-		const gateway = new Gateway();
+        const ccp = buildCCP(selectedCompany);
+        const gateway = new Gateway();
 
-		await gateway.connect(ccp, {
-			wallet,
-			identity: userIdentity,
-			discovery: { enabled: false, asLocalhost: false },
-		});
+        await gateway.connect(ccp, {
+            wallet,
+            identity: userIdentity,
+            discovery: { enabled: false, asLocalhost: false },
+        });
 
-		// 네트워크 채널 가져오기
-		const network = await gateway.getNetwork("contractchannel");
+        // 네트워크 채널 가져오기
+        const network = await gateway.getNetwork("contractchannel");
 
-		// 스마트 컨트랙트 가져오기
-		const contract = network.getContract("contract");
+        // 스마트 컨트랙트 가져오기
+        const contract = network.getContract("contract");
 
-		try {
-			const result = await contract.submitTransaction(
-				"CreateContractInfo", // 스마트 컨트랙트의 함수 이름
-				newAdUploadDocument._id,
-				newAdUploadDocument.title,
-				newAdUploadDocument.content,
-				newAdUploadDocument.writer,
-				newAdUploadDocument.company_id,
-				newAdUploadDocument.pdfHash,
-				newAdUploadDocument.originalname,
-				newAdUploadDocument.key,
-				newAdUploadDocument.location,
-				newAdUploadDocument.createdAt.toISOString(),
-				newAdUploadDocument.updatedAt.toISOString()
-			);
-		} catch (bcError) {
-			console.error("Blockchain transaction failed:", bcError);
-			throw bcError;
-		}
+        try {
+            const result = await contract.submitTransaction(
+                "CreateContractInfo", // 스마트 컨트랙트의 함수 이름
+                newAdUploadDocument._id,
+                newAdUploadDocument.title,
+                newAdUploadDocument.content,
+                newAdUploadDocument.writer,
+                newAdUploadDocument.company_id,
+                newAdUploadDocument.pdfHash,
+                newAdUploadDocument.originalname,
+                newAdUploadDocument.key,
+                newAdUploadDocument.location,
+                newAdUploadDocument.createdAt.toISOString(),
+                newAdUploadDocument.updatedAt.toISOString()
+            );
+        } catch (bcError) {
+            console.error("Blockchain transaction failed:", bcError);
+            throw bcError;
+        }
 
-		await gateway.disconnect();
+        await gateway.disconnect();
 
-		// 트랜잭션 커밋
-		await session.commitTransaction();
-		session.endSession();
+        // 트랜잭션 커밋
+        await session.commitTransaction();
+        session.endSession();
 
-		/**
-		 * blockchain 코드 끝 -------------------------------------------
-		 */
-		return res.status(200).json({
-			message: "계약서 생성 성공",
-		});
-	} catch (err) {
-		console.log(err);
-		// console.log(err?.responses[0]?.responses);
+        /**
+         * blockchain 코드 끝 -------------------------------------------
+         */
+        return res.status(200).json({
+            message: "계약서 생성 성공",
+        });
+    } catch (err) {
+        console.log(err);
 
-		// 트랜잭션 롤백
-		await session.abortTransaction();
-		session.endSession();
-		return res.status(500).json({ error: true, message: "Server Error" });
-	}
+        // 트랜잭션 롤백
+        await session.abortTransaction();
+        session.endSession();
+        return res.status(500).json({ error: true, message: "Server Error" });
+    }
 };
 
 // exports.getPdf = async (req, res) => {
@@ -180,7 +173,6 @@ exports.uploadDocument = async (req, res) => {
 //   const dbModels = global.DB_MODELS;
 //   const { _id, email, org } = req.decoded;
 //   const { id } = req.params;
-//   console.log(id);
 
 //   try {
 //     const user = await dbModels.User.findOne({ _id, email, org }).lean();
@@ -192,7 +184,6 @@ exports.uploadDocument = async (req, res) => {
 //       .findById(id)
 //       .lean();
 
-//     console.log(foundContract)
 //     if (!foundContract) {
 //       return res.status(404).json({ error: true, message: "계약을 찾을 수 없습니다." });
 //     }
@@ -221,7 +212,7 @@ exports.uploadDocument = async (req, res) => {
 //   const dbModels = global.DB_MODELS;
 //   const { _id, email, org } = req.decoded;
 //   const { id } = req.params;
-//   console.log(id);
+
 //   const session = await dbModels.Contract.startSession();
 
 //   try {
@@ -247,7 +238,6 @@ exports.uploadDocument = async (req, res) => {
 //       })
 //       .lean();
 
-//     console.log(foundContract)
 //     if (!foundContract) {
 //       return res.status(404).json({ error: true, message: "계약을 찾을 수 없습니다." });
 //     }
@@ -409,7 +399,7 @@ exports.uploadDocument = async (req, res) => {
 //       );
 //       const resultString = resultBuffer.toString('utf8');
 //       const resultJson = JSON.parse(resultString);
-//       console.log(resultJson)
+
 //     } catch (bcError) {
 //       console.error('Blockchain transaction failed:', bcError);
 //       return res.status(500).json({
@@ -443,8 +433,6 @@ exports.uploadDocument = async (req, res) => {
 //   const { _id, email, org } = req.decoded;
 //   const { id } = req.params
 //   const { receiver, ...body } = req.body;
-//   console.log(body)
-//   console.log(id)
 
 //   const session = await dbModels.Contract.startSession();
 
@@ -477,19 +465,16 @@ exports.uploadDocument = async (req, res) => {
 //     }
 
 //     const userPrivateKey = userIdentity.credentials.privateKey;
-//     console.log(userPrivateKey)
+
 //     const sig = new KJUR.crypto.Signature({ "alg": "SHA256withECDSA" });
 //     sig.init(userPrivateKey, "");
 //     sig.updateHex(foundContract.pdfHash);
 //     const sigValueHex = sig.sign();
 //     const sigValueBase64 = Buffer.from(sigValueHex, 'hex').toString('base64');
-//     console.log("Signature: " + sigValueBase64);
 
 //     body[receiver === 'a' ? 'signA' : 'signB'] = sigValueBase64;
 
 //     const updatedContract = await dbModels.Contract.findByIdAndUpdate(id, body, { new: true })
-//     console.log(receiver)
-//     console.log(updatedContract)
 
 //     if (!updatedContract) {
 //       await session.abortTransaction();
@@ -539,7 +524,7 @@ exports.uploadDocument = async (req, res) => {
 //       );
 //       const resultString = resultBuffer.toString('utf8');
 //       const resultJson = JSON.parse(resultString);
-//       console.log(resultJson)
+
 //     } catch (bcError) {
 //       console.error('Blockchain transaction failed:', bcError);
 //       return res.status(500).json({
@@ -602,9 +587,6 @@ exports.uploadDocument = async (req, res) => {
 
 //     // 계약이 존재하는지 확인 및 수신자가 맞는지 확인
 //     const foundContract = await dbModels.Contract.findOne({ _id: id, [receiverField]: _id }).lean();
-//     console.log(receiverField)
-//     console.log(_id)
-//     console.log(foundContract)
 
 //     if (!foundContract) {
 //       await unlink(file.path); // 파일 삭제
@@ -614,7 +596,6 @@ exports.uploadDocument = async (req, res) => {
 //     // 업로드된 파일의 해시 생성
 //     const fileData = await fsPromises.readFile(file.path);
 //     const fileHash = crypto.createHash('sha256').update(fileData).digest('hex');
-//     console.log('File Hash:', fileHash);
 
 //     // 파일 해시가 계약서의 해시와 일치하는지 확인
 //     if (foundContract.pdfHash !== fileHash) {
@@ -732,7 +713,6 @@ exports.uploadDocument = async (req, res) => {
 //   const dbModels = global.DB_MODELS;
 //   const { _id, email, org } = req.decoded;
 //   const { id } = req.params
-//   console.log(id)
 
 //   const session = await dbModels.Order.startSession();
 
@@ -798,7 +778,7 @@ exports.uploadDocument = async (req, res) => {
 //       );
 //       const resultString = resultBuffer.toString('utf8');
 //       const resultJson = JSON.parse(resultString);
-//       console.log(resultJson)
+
 //     } catch (bcError) {
 //       console.error('Blockchain transaction failed:', bcError);
 //       return res.status(500).json({
@@ -837,7 +817,7 @@ exports.uploadDocument = async (req, res) => {
 //   const dbModels = global.DB_MODELS;
 //   const { _id, email, org } = req.decoded;
 //   const { id } = req.params
-//   console.log(id)
+
 //   const session = await dbModels.Order.startSession();
 
 //   try {
@@ -891,7 +871,7 @@ exports.uploadDocument = async (req, res) => {
 //       );
 //       const resultString = resultBuffer.toString('utf8');
 //       const resultJson = JSON.parse(resultString);
-//       console.log(resultJson)
+
 //     } catch (bcError) {
 //       console.error('Blockchain transaction failed:', bcError);
 //       return res.status(500).json({
