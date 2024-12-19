@@ -66,8 +66,6 @@ exports.getLeaveRequest = async (req, res) => {
             { $limit: limit },
         ]);
 
-        console.log(pendingLeaveReqList);
-
         return res.status(200).send({
             message: "getPendingData",
             pendingLeaveReqList,
@@ -91,7 +89,7 @@ exports.approvedLeaveRequest = async (req, res) => {
 --------------------------------------------------`);
     const dbModels = global.DB_MODELS;
     const data = req.body;
-    console.log(data);
+
     const session = await dbModels.LeaveRequest.startSession();
 
     try {
@@ -123,7 +121,6 @@ exports.approvedLeaveRequest = async (req, res) => {
         // }
 
         // const leaveRequestHistory = dbModels.LeaveRequestHistory(leaveReqHistory);
-        // console.log(leaveRequestHistory);
         // await leaveRequestHistory.save();
         ////////////////
 
@@ -186,10 +183,9 @@ exports.approvedLeaveRequest = async (req, res) => {
 
         // 네트워크 채널 가져오기
         const network = await gateway.getNetwork("vice-krchannel");
-        console.log("11111111111111111111111");
+
         // 스마트 컨트랙트 가져오기
         const contract = network.getContract("leave");
-        console.log("22222222222222222222222222222222");
 
         try {
             console.log("체인코드 초기화 시작");
@@ -197,7 +193,6 @@ exports.approvedLeaveRequest = async (req, res) => {
             // await contract.submitTransaction("Init");
             // console.log("체인코드 초기화 완료");
 
-            console.log("3333333333333333333333333333");
             const result = await contract.submitTransaction(
                 "CreateLeaveRequest", // 스마트 컨트랙트의 함수 이름
                 updatedRequest._id,
@@ -215,7 +210,6 @@ exports.approvedLeaveRequest = async (req, res) => {
             throw bcError;
         }
 
-        console.log("4444444444444444444444444444444");
         await gateway.disconnect();
         // 트랜잭션 커밋
         await session.commitTransaction();
@@ -307,7 +301,6 @@ exports.rejectLeaveRequest = async (req, res) => {
 --------------------------------------------------`);
 
     const data = req.body;
-    console.log(data);
     const dbModels = global.DB_MODELS;
 
     try {
@@ -327,14 +320,12 @@ exports.rejectLeaveRequest = async (req, res) => {
             const userYear = await dbModels.Member.findOne({
                 _id: data.requestor,
             });
-            console.log(userYear);
 
             // 년차 뽑아옴
             const date = new Date();
             const today = moment(new Date());
             const empStartDate = moment(userYear.emp_start_date);
             const careerYear = today.diff(empStartDate, "years") + 1;
-            console.log(careerYear);
 
             // rollover 값을 우선 찾는다..
             const rolloverTotal = await dbModels.PersonalLeaveStandard.findOne({
@@ -342,12 +333,8 @@ exports.rejectLeaveRequest = async (req, res) => {
             });
             // rollover 변수에 duration 을 뺀 값을 저장
 
-            // console.log(rolloverTotal.leave_standard[careerYear]);
-            // console.log(rolloverTotal.leave_standard[careerYear]['rollover'] != undefined);
-
             if (rolloverTotal.leave_standard[careerYear]["rollover"] != undefined) {
                 rollover = rolloverTotal.leave_standard[careerYear].rollover + req.body.leaveDuration;
-                // console.log(rollover);
 
                 // 위에서 구한 변수로 set
                 // 여기서 한번에 다 하고 싶었으나 안됨..
@@ -363,8 +350,6 @@ exports.rejectLeaveRequest = async (req, res) => {
                     },
                     { new: true }
                 );
-                console.log(rolloverCal);
-                console.log(rolloverCal.leave_standard[careerYear + 1]);
             }
         }
         ////////////////////
@@ -372,7 +357,6 @@ exports.rejectLeaveRequest = async (req, res) => {
             const ReplacementTaken = await dbModels.RdRequest.findOne({
                 _id: req.body.rdRequest,
             });
-            console.log(ReplacementTaken);
 
             const taken = ReplacementTaken.taken - req.body.leaveDuration;
 
@@ -387,7 +371,6 @@ exports.rejectLeaveRequest = async (req, res) => {
         }
 
         const leaveRequest = await dbModels.LeaveRequest.findOneAndUpdate(criteria, updateData);
-        // // console.log(leaveRequest);
 
         // // 일단 보류 LeaveRequestHistory
         // // const leaveRequestHistory = {
@@ -442,9 +425,6 @@ exports.cancelMyRequestLeave = async (req, res) => {
 --------------------------------------------------`);
 
     const data = req.body;
-    // console.log(data);
-
-    // console.log(match_criteria);
 
     const dbModels = global.DB_MODELS;
 
@@ -456,22 +436,17 @@ exports.cancelMyRequestLeave = async (req, res) => {
         // rollover 처리
         // leave type 이 annual_leave 일때만 rollover
         // 휴가 신청자 계약일 받아오고
-        // console.log(data.requestor);
         const userYear = await dbModels.Member.findOne({
             _id: data.requestor,
         });
-        // console.log('userYear');
-        // console.log(userYear);
 
         // 년차 뽑아옴
         const date = new Date();
         const today = moment(new Date());
         const empStartDate = moment(userYear.emp_start_date);
         const careerYear = today.diff(empStartDate, "years") + 1;
-        // console.log(careerYear);
 
         // rollover 값을 우선 찾는다..
-        // console.log(data);
         const rolloverTotal = await dbModels.PersonalLeaveStandard.findOne({
             member_id: data.requestor,
         });
@@ -488,12 +463,6 @@ exports.cancelMyRequestLeave = async (req, res) => {
                 status: "Cancel",
             }
         );
-        // console.log(leaveRequest)
-        // rollover 변수에 duration 을 뺀 값을 저장
-
-        // console.log(rolloverTotal);
-        // console.log(rolloverTotal.leave_standard[careerYear]);
-        // console.log(rolloverTotal.leave_standard[careerYear]['rollover'] != undefined);
 
         /**-----------------------------------
          * blockchain 코드 시작 -------------------------------------------
@@ -510,8 +479,6 @@ exports.cancelMyRequestLeave = async (req, res) => {
         const getManagerData = await dbModels.Manager.findOne(findMyManagerCriteria).populate("myManager", "email");
 
         const foundCompany = await dbModels.Company.findById(userYear.company_id).lean();
-
-        console.log(foundCompany);
 
         let selectedCompany = "";
         let mspId = "";
@@ -581,7 +548,6 @@ exports.cancelMyRequestLeave = async (req, res) => {
         if (rolloverTotal.leave_standard[careerYear]["rollover"] != undefined) {
             if (req.body.leaveType == "annual_leave") {
                 rollover = rolloverTotal.leave_standard[careerYear].rollover + req.body.leaveDuration;
-                // console.log(rollover);
 
                 // 위에서 구한 변수로 set
                 // 여기서 한번에 다 하고 싶었으나 안됨..
@@ -597,7 +563,6 @@ exports.cancelMyRequestLeave = async (req, res) => {
                     },
                     { new: true }
                 );
-                // console.log(rolloverCal.leave_standard[careerYear + 1]);
             }
         }
 
@@ -605,7 +570,7 @@ exports.cancelMyRequestLeave = async (req, res) => {
             const rdTaken = await dbModels.RdRequest.findOne({
                 _id: leaveRequest.rdRequest,
             });
-            // console.log(rdTaken);
+
             const taken = rdTaken.taken - data.leaveDuration;
             const rdRequest = await dbModels.RdRequest.findOneAndUpdate(
                 {
