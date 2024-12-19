@@ -274,7 +274,6 @@ exports.getTempPw = async (req, res) => {
   router.put('getTempPw', adAuthcontroller.getEcode) 
 --------------------------------------------------`);
 
-    console.log(req.body);
     const tempPw = randomize("aA0", 12);
 
     try {
