@@ -1,26 +1,24 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
 const pendingCompanyRequestSchema = mongoose.Schema(
-	{
-		member_id: {
-			type: mongoose.Schema.Types.ObjectId,
-			ref: 'Member',
-		},
+    {
+        member_id: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Member",
+        },
         company_id: {
             type: mongoose.Schema.Types.ObjectId,
-			ref: 'Company',
+            ref: "Company",
         },
-		status: {
-			type: String
-		}
-	},
-	{
-		timestamps: true
-	}
+        status: {
+            type: String,
+        },
+    },
+    {
+        timestamps: true,
+    }
 );
 
-const PendingCompanyRequest = mongoose.model('PendingCompanyRequest', pendingCompanyRequestSchema);
+const PendingCompanyRequest = mongoose.model("PendingCompanyRequest", pendingCompanyRequestSchema);
 
 module.exports = PendingCompanyRequest;
-
-
