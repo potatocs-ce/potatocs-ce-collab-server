@@ -1,72 +1,67 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
-const scrumBoard = mongoose.Schema( 
-    {
-     
-        space_id: {
-			type: mongoose.Schema.Types.ObjectId,
-			ref: 'Space',
-		},
-        scrum: [
-            {
-                _id: false,
+const scrumBoard = mongoose.Schema({
+    space_id: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Space",
+    },
+    scrum: [
+        {
+            _id: false,
 
-                label: {
-                    type: String
-                },
-                children: [
-                    {
-                        _id: false,
+            label: {
+                type: String,
+            },
+            children: [
+                {
+                    _id: false,
 
-                        doc_id: {
+                    doc_id: {
+                        type: mongoose.Schema.Types.ObjectId,
+                        ref: "Document",
+                    },
+                    creator: [
+                        {
                             type: mongoose.Schema.Types.ObjectId,
-			                ref: 'Document',
+                            ref: "Member",
                         },
-                        creator: [{
-                            type: mongoose.Schema.Types.ObjectId,
-                            ref: 'Member',
-                        }],
-                        // creatorName: {
-                        //     type: String,
-                        // },
-                        // creatorImg:{
-                        //     type: String,
-                        // },
-                        docTitle: {
+                    ],
+                    // creatorName: {
+                    //     type: String,
+                    // },
+                    // creatorImg:{
+                    //     type: String,
+                    // },
+                    docTitle: {
+                        type: String,
+                    },
+                    startDate: {
+                        type: Date,
+                    },
+                    endDate: {
+                        type: Date,
+                    },
+
+                    done: {
+                        type: Boolean,
+                    },
+
+                    color: {
+                        primary: {
                             type: String,
                         },
-                        startDate: {
-                            type: Date,
+                        secondary: {
+                            type: String,
                         },
-                        endDate: {
-                            type: Date,
-                        },
+                    },
 
-                        done: {
-                            type: Boolean
-                        },
+                    labels: [],
+                },
+            ],
+        },
+    ],
+});
 
-                        
-
-                        color: {
-                            primary: {
-                                type: String
-                            },
-                            secondary: {
-                                type: String
-                            }
-                        },
-
-                        labels: []
-                    }
-                ]
-            }
-        ]
-
-    }
-);
-
-
-const ScrumBoard = mongoose.model('ScrumBoard', scrumBoard);
+const ScrumBoard = mongoose.model("ScrumBoard", scrumBoard);
 
 module.exports = ScrumBoard;
