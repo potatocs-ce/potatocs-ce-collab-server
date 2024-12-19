@@ -1,10 +1,5 @@
-const { ObjectId } = require("bson");
 const mongoose = require("mongoose");
-var fs = require("fs");
-var path = require("path");
-const { promisify } = require("util");
 const { GetObjectCommand, S3Client, DeleteObjectCommand } = require("@aws-sdk/client-s3");
-const unlinkAsync = promisify(fs.unlink);
 const s3Client = new S3Client({
     region: process.env.AWS_REGION,
     credentials: {
@@ -12,8 +7,6 @@ const s3Client = new S3Client({
         secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
     },
 });
-// const s3 = global.AWS_S3.s3;
-// const bucket = global.AWS_S3.bucket;
 
 exports.createDoc = async (req, res) => {
     console.log("멤버아디", req.body.memberId);
@@ -25,8 +18,8 @@ exports.createDoc = async (req, res) => {
   data: ${req.body.spaceTime}, ${req.body.editorTitle},
   ${req.body.docContent}, ${req.body.status}, ${req.body.faceOption}
 --------------------------------------------------`);
+
     const dbModels = global.DB_MODELS;
-    //console.log("크리에이터",req.body.usrData._id);
 
     try {
         const primaryColor = "#" + Math.round(Math.random() * 0xffffff).toString(16);
@@ -58,7 +51,6 @@ exports.createDoc = async (req, res) => {
         const scrumBoard = await dbModels.ScrumBoard.findOne({
             space_id: req.body.spaceTime,
         });
-        console.log(scrumBoard);
 
         const scrumCriteria = {
             doc_id: doc._id,
@@ -80,7 +72,6 @@ exports.createDoc = async (req, res) => {
                 scrumBoard.scrum[index].children.push(scrumCriteria);
             }
         }
-        console.log(scrumBoard);
 
         await scrumBoard.save();
         // scrumBoard//////////////////////////////
@@ -91,8 +82,7 @@ exports.createDoc = async (req, res) => {
         // 		_id: req.body.spaceTime,
         // 	}
         // )
-        // console.log(inviteSpaceMember);
-        // console.log(memberName);
+
         // const mySpaceHistory = await dbModels.MySpaceHistory(
         // 	{
         // 		space_id: spaceId._id,
@@ -150,7 +140,7 @@ exports.updateDoc = async (req, res) => {
         const scrumBoard = await dbModels.ScrumBoard.findOne({
             space_id: updatedDoc.spaceTime_id,
         });
-        // console.log(scrumBoard);
+
         let temp;
         for (let i = 0; i < scrumBoard.scrum.length; i++) {
             const docs = scrumBoard.scrum[i].children;
@@ -173,13 +163,8 @@ exports.updateDoc = async (req, res) => {
             }
         }
 
-        // console.log(temp);
-        // console.log(scrumBoard);
-
         await scrumBoard.save();
         // scrumboard////////////////
-
-        // console.log(updatedDoc);
 
         return res.status(200).send({
             message: "updated",
@@ -553,7 +538,7 @@ exports.getDocInfo = async (req, res) => {
                 },
             },
         ]);
-        console.log(docInfo[0]);
+
         // space 관리자인지 확인하는 작업 -> 이걸로 문서 삭제 권한 주고안주고
         let isAdmin;
         for (let index = 0; index < docInfo[0].isSpaceAdmin.length; index++) {
@@ -567,7 +552,6 @@ exports.getDocInfo = async (req, res) => {
         }
 
         docInfo[0].isSpaceAdmin = isAdmin;
-        // console.log(docInfo[0]);
 
         return res.status(200).send({
             message: "getDocInfo",
@@ -590,8 +574,7 @@ exports.deleteDoc = async (req, res) => {
 --------------------------------------------------`);
     const dbModels = global.DB_MODELS;
     const data = req.query;
-    console.log(data);
-    // console.log(data.docId);
+
     try {
         // 파일이 있는 문서 아이디 가져오기
         // const findDocUploadFile = await dbModels.UploadFile.find(
@@ -603,7 +586,7 @@ exports.deleteDoc = async (req, res) => {
         // 업로드된 파일 제거
         // for (let index = 0; index < findDocUploadFile.length; index++) {
         // 	const element = findDocUploadFile[index].filename;
-        // 	// console.log(element);
+
         // 	// await unlinkAsync('uploads/upload_file/' + element);
         // }
 
@@ -628,13 +611,12 @@ exports.deleteDoc = async (req, res) => {
         const deleteDoc = await dbModels.Document.findOneAndDelete({
             _id: data.docId,
         });
-        // console.log(deleteDoc);
+
         //////  mySpaceHistory  ////////
         const spaceId = await dbModels.Space.findOne({
             _id: deleteDoc.spaceTime_id,
         });
-        // console.log(inviteSpaceMember);
-        // console.log(memberName);
+
         // const mySpaceHistory = await dbModels.MySpaceHistory(
         // 	{
         // 		space_id: spaceId._id,
@@ -740,7 +722,7 @@ exports.editDoc = async (req, res) => {
 --------------------------------------------------`);
     const dbModels = global.DB_MODELS;
     const data = req.body;
-    console.log(data);
+
     try {
         const docInfo = await dbModels.Document.findOneAndUpdate(
             {
@@ -773,7 +755,7 @@ exports.editDoc = async (req, res) => {
         }
 
         await scrumBoard.save();
-        console.log(scrumBoard);
+
         // scrumboard//////////////////////
 
         const spaceDocs = await dbModels.Document.aggregate([
@@ -849,7 +831,6 @@ exports.editDocDescription = async (req, res) => {
 --------------------------------------------------`);
     const dbModels = global.DB_MODELS;
     const data = req.body;
-    console.log(data);
 
     try {
         const document = await dbModels.Document.findOneAndUpdate(
@@ -881,7 +862,6 @@ exports.getUploadFileList = async (req, res) => {
 --------------------------------------------------`);
     const dbModels = global.DB_MODELS;
     const data = req.query.docId;
-    // console.log(data);
 
     try {
         // const criteria = {
@@ -923,7 +903,6 @@ exports.getUploadFileList = async (req, res) => {
                 },
             },
         ]);
-        // console.log(findFileList);
 
         return res.status(200).send({
             message: "get upload file list",
@@ -947,7 +926,7 @@ exports.fileUpload = async (req, res) => {
 --------------------------------------------------`);
     const dbModels = global.DB_MODELS;
     const data = req.files[0];
-    console.log(req.body);
+
     try {
         const criteria = {
             doc_id: req.body.docId,
@@ -961,7 +940,7 @@ exports.fileUpload = async (req, res) => {
         };
 
         const uploadFile = dbModels.UploadFile(criteria);
-        // console.log(uploadFile);
+
         await uploadFile.save();
 
         // sendData = data.filename;
@@ -987,14 +966,13 @@ exports.fileDownload = async (req, res) => {
 --------------------------------------------------`);
     const dbModels = global.DB_MODELS;
     const data = req.query;
-    // console.log(data);
+
     try {
         const donloadFile = await dbModels.UploadFile.findOne({
             _id: data.fileId,
         }).lean();
 
         const key = donloadFile.key;
-        console.log(key);
 
         const command = new GetObjectCommand({
             Bucket: process.env.AWS_S3_BUCKET,
@@ -1036,7 +1014,6 @@ exports.deleteUploadFile = async (req, res) => {
         const deleteUploadFile = await dbModels.UploadFile.findOneAndDelete({
             _id: data.fileId,
         });
-        // console.log(deleteUploadFile);
 
         // await unlinkAsync('uploads/upload_file/' + data._id);
 
@@ -1044,7 +1021,6 @@ exports.deleteUploadFile = async (req, res) => {
             message: "upload file delete",
         });
     } catch (err) {
-        console.log(err);
         console.log("[ ERROR ]", err);
         res.status(500).send({
             message: "delete upload file Error",
@@ -1064,7 +1040,7 @@ exports.createChat = async (req, res) => {
 --------------------------------------------------`);
     const dbModels = global.DB_MODELS;
     const data = req.body;
-    // console.log(data);
+
     try {
         const chat = dbModels.Chat({
             docId: data.docId,
@@ -1074,7 +1050,6 @@ exports.createChat = async (req, res) => {
             reply: data.replyChatId,
         });
 
-        // console.log(chat);
         await chat.save();
 
         return res.status(200).send({
@@ -1098,7 +1073,7 @@ exports.getChatInDoc = async (req, res) => {
 --------------------------------------------------`);
     const dbModels = global.DB_MODELS;
     const data = req.query;
-    console.log(data);
+
     try {
         let getChatInDoc;
         if (data.from == "document") {
@@ -1206,8 +1181,6 @@ exports.getChatInDoc = async (req, res) => {
             ]);
         }
 
-        // console.log(getChatInDoc);
-
         return res.status(200).send({
             message: "get chat in doc",
             getChatInDoc,
@@ -1230,14 +1203,12 @@ exports.deleteChat = async (req, res) => {
 --------------------------------------------------`);
     const dbModels = global.DB_MODELS;
     const data = req.query;
-    // console.log(data);
 
     try {
         // 답글이 있는지를 확인
         const findReply = await dbModels.Chat.find({
             reply: data.chatId,
         });
-        // console.log(findReply);
 
         // 답글이 없다면 삭제 / 답글이 있다면 멤버 지우고 content 바꿈
         if (findReply.length == 0) {
@@ -1259,7 +1230,6 @@ exports.deleteChat = async (req, res) => {
 
         // 같이 날라온 부모댓글 id(replyId) 가 undefind 라면 send 하면서 끝
         if (data.replyId == "undefined") {
-            // console.log('undefinedddddddddd')
             return res.status(200).send({
                 message: "delete Chat but reply chat not delete",
             });
@@ -1268,18 +1238,14 @@ exports.deleteChat = async (req, res) => {
         // 부모댓글이 같이 왓다면 부모댓글 확인
         // 부모 댓글이 '삭제된 메시지 입니다.' 상태면 부모도 지워준다.
         else {
-            // console.log('not undefineddddddddddd');
             const findParentReply = await dbModels.Chat.find({
                 reply: data.replyId,
             });
-            // console.log(findParentReply);
             if (findParentReply.length == 0) {
                 const findReplyReplyId = await dbModels.Chat.find({
                     reply: data.replyId,
                     chatContent: "삭제된 메시지 입니다.",
                 });
-                // console.log(findReplyReplyId);
-                // console.log(findReplyReplyId);
                 if (findReplyReplyId.length == 0) {
                     const deleteReplyReplyId = await dbModels.Chat.findOneAndDelete({
                         _id: data.replyId,
@@ -1311,7 +1277,7 @@ exports.createMeeting = async (req, res) => {
     const dbModels = global.DB_MODELS;
     const data = req.body;
     // currentMember = req.body
-    console.log(data);
+
     try {
         const meeting = dbModels.Meeting({
             manager: req.decoded._id,
@@ -1325,10 +1291,8 @@ exports.createMeeting = async (req, res) => {
             start_time: data.startTime,
             status: data.status,
         });
-        console.log(meeting);
-        await meeting.save();
 
-        // console.log(data.docId);
+        await meeting.save();
 
         //////  mySpaceHistory  ////////
         // const spaceId = await dbModels.Document.aggregate([
@@ -1357,8 +1321,7 @@ exports.createMeeting = async (req, res) => {
         // 		}
         // 	}
         // ]);
-        // console.log(spaceId[0].space_id);
-        // console.log(memberName);
+
         // const mySpaceHistory = await dbModels.MySpaceHistory(
         // 	{
 
@@ -1371,14 +1334,14 @@ exports.createMeeting = async (req, res) => {
         // 		content: data.meetingTitle + ' 미팅이 생겼습니다.'
         // 	}
         // )
-        // // console.log(mySpaceHistory);
+
         // await mySpaceHistory.save();
         //////////////////////////////////////
 
         //// notification //////////
         for (let index = 0; index < data.enlistedMembers.length; index++) {
             const element = data.enlistedMembers[index];
-            console.log(element);
+
             const notification = await dbModels.Notification({
                 sender: req.decoded._id,
                 receiver: element,
@@ -1418,12 +1381,12 @@ exports.getMeetingList = async (req, res) => {
 --------------------------------------------------`);
     const dbModels = global.DB_MODELS;
     const data = req.query;
-    console.log(data);
+
     try {
         const meetingList = await dbModels.Meeting.find({
             spaceId: data.spaceId,
         });
-        // console.log(meetingList);
+
         return res.status(200).send({
             message: "get meeting list",
             meetingList,
@@ -1446,12 +1409,11 @@ exports.deleteMeeting = async (req, res) => {
 --------------------------------------------------`);
     const dbModels = global.DB_MODELS;
     const data = req.query;
-    // console.log(data);
+
     try {
         const deleteMeeting = await dbModels.Meeting.findOneAndDelete({
             _id: data._id,
         });
-        // console.log(deleteMeeting);
 
         //////  mySpaceHistory  ////////
         // const spaceTime = await dbModels.Document.findOne(
@@ -1464,8 +1426,7 @@ exports.deleteMeeting = async (req, res) => {
         // 		_id: spaceTime.spaceTime_id
         // 	}
         // )
-        // console.log(inviteSpaceMember);
-        // console.log(memberName);
+
         // const mySpaceHistory = await dbModels.MySpaceHistory(
         // 	{
         // 		space_id: spaceId._id,
@@ -1506,7 +1467,7 @@ exports.openMeeting = async (req, res) => {
 --------------------------------------------------`);
     const dbModels = global.DB_MODELS;
     const data = req.body;
-    console.log(data);
+
     try {
         const openMeeting = await dbModels.Meeting.findOneAndUpdate(
             {
@@ -1520,7 +1481,7 @@ exports.openMeeting = async (req, res) => {
         const meetingList = await dbModels.Meeting.find({
             spaceId: data.spaceId,
         });
-        // console.log(meetingInDoc);
+
         return res.status(200).send({
             message: "get meeting list",
             meetingList,
@@ -1542,7 +1503,7 @@ exports.closeMeeting = async (req, res) => {
 --------------------------------------------------`);
     const dbModels = global.DB_MODELS;
     const data = req.body;
-    console.log(data);
+
     try {
         const openMeeting = await dbModels.Meeting.findOneAndUpdate(
             {
@@ -1556,7 +1517,7 @@ exports.closeMeeting = async (req, res) => {
         const meetingList = await dbModels.Meeting.find({
             spaceId: data.spaceId,
         });
-        // console.log(meetingInDoc);
+
         return res.status(200).send({
             message: "get meeting list",
             meetingList,
@@ -1579,7 +1540,7 @@ exports.scrumEditDocStatus = async (req, res) => {
 --------------------------------------------------`);
     const dbModels = global.DB_MODELS;
     const data = req.body;
-    console.log(data);
+
     try {
         const editDocStatus = await dbModels.Document.findOneAndUpdate(
             {
@@ -1606,11 +1567,11 @@ exports.scrumEditDocStatus = async (req, res) => {
             // doc 찾는중
             for (let j = 0; j < children.length; j++) {
                 const doc_id = children[j].doc_id;
-                // console.log(doc_id);
+
                 // 찾은 doc 이랑 받아온 doc 이랑 같으면
                 if (doc_id == data._id) {
                     // 옮길거 temp에 옮겨두고
-                    // console.log(scrumBoard.scrum[i].children[j])
+
                     temp = scrumBoard.scrum[i].children[j];
                     // 원래값 빼기
                     scrumBoard.scrum[i].children.splice(data.swapPre, 1);
@@ -1704,7 +1665,7 @@ exports.scrumEditStatusSequence = async (req, res) => {
 --------------------------------------------------`);
     const dbModels = global.DB_MODELS;
     const data = req.body;
-    console.log(data);
+
     try {
         const status = await dbModels.Space.findOne({
             _id: data._id,
@@ -1719,12 +1680,11 @@ exports.scrumEditStatusSequence = async (req, res) => {
         const scrumBoard = await dbModels.ScrumBoard.findOne({
             space_id: data._id,
         });
-        // console.log(scrumBoard);
+
         const scrumTemp = scrumBoard.scrum[data.swapPre];
         scrumBoard.scrum[data.swapPre] = scrumBoard.scrum[data.swapCur];
         scrumBoard.scrum[data.swapCur] = scrumTemp;
         ////////////// scrumboard////////////////
-        // console.log(scrumBoard);
 
         await status.save();
         await scrumBoard.save();
@@ -1749,7 +1709,7 @@ exports.scrumAddDocStatus = async (req, res) => {
 --------------------------------------------------`);
     const dbModels = global.DB_MODELS;
     const data = req.body;
-    console.log(data);
+
     try {
         const space = await dbModels.Space.findOneAndUpdate(
             {
@@ -1764,7 +1724,6 @@ exports.scrumAddDocStatus = async (req, res) => {
                 new: true,
             }
         );
-        console.log(space);
 
         const scrumboard = await dbModels.ScrumBoard.findOneAndUpdate(
             {
@@ -1782,7 +1741,6 @@ exports.scrumAddDocStatus = async (req, res) => {
                 new: true,
             }
         );
-        console.log(scrumboard);
 
         return res.status(200).send({
             message: "add doc status",
@@ -1806,7 +1764,7 @@ exports.scrumDeleteDocStatus = async (req, res) => {
 --------------------------------------------------`);
     const dbModels = global.DB_MODELS;
     const data = req.body;
-    console.log(data);
+
     try {
         const space = await dbModels.Space.findOneAndUpdate(
             {
@@ -1821,7 +1779,6 @@ exports.scrumDeleteDocStatus = async (req, res) => {
                 new: true,
             }
         );
-        console.log(space);
 
         const scrumboard = await dbModels.ScrumBoard.findOneAndUpdate(
             {
@@ -1839,7 +1796,6 @@ exports.scrumDeleteDocStatus = async (req, res) => {
                 new: true,
             }
         );
-        console.log(scrumboard);
 
         const document = await dbModels.Document.deleteMany({
             spaceTime_id: data.space_id,
@@ -1868,7 +1824,7 @@ exports.statusNameChange = async (req, res) => {
 --------------------------------------------------`);
     const dbModels = global.DB_MODELS;
     const data = req.body;
-    console.log(data);
+
     try {
         const space = await dbModels.Space.findOneAndUpdate(
             {
@@ -1908,7 +1864,7 @@ exports.statusNameChange = async (req, res) => {
         const scrumboard = await dbModels.ScrumBoard.findOne({
             space_id: data.spaceId,
         });
-        console.log(data.spaceId);
+
         const updateDocs = await dbModels.Document.aggregate([
             {
                 $match: {
@@ -1953,8 +1909,6 @@ exports.statusNameChange = async (req, res) => {
                 },
             },
         ]);
-
-        console.log(updateDocs);
 
         return res.status(200).send({
             message: "Doc status name change",
