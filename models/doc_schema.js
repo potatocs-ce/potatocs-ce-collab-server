@@ -1,45 +1,47 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
 const docSchema = mongoose.Schema(
     {
         spaceTime_id: {
             type: mongoose.Schema.Types.ObjectId,
-            ref: 'Space',
+            ref: "Space",
         },
 
         docTitle: {
-            type: String
+            type: String,
         },
         docDescription: {
-            type: String
+            type: String,
         },
         docContent: {
             type: Array,
         },
         status: {
-            type: Object
+            type: Object,
         },
-        creator: [{
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'Member',
-        }],
+        creator: [
+            {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: "Member",
+            },
+        ],
         startDate: {
-            type: Date
+            type: Date,
         },
         endDate: {
-            type: Date
+            type: Date,
         },
         done: {
             type: Boolean,
-            default: false
+            default: false,
         },
         color: {
             primary: {
-                type: String
+                type: String,
             },
             secondary: {
-                type: String
-            }
+                type: String,
+            },
         },
         labels: [],
 
@@ -47,15 +49,13 @@ const docSchema = mongoose.Schema(
         faceAuthentication: {
             type: Boolean,
             // default: false
-        }
+        },
     },
     {
-        timestamps: true
+        timestamps: true,
     }
 );
 
-const Document = mongoose.model('Document', docSchema);
+const Document = mongoose.model("Document", docSchema);
 
 module.exports = Document;
-
-
