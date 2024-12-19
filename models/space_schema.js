@@ -1,62 +1,57 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
 const spaceSchema = mongoose.Schema(
     {
         displayName: {
-            type: String
+            type: String,
         },
         displayBrief: {
-            type: String
+            type: String,
         },
         route: {
             type: String,
-            default: 'collab/space'
+            default: "collab/space",
         },
         // spaceTime: {
         // 	type: String
         // },
         in_order: {
-            type: Number
+            type: Number,
         },
         members: [
             {
                 type: mongoose.Schema.Types.ObjectId,
-                ref: 'Member',
-            }
+                ref: "Member",
+            },
         ],
         admins: [
             {
                 type: mongoose.Schema.Types.ObjectId,
-                ref: 'Member',
-            }
+                ref: "Member",
+            },
         ],
         folder_id: {
             type: mongoose.Schema.Types.ObjectId,
-            ref: 'Folder',
+            ref: "Folder",
         },
         in_order: {
-            type: Number
+            type: Number,
         },
         docStatus: {
-            type: Array
+            type: Array,
         },
 
-
-        labels: [
-
-        ],
+        labels: [],
         faceAuthentication: {
             type: Boolean,
             // default: false
-        }
+        },
     },
     {
-        timestamps: true
+        timestamps: true,
     }
 );
 
-const Space = mongoose.model('Space', spaceSchema);
+const Space = mongoose.model("Space", spaceSchema);
 
 module.exports = Space;
-
-
