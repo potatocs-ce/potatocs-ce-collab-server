@@ -1,11 +1,5 @@
 const router = require("express").Router();
-// const multer = require("multer");
-// const multerS3 = require("multer-s3");
-const { S3Client } = require("@aws-sdk/client-s3");
-
-const { uploadSingle, uploadArray, uploadAny } = require('../../../../utils/s3Utils'); // 'upload.js' 파일에서 upload 모듈 가져오기
-
-
+const { uploadAny } = require("../../../../utils/s3Utils"); // 'upload.js' 파일에서 upload 모듈 가져오기
 
 // const s3Client = new S3Client({
 //     region: process.env.AWS_REGION,
@@ -104,15 +98,18 @@ router.put("/space/doc/docCheckDone", docController.docCheckDone);
 //     }),
 // });
 
-router.post("/space/doc/fileUpload", (req, res, next) => {
-    uploadAny(req, res, function (err) {
-        if (err) {
-            return res.status(400).json({ error: err.message })
-        }
-        next()
-    })
-}, docController.fileUpload);
-
+router.post(
+    "/space/doc/fileUpload",
+    (req, res, next) => {
+        uploadAny(req, res, function (err) {
+            if (err) {
+                return res.status(400).json({ error: err.message });
+            }
+            next();
+        });
+    },
+    docController.fileUpload
+);
 
 router.get("/space/doc/fileDownload", docController.fileDownload);
 router.get("/space/doc/getUploadFileList", docController.getUploadFileList);
@@ -147,8 +144,7 @@ router.get("/main/getMainInfo", mainController.getMainInfo); // 현재 안쓰이
 // const storage = multer.diskStorage({
 // 	destination(req, file, cb) {
 // 		// 원본 image (resize 전의 image)를 저장할 임시 folder -> /original
-// 		// console.log('req check >>>', req);
-// 		// console.log('*****', req.files);
+
 // 		if (req.files[0].fieldname === 'recordingFile') {
 // 			const destPath = req.app.locals.whiteBoardFolderPath;
 // 			cb(null, destPath);
@@ -177,15 +173,19 @@ router.get("/main/getMainInfo", mainController.getMainInfo); // 현재 안쓰이
 // 		},
 // 	}),
 // });
-router.post("/space/doc/saveGstdPath", (req, res, next) => {
-    uploadAny(req, res, function (err) {
-        if (err) {
-            console.log('err :  ', err)
-            return res.status(400).json({ error: err.message })
-        }
-        next()
-    })
-}, wbController.saveGstdPath);
+router.post(
+    "/space/doc/saveGstdPath",
+    (req, res, next) => {
+        uploadAny(req, res, function (err) {
+            if (err) {
+                console.log("err :  ", err);
+                return res.status(400).json({ error: err.message });
+            }
+            next();
+        });
+    },
+    wbController.saveGstdPath
+);
 router.post("/space/doc/saveRecording", wbController.saveRecording);
 router.post("/space/doc/getWhiteBoardRecList", wbController.getWhiteBoardRecList);
 router.post("/space/doc/getRecording", wbController.getRecording);
