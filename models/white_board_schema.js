@@ -1,32 +1,30 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
 const whiteBoardSchema = mongoose.Schema(
-	{
+    {
         creator: {
             type: mongoose.Schema.Types.ObjectId,
-            ref: 'Member',
+            ref: "Member",
         },
         docId: {
             type: mongoose.Schema.Types.ObjectId,
-            ref: 'Document',
+            ref: "Document",
         },
         recordingTitle: {
-            type: String
+            type: String,
         },
-		gstd_key: {
-			type: String
-		},
-		image_key: {
-			type: String
-		},
-	},
-	{
-		timestamps: true
-	}
+        gstd_key: {
+            type: String,
+        },
+        image_key: {
+            type: String,
+        },
+    },
+    {
+        timestamps: true,
+    }
 );
 
-const WhiteBoard = mongoose.model('WhiteBoard', whiteBoardSchema);
+const WhiteBoard = mongoose.model("WhiteBoard", whiteBoardSchema);
 
 module.exports = WhiteBoard;
-
-
