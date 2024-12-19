@@ -1,9 +1,5 @@
-const { ObjectId } = require("bson");
 const mongoose = require("mongoose");
-var fs = require("fs");
-var path = require("path");
-const { promisify } = require("util");
-const unlinkAsync = promisify(fs.unlink);
+
 /* 
   Create a folder
 */
@@ -23,7 +19,6 @@ exports.createFolder = async (req, res) => {
     const count_space = await dbModels.Space.countDocuments();
 
     const order = count_folder + count_space;
-    // console.log(order);
 
     try {
         const criteria = {
@@ -73,7 +68,7 @@ exports.updateFolder = async (req, res) => {
                 },
             },
         ]);
-        // console.log(folderNav);
+
         return res.status(200).send({
             message: "updated",
             folderNav,
@@ -110,8 +105,6 @@ exports.createSpace = async (req, res) => {
     const order = count_folder + count_space;
 
     try {
-        console.log(req.body);
-        console.log("start");
         const criteria = {
             displayName: req.body.spaceName,
             displayBrief: req.body.spaceBrief,
@@ -120,11 +113,9 @@ exports.createSpace = async (req, res) => {
             admins: [req.decoded._id],
             in_order: order + 1,
             docStatus: ["submitted", "onGoing", "Done"],
-            faceAuthentication: req.body.faceOption
+            faceAuthentication: req.body.faceOption,
         };
         const Space = dbModels.Space(criteria);
-
-        // console.log(Space);
 
         const scrumBoard = dbModels.ScrumBoard({
             space_id: Space._id,
@@ -149,7 +140,6 @@ exports.createSpace = async (req, res) => {
         // 2024-06-13 박재현
         // 안쓰는 것 같아서 주석 처리함
         // if (req.body.folderId === undefined || req.body.folderId == "thisplace") {
-        console.log("?");
 
         const test = await dbModels.MenuSide.findOne(
             // const menuside = await dbModels.MenuSide.updateOne(
@@ -157,7 +147,6 @@ exports.createSpace = async (req, res) => {
                 member_id: new mongoose.Types.ObjectId(req.decoded._id),
             }
         );
-        console.log(test);
 
         const menuside = await dbModels.MenuSide.findOneAndUpdate(
             // const menuside = await dbModels.MenuSide.updateOne(
@@ -169,7 +158,6 @@ exports.createSpace = async (req, res) => {
             }
         );
         // }
-        console.log("???");
         // else {
         // 	const updateFolder = {
         // 		children: [
@@ -211,7 +199,7 @@ exports.deleteFolder = async (req, res) => {
 --------------------------------------------------`);
     const dbModels = global.DB_MODELS;
     const data = req.query;
-    // console.log(data);
+
     try {
         const deleteFolder = await dbModels.Folder.deleteOne({
             _id: data.folderId,
@@ -247,32 +235,26 @@ exports.deleteFolder = async (req, res) => {
 // --------------------------------------------------`);
 // 	const dbModels = global.DB_MODELS;
 // 	const data = req.query;
-// 	// console.log(data);
+
 // 	try {
 // 		const spaceInMember = await dbModels.Space.findOne({
 // 			_id: data.spaceTime,
 // 		});
-// 		// console.log('spaceInMember');
-// 		// console.log(spaceInMember);
+
 // 		// spaceTime으로 space 안에 있는 문서들 가져오기
 // 		const spaceInDoc = await dbModels.Document.find({
 // 			spaceTime_id: data.spaceTime,
 // 		});
-// 		// console.log('spaceInDoc');
-// 		// console.log(spaceInDoc);
 
 // 		// 문서와 문서 안에 있는 파일 삭제
 // 		for (let i = 0; i < spaceInDoc.length; i++) {
 // 			const element = spaceInDoc[i]._id;
-// 			// console.log('element');
-// 			// console.log(element);
+
 // 			// 문서 안에 있는 파일을 가져오기 위한 문서 아이디
 // 			const docInUploadFile = await dbModels.UploadFile.find({
 // 				doc_id: element,
 // 			});
 
-// 			// console.log('docInUploadFile');
-// 			// console.log(docInUploadFile);
 // 			// 업로드된 파일 삭제하고 디비에서도 삭제
 // 			for (let j = 0; j < docInUploadFile.length; j++) {
 // 				const element = docInUploadFile[j].filename;
@@ -314,7 +296,7 @@ exports.deleteFolder = async (req, res) => {
 
 // 		for (let index = 0; index < spaceInMember.members.length; index++) {
 // 			const element = spaceInMember.members[index];
-// 			// console.log(element);
+
 // 			await dbModels.MenuSide.updateOne(
 // 				{
 // 					member_id: element,
@@ -402,9 +384,6 @@ exports.updateSideMenu = async (req, res) => {
             },
         ]);
 
-        // console.log(menuside);
-        // console.log(menuside[0].folders);
-
         const folderNav = await dbModels.Folder.aggregate([
             {
                 $match: {
@@ -418,7 +397,7 @@ exports.updateSideMenu = async (req, res) => {
         // navList.push(...menuside[0].spaces);
 
         const navList = menuside;
-        // console.log(navList);
+
         folderNav.push({ _id: "thisplace", displayName: "Main" });
         return res.status(200).send({
             message: "updated",
@@ -444,8 +423,7 @@ exports.updateSpacePlace = async (req, res) => {
     const data = req.body;
     const space_id = data.spaceFlag.space_id;
     const folder_id = data.folderId;
-    // console.log(space_id);
-    // console.log(folder_id);
+
     try {
         // 현재 폴더에 있는 space id 제거, 없으면 그냥 지나가지
         const deleteFolderSpace = await dbModels.Folder.updateOne(
