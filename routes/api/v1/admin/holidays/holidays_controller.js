@@ -1,5 +1,3 @@
-const mongoose = require("mongoose");
-
 // 휴일 목록
 exports.getHolidayList = async (req, res) => {
     console.log(`

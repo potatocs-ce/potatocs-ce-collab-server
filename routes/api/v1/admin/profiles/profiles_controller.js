@@ -1,9 +1,5 @@
-var fs = require("fs");
-const { promisify } = require("util");
-// const unlinkAsync = promisify(fs.unlink);
-// const sharp = require("sharp");
 const { s3Client } = require("../../../../../utils/s3Utils");
-const { PutObjectCommand, DeleteObjectCommand } = require("@aws-sdk/client-s3");
+const { DeleteObjectCommand } = require("@aws-sdk/client-s3");
 const admin = require("../../../../../models/admin_schema");
 
 // 프로필 수정
@@ -15,7 +11,7 @@ exports.editProfile = async (req, res) => {
   router.patch('/profiles', profiles.editProfile);
         
 --------------------------------------------------`);
-    const dbModels = global.DB_MODELS;
+
     const data = req.body;
     let updateData;
 
@@ -67,14 +63,14 @@ exports.editProfileImage = async (req, res) => {
     const dbModels = global.DB_MODELS;
 
     const data = req.uploadedImage[0];
-    // console.log('data\n', data)
+
     try {
         const previousProfileImage = await dbModels.Admin.findOne({
             _id: req.decoded._id,
         });
 
         const profileImgPath = previousProfileImage.profile_img.substring(previousProfileImage.profile_img.indexOf("nsProfile_img"));
-        // console.log(profileImgPath)
+
         if (profileImgPath) {
             const params = {
                 Bucket: process.env.AWS_S3_BUCKET,
@@ -143,7 +139,6 @@ exports.editProfileImage = async (req, res) => {
     }
 };
 
-
 exports.faceDetection = async (req, res) => {
     console.log(`
 --------------------------------------------------
@@ -152,13 +147,8 @@ exports.faceDetection = async (req, res) => {
   router.post('/profiles', profiles.faceDetection);
         
 --------------------------------------------------`);
-    const dbModels = global.DB_MODELS;
-    const data = req.body;
-
 
     try {
-        console.log(data)
-
         return res.status(200).send({
             message: "Successfully face Detection",
         });
