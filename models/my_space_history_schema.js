@@ -1,31 +1,30 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
-const mySpaceHistory = mongoose.Schema( 
+const mySpaceHistory = mongoose.Schema(
     {
         space_id: {
             type: mongoose.Schema.Types.ObjectId,
-            ref: 'Space',
+            ref: "Space",
         },
         doc_id: {
             type: mongoose.Schema.Types.ObjectId,
-            ref: 'Document',
+            ref: "Document",
         },
 
         // 1 이면 스페이스, 2 면 도큐먼트
         type: {
-            type: Number
+            type: Number,
         },
-        
+
         content: {
-            type: String
-        }       
+            type: String,
+        },
     },
     {
-		timestamps: true
-	}
+        timestamps: true,
+    }
 );
 
-
-const MySpaceHistory = mongoose.model('MySpaceHistory', mySpaceHistory);
+const MySpaceHistory = mongoose.model("MySpaceHistory", mySpaceHistory);
 
 module.exports = MySpaceHistory;
