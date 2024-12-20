@@ -90,7 +90,8 @@ exports.deleteCountry = async (req, res) => {
 --------------------------------------------------`);
     const dbModels = global.DB_MODELS;
     try {
-        const deleteCountry = await dbModels.NationalHoliday.findByIdAndDelete({ _id: req.params.id });
+        await dbModels.NationalHoliday.findByIdAndDelete({ _id: req.params.id });
+
         return res.status(200).send({
             message: "Successfully deleted the country",
         });
