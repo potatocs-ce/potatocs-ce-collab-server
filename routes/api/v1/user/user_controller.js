@@ -6,7 +6,7 @@ const { default: mongoose } = require("mongoose");
 const { s3Client } = require("../../../../utils/s3Utils");
 const { faceImageUpload, getImageBase64FromS3 } = require("../../../../utils/s3Utils");
 const { DeleteObjectCommand } = require("@aws-sdk/client-s3");
-const axios = require('axios');
+const axios = require("axios");
 
 exports.profile = async (req, res) => {
     console.log(`
@@ -30,11 +30,9 @@ exports.profile = async (req, res) => {
         /// 우선 임시 ------------------------------------------
         // user 에서 isAdmin이 true 면 ( admin 이면 )
         if (user.isAdmin) {
-            console.log(user);
             const adminCompany = await dbModels.Company.findOne({
                 _id: user.company_id,
             });
-            // console.log(adminCompany);
 
             adminCompanyInfo = {
                 _id: adminCompany._id,
@@ -81,7 +79,6 @@ exports.profile = async (req, res) => {
         const nationalHoliday = await dbModels.NationalHoliday.findOne({
             countryName: user.location,
         });
-        console.log(nationalHoliday);
 
         // if (user.profile_img == '') {
         // 	user.profile_img = '/uploads/profile_img/person.png'
@@ -153,11 +150,9 @@ exports.profile = async (req, res) => {
             manager: managerInfo,
         };
 
-        // console.log(user);
         // const today = new Date();
         // // // 연차이므로 아직 1년이 안되면 1년차이므로 + 1
         // const year = Math.floor((today - user.emp_start_date) / (1000*60*60*24*365)) + 1;
-        // // console.log(year);
 
         // if( user.years != year ){
         // 	const yearUp = await member.findOneAndUpdate(
@@ -168,10 +163,8 @@ exports.profile = async (req, res) => {
         // 			years: year
         // 		}
         // 	)
-        // 	// console.log(yearUp);
         // }
 
-        // console.log(profileData);
         if (!user) {
             return res.status(401).send({
                 message: "An error has occurred",
@@ -192,7 +185,6 @@ exports.profileChange = async (req, res) => {
 --------------------------------------------------`);
     const data = req.body;
 
-    // console.log(data);
     let updateData;
     try {
         const hasPwd = data.new_password;
@@ -215,8 +207,6 @@ exports.profileChange = async (req, res) => {
             };
         }
 
-        // console.log(updateData);
-
         const profileChange = await member.findOneAndUpdate(
             {
                 _id: data._id,
@@ -232,7 +222,6 @@ exports.profileChange = async (req, res) => {
             profileChange.profile_img = "/assets/image/person.png";
         }
 
-        // console.log(profileChange);
         return res.send({
             message: "changed",
             profileChange,
@@ -259,7 +248,7 @@ exports.profileImageChange = async (req, res) => {
 
         // 이전 사진 있으면 삭제
         const profileImgPath = previousProfileImage.profile_img.substring(previousProfileImage.profile_img.indexOf("nsProfile_img"));
-        // console.log(profileImgPath)
+
         if (profileImgPath) {
             const params = {
                 Bucket: process.env.AWS_S3_BUCKET,
@@ -274,7 +263,6 @@ exports.profileImageChange = async (req, res) => {
         // await sharp(data.path).resize(300, 300).toFile(resizePath);
 
         // await unlinkAsync(data.path);
-        // // console.log(previousProfileImage)
 
         // const resizeImgName = `profile-img/${Date.now()}.${data.originalname}`;
         // // var params = {
@@ -287,7 +275,6 @@ exports.profileImageChange = async (req, res) => {
 
         // // 리사이즈된 이미지를 S3에 업로드
 
-        // console.log(resizePath);
         // const uploadParams = {
         //     Bucket: process.env.AWS_S3_BUCKET,
         //     Key: resizeImgName,
@@ -297,7 +284,7 @@ exports.profileImageChange = async (req, res) => {
         // };
 
         // const new_data = await s3Client.send(new PutObjectCommand(uploadParams));
-        // console.log(new_data);
+
         // // 로컬에 저장된 리사이즈 파일 제거
         // await unlinkAsync(resizePath);
         // const location = `${process.env.AWS_LOCATION}${resizeImgName}`;
@@ -325,12 +312,10 @@ exports.profileImageChange = async (req, res) => {
                 new: true,
             }
         );
-        console.log(changeProfileImage)
 
         // https://www.w3schools.com/jsref/jsref_decodeuri.asp
         // s3로부터 받은 Location이 깨졌을 경우 해결
         // await s3.upload(params, async function (err, data) {
-        //   // console.log(data);
         //   const changeProfileImage = await member.findOneAndUpdate(
         //     {
         //       _id: req.decoded._id
@@ -459,36 +444,29 @@ exports.faceDetection = async (req, res) => {
     const dbModels = global.DB_MODELS;
     const data = req.body;
 
-
     try {
-
-        const flaskUrl = 'http://127.0.0.1:5000/detection';
+        const flaskUrl = "http://127.0.0.1:5000/detection";
 
         // Flask 서버로 POST 요청 보내기
         const flaskResponse = await axios.post(flaskUrl, data, {
             headers: {
-                'Content-Type': 'application/json'
-            }
+                "Content-Type": "application/json",
+            },
         });
-        console.log(flaskResponse.data)
+
         // Flask 서버의 응답 처리
         if (flaskResponse.status === 200) {
-
             // 얼굴 인식이 안되었으면
             if (!flaskResponse.data.status) {
-                console.log('인식 안된거 아니야?')
                 return res.status(200).send({
-                    message: "Not Detection"
-                })
+                    message: "Not Detection",
+                });
             }
             // 인식이 되서 이미지 데이터가 왔으면
             else {
-                console.log('인식 된거?')
-                // console.log(flaskResponse.data)
+                flaskResponse.data.filename = req.decoded._id + "_face";
 
-                flaskResponse.data.filename = req.decoded._id + '_face'
-
-                const face = await faceImageUpload(flaskResponse)
+                const face = await faceImageUpload(flaskResponse);
 
                 const memberInfo = await dbModels.Member.findOneAndUpdate(
                     {
@@ -510,8 +488,6 @@ exports.faceDetection = async (req, res) => {
                 message: "Failed to get a successful response from Flask server",
             });
         }
-
-
     } catch (err) {
         console.log("[ ERROR ]", err);
         return res.status(500).send({
@@ -530,9 +506,8 @@ exports.faceRecognition = async (req, res) => {
 --------------------------------------------------`);
     const dbModels = global.DB_MODELS;
     const data = req.body;
-    // console.log('data : ', data)
-    try {
 
+    try {
         const memberInfo = await dbModels.Member.findOne({
             _id: req.decoded._id,
         });
@@ -541,44 +516,34 @@ exports.faceRecognition = async (req, res) => {
             고민중
         */
 
-        // console.log(memberInfo)
-
         const face_img = await getImageBase64FromS3({
             // bucketName: 'face_img/',
-            objectKey: memberInfo.face_img_key
-        })
+            objectKey: memberInfo.face_img_key,
+        });
 
-        // console.log('face_img : ', face_img)
-
-        const flaskUrl = 'http://127.0.0.1:5000/recognition';
+        const flaskUrl = "http://127.0.0.1:5000/recognition";
 
         const flaskSendData = {
-            profile_img: face_img,      // s3에 저장되 있던 사진
-            frame_img: req.body.frame,  // client 에서 보낸 사진
-        }
+            profile_img: face_img, // s3에 저장되 있던 사진
+            frame_img: req.body.frame, // client 에서 보낸 사진
+        };
         // Flask 서버로 POST 요청 보내기
         const flaskResponse = await axios.post(flaskUrl, flaskSendData, {
             headers: {
-                'Content-Type': 'application/json'
-            }
+                "Content-Type": "application/json",
+            },
         });
-        console.log(flaskResponse.data)
+
         // Flask 서버의 응답 처리
         if (flaskResponse.status === 200) {
-
             // 얼굴 인식이 안되었으면
             if (!flaskResponse.data.status) {
-                console.log('인식 안된거 아니야?')
                 return res.status(200).send({
-                    message: "Not recognition"
-                })
+                    message: "Not recognition",
+                });
             }
             // 인식이 되서 이미지 데이터가 왔으면
             else {
-                console.log('인식 된거?')
-                // console.log(flaskResponse.data)
-
-
                 return res.status(200).send({
                     message: "recognition",
                 });
@@ -588,8 +553,6 @@ exports.faceRecognition = async (req, res) => {
                 message: "Failed to get a successful response from Flask server",
             });
         }
-
-
     } catch (err) {
         console.log("[ ERROR ]", err);
         return res.status(500).send({
