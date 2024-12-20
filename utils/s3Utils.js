@@ -19,11 +19,11 @@ const fileFilter = (req, file, cb) => {
 
     // 예시: 경로에 따른 허용 확장자 설정
     const allowedExtensions = {
-        'upload-file': [], // 모든 확장자를 허용하기 위해 빈 배열,
-        'recording': [],
-        'profile_img': ['.jpeg', '.jpg', '.png'],
-        'face_img': [],
-        'nsProfile_img': ['.jpeg', '.jpg', '.png']
+        "upload-file": [], // 모든 확장자를 허용하기 위해 빈 배열,
+        recording: [],
+        profile_img: [".jpeg", ".jpg", ".png"],
+        face_img: [],
+        nsProfile_img: [".jpeg", ".jpg", ".png"],
     };
 
     const allowedExts = allowedExtensions[uploadPath];
@@ -129,25 +129,23 @@ const resizeAndUploadImage = async (req, res, next) => {
 // face Detection 업로드 하는 부분
 const faceImageUpload = async (req, res, next) => {
     try {
-        console.log('req.data : ', req.data)
-
-        const buffer = Buffer.from(req.data.detections, 'base64');
+        const buffer = Buffer.from(req.data.detections, "base64");
 
         await s3Client.send(
             new PutObjectCommand({
                 ACL: "public-read",
                 Bucket: process.env.AWS_S3_BUCKET,
-                Key: 'face_img/' + req.data.filename,
+                Key: "face_img/" + req.data.filename,
                 Body: buffer,
-                ContentEncoding: 'base64', // required
-                ContentType: 'image/jpeg', // required
+                ContentEncoding: "base64", // required
+                ContentType: "image/jpeg", // required
             })
         );
 
         return {
             location: `https://${process.env.AWS_S3_BUCKET}.s3.${process.env.AWS_REGION}.amazonaws.com/${req.data.filename}`,
-            Key: 'face_img/' + req.data.filename,
-        }
+            Key: "face_img/" + req.data.filename,
+        };
     } catch (error) {
         console.error(error);
         res.status(500).send("Error processing file.");
@@ -156,14 +154,11 @@ const faceImageUpload = async (req, res, next) => {
 
 const getImageBase64FromS3 = async (req, res, next) => {
     try {
-        // console.log('req.data : ', req)
-
         const params = {
             Bucket: process.env.AWS_S3_BUCKET,
             Key: req.objectKey,
         };
         const data = await s3Client.send(new GetObjectCommand(params));
-        // console.log('data.Body.toString(\'base64\')', data.Body.toString('base64'));
 
         // 스트림을 버퍼로 변환하는 유틸리티 함수
         const streamToBuffer = (stream) =>
@@ -176,12 +171,9 @@ const getImageBase64FromS3 = async (req, res, next) => {
 
         // S3에서 가져온 스트림을 버퍼로 변환 후 Base64로 인코딩
         const buffer = await streamToBuffer(data.Body);
-        const base64Image = buffer.toString('base64');
-
-        // console.log('Base64 Image Data:', base64Image);
+        const base64Image = buffer.toString("base64");
 
         return base64Image;
-
     } catch (error) {
         console.error(error);
         res.status(500).send("Error processing file.");
@@ -191,12 +183,11 @@ const getImageBase64FromS3 = async (req, res, next) => {
 const uploadAny = upload.any();
 const uploadImage = uploadMemory.any();
 
-
 module.exports = {
     uploadAny,
     uploadImage,
     faceImageUpload,
     s3Client,
     resizeAndUploadImage,
-    getImageBase64FromS3
+    getImageBase64FromS3,
 };
