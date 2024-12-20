@@ -57,7 +57,7 @@ exports.addHoliday = async (req, res) => {
             });
         }
 
-        const updateCountryHoliday = await dbModels.NationalHoliday.findByIdAndUpdate(
+        await dbModels.NationalHoliday.findByIdAndUpdate(
             {
                 _id: req.body._id,
             },
@@ -95,7 +95,7 @@ exports.deleteHoliday = async (req, res) => {
 --------------------------------------------------`);
     const dbModels = global.DB_MODELS;
     try {
-        const updateCountryHoliday = await dbModels.NationalHoliday.findByIdAndUpdate(
+        await dbModels.NationalHoliday.findByIdAndUpdate(
             req.query.countryId,
             {
                 $pull: {
