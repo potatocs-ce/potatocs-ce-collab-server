@@ -59,12 +59,6 @@ exports.editNotification = async (req, res) => {
             }
         );
 
-        // const notification = await dbModels.Notification.find(
-        //     {
-        //         receiver: req.decoded._id
-        //     }
-        // )
-
         const notification = await dbModels.Notification.aggregate([
             {
                 $match: {
@@ -112,12 +106,6 @@ exports.allReadNotification = async (req, res) => {
                 isRead: true,
             }
         );
-
-        // const notification = await dbModels.Notification.find(
-        //     {
-        //         receiver: req.decoded._id
-        //     }
-        // )
 
         const notification = await dbModels.Notification.aggregate([
             {
