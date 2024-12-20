@@ -1,5 +1,5 @@
-const router = require('express').Router();
-const userController = require('./user_controller');
+const router = require("express").Router();
+const userController = require("./user_controller");
 const { uploadImage, resizeAndUploadImage } = require("../../../../utils/s3Utils");
 // const multer = require("multer");
 // const multerS3 = require("multer-s3");
@@ -12,7 +12,6 @@ const { uploadImage, resizeAndUploadImage } = require("../../../../utils/s3Utils
 //         secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
 //     },
 // });
-
 
 // // #프로필 이미지 업데이트
 // const storage = multer.diskStorage({
@@ -27,13 +26,11 @@ const { uploadImage, resizeAndUploadImage } = require("../../../../utils/s3Utils
 //     }
 // });
 
-
 // const upload = multer({
 //     storage: multerS3({
 //         s3: s3Client,
 //         bucket: process.env.AWS_S3_BUCKET,
 //         metadata: function (req, file, cb) {
-//             console.log(file)
 //             cb(null, { fieldName: file.fieldName });
 //         },
 //         key: function (req, file, cb) {
@@ -43,28 +40,30 @@ const { uploadImage, resizeAndUploadImage } = require("../../../../utils/s3Utils
 //     }),
 // });
 
-
-
 // const upload = multer({ storage });
 /* 유저정보  */
-router.get('/profile', userController.profile);
-router.put('/profileChange', userController.profileChange);
+router.get("/profile", userController.profile);
+router.put("/profileChange", userController.profileChange);
 
-router.post('/profileImageChange', (req, res, next) => {
-    uploadImage(req, res, function (err) {
-        if (err) {
-            console.log('err :  ', err)
-            return res.status(400).json({ error: err.message })
-        }
-        next()
-    })
-}, resizeAndUploadImage, userController.profileImageChange);
+router.post(
+    "/profileImageChange",
+    (req, res, next) => {
+        uploadImage(req, res, function (err) {
+            if (err) {
+                console.log("err :  ", err);
+                return res.status(400).json({ error: err.message });
+            }
+            next();
+        });
+    },
+    resizeAndUploadImage,
+    userController.profileImageChange
+);
 
-router.post('/company-connections', userController.companyConnections)
+router.post("/company-connections", userController.companyConnections);
 
 // 얼굴 Detection
 router.post("/faceDetection", userController.faceDetection);
 router.post("/faceRecognition", userController.faceRecognition);
-
 
 module.exports = router;
