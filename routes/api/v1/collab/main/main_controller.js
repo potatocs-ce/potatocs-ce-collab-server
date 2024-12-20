@@ -50,12 +50,6 @@ exports.getMainInfo = async (req, res) => {
             },
         ]);
 
-        // const meeting = await dbModels.meeting.find(
-        //     {
-        //         enlistedMembers: req.decoded._id
-        //     }
-        // )
-
         const meeting = await dbModels.Meeting.aggregate([
             {
                 $match: {
