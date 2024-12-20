@@ -91,7 +91,7 @@ exports.addHoliday = async (req, res) => {
             }
         );
 
-        const addHoliday = await dbModels.Company.findOneAndUpdate(
+        await dbModels.Company.findOneAndUpdate(
             {
                 _id: findCompanyId.company_id,
             },
@@ -141,7 +141,7 @@ exports.deleteholiday = async (req, res) => {
             }
         );
 
-        const updateCompanyHoliday = await dbModels.Company.findOneAndUpdate(
+        await dbModels.Company.findOneAndUpdate(
             {
                 _id: findCompanyId.company_id,
             },
