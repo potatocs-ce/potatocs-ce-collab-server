@@ -1,9 +1,5 @@
-var fs = require("fs");
-const { promisify } = require("util");
-const unlinkAsync = promisify(fs.unlink);
-const sharp = require("sharp");
 const { s3Client } = require("../../../../../utils/s3Utils");
-const { PutObjectCommand, DeleteObjectCommand } = require("@aws-sdk/client-s3");
+const { DeleteObjectCommand } = require("@aws-sdk/client-s3");
 
 // 프로필 수정
 exports.editProfile = async (req, res) => {
