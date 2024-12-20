@@ -149,7 +149,7 @@ exports.editCompany = async (req, res) => {
             leaveStandardsLength: req.body.leaveStandardsLength,
         };
 
-        const updateCompany = await dbModels.Company.findOneAndUpdate({ _id: req.params.id }, editCompany);
+        await dbModels.Company.findOneAndUpdate({ _id: req.params.id }, editCompany);
 
         return res.status(200).send({
             message: "Successfully edited the company",
@@ -173,7 +173,7 @@ exports.deleteCompany = async (req, res) => {
 --------------------------------------------------`);
     const dbModels = global.DB_MODELS;
     try {
-        const deleteCompany = await dbModels.Company.deleteOne({ _id: req.params.id });
+        await dbModels.Company.deleteOne({ _id: req.params.id });
 
         return res.status(200).send({
             message: "Successfully deleted the company",
