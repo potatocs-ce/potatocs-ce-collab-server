@@ -2,7 +2,6 @@ const path = require("path");
 const express = require("express");
 const http = require("http");
 const cors = require("cors");
-//박재혆ㅎ
 const app = express();
 
 const allowedOrigins = [
@@ -14,7 +13,6 @@ const allowedOrigins = [
     "http://192.168.0.8:4300",
     "http://192.168.0.8:4400",
     "http://192.168.0.5:4200",
-    // "http://192.168.0.10:4200",
     "http://192.168.0.5:4300",
     "http://192.168.0.42:4200",
     "https://potatocs.com",
