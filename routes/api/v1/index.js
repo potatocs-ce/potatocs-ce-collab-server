@@ -8,7 +8,6 @@ const adAuth = require("./admin/adAuth/adAuth_index");
 const nsAuth = require("./nsmarts/nsAuth/nsAuth_index");
 // AUTH
 const user = require("./user/user_index");
-// const leaves = require("./leaves/leave_index");
 const collab = require("./collab/collab_index");
 const employees = require("./employees/employees_index");
 const admin = require("./admin/admin_index");
@@ -34,7 +33,6 @@ router.use(isAuthenticated);
 -----------------------------------*/
 router.use("/admin", admin);
 router.use("/user", user);
-// router.use("/leaves", leaves);
 router.use("/employees", employees);
 router.use("/leave", leave);
 
